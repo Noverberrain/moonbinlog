@@ -24,6 +24,12 @@ pub(all) suberror DecodeError {
   UnsupportedChecksumAlgorithm(file_offset~ : UInt64, algorithm~ : Byte)
   ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt, actual~ : UInt)
   FormatContextResetRequired(file_offset~ : UInt64)
+  InvalidTableMap(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
+  UnsupportedColumnType(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  InvalidColumnLimit(max_columns~ : Int)
+  ColumnLimitExceeded(file_offset~ : UInt64, count~ : UInt64, max_columns~ : Int)
+  InvalidTableContextLimit(max_tables~ : Int, max_bytes~ : UInt64)
+  TableContextLimitExceeded(file_offset~ : UInt64, reason~ : String)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -66,6 +72,47 @@ pub fn FormatDescription::not_equal(Self, Self) -> Bool
 pub fn FormatDescription::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
 pub fn FormatDescription::payload(Self, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> BytesView raise DecodeError
 pub fn FormatDescription::to_repr(Self) -> @debug.Repr
+
+pub struct TableColumn {
+  wire_type : Byte
+  metadata : Bytes
+  nullable : Bool
+} derive(Eq, @debug.Debug)
+pub fn TableColumn::equal(Self, Self) -> Bool
+pub fn TableColumn::not_equal(Self, Self) -> Bool
+pub fn TableColumn::to_repr(Self) -> @debug.Repr
+
+pub struct TableMap {
+  header : EventHeader
+  table_id : UInt64
+  flags : UInt16
+  database : String
+  table : String
+  columns : ReadOnlyArray[TableColumn]
+  optional_metadata : ReadOnlyArray[TableMetadataField]
+} derive(Eq, @debug.Debug)
+pub fn TableMap::equal(Self, Self) -> Bool
+pub fn TableMap::not_equal(Self, Self) -> Bool
+pub fn TableMap::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_columns? : Int, max_event_size? : UInt) -> Self raise DecodeError
+pub fn TableMap::to_repr(Self) -> @debug.Repr
+
+pub struct TableMapContext {
+  // private fields
+}
+pub fn TableMapContext::apply(Self, BytesView, file_offset~ : UInt64, max_columns? : Int, max_event_size? : UInt) -> TableMap raise DecodeError
+pub fn TableMapContext::clear(Self) -> Unit
+pub fn TableMapContext::get(Self, UInt64) -> TableMap?
+pub fn TableMapContext::length(Self) -> Int
+pub fn TableMapContext::new(FormatDescription, max_tables? : Int, max_bytes? : UInt64) -> Self raise DecodeError
+pub fn TableMapContext::reset(Self, FormatDescription) -> Unit
+
+pub struct TableMetadataField {
+  field_type : Byte
+  value : Bytes
+} derive(Eq, @debug.Debug)
+pub fn TableMetadataField::equal(Self, Self) -> Bool
+pub fn TableMetadataField::not_equal(Self, Self) -> Bool
+pub fn TableMetadataField::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

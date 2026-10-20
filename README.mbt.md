@@ -2,7 +2,7 @@
 
 纯 MoonBit 的 MySQL Binlog 解析库，正在按功能逐步开发。
 
-当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述及 CRC32 校验。
+当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验和表映射。
 输入使用 `BytesView`，不依赖数据库连接或第三方解析程序。
 
 ## 使用示例
@@ -34,10 +34,13 @@ test "validate a file signature and decode a common header" {
 - CRC32 策略验证普通事件并移除四字节 CRC；OFF 策略保留普通事件的全部 body。
 - 格式描述自身始终校验 CRC32，校验时仅忽略它的 in-use 标志位。
 - 遇到新格式描述必须重新解析建立上下文；未知算法、版本和格式明确报错。
-- 当前不包含文件遍历 CLI、表映射、字段/行解码和事务处理。
+- `TableMap::parse` 解析表 ID、库表名、列类型、逐列原始元数据及 nullable 标志，可选元数据按 TLV 保留。
+- `TableMapContext` 提供有容量及原始事件字节预算的映射缓存；同 ID 覆盖，失败清空，语句结束须显式 clear，新文件/格式须 reset。
+- 当前不包含文件遍历 CLI、字段/行解码、外部 schema 配置或事务处理。
 - 样本由协议构造和独立 zlib 校验生成，尚未完成真实 MySQL 文件集成验证。
 
 格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
+表映射范围、元数据宽度及上下文生命周期见 [表映射说明](docs/table-map.md)。
 
 ## 验证
 
@@ -48,6 +51,7 @@ moon build
 moon fmt --check
 moon info
 python scripts/generate_format_fixtures.py --check
+python scripts/generate_table_map_fixtures.py --check
 ```
 
 公共接口由 `moon info` 生成在 `pkg.generated.mbti`。
@@ -70,4 +74,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批拟实现 TABLE_MAP_EVENT 和表结构上下文，等待用户继续指令。
+下一批拟实现常用字段值解码，等待用户继续指令。

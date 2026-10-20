@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// Errors from file signatures, event framing, format descriptions and checksums.
+/// Errors from file signatures, event framing, formats, checksums and table maps.
 /// Offsets are physical file positions, not the header's next-position field.
 pub(all) suberror DecodeError {
   InvalidMagic(actual~ : Bytes)
@@ -23,6 +23,20 @@ pub(all) suberror DecodeError {
   UnsupportedChecksumAlgorithm(file_offset~ : UInt64, algorithm~ : Byte)
   ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt32, actual~ : UInt32)
   FormatContextResetRequired(file_offset~ : UInt64)
+  InvalidTableMap(file_offset~ : UInt64, body_offset~ : Int32, reason~ : String)
+  UnsupportedColumnType(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidColumnLimit(max_columns~ : Int32)
+  ColumnLimitExceeded(
+    file_offset~ : UInt64,
+    count~ : UInt64,
+    max_columns~ : Int32
+  )
+  InvalidTableContextLimit(max_tables~ : Int32, max_bytes~ : UInt64)
+  TableContextLimitExceeded(file_offset~ : UInt64, reason~ : String)
 } derive(Debug, Eq)
 
 ///|
