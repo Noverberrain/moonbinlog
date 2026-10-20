@@ -2,7 +2,7 @@
 
 纯 MoonBit 的 MySQL Binlog 解析库，正在按功能逐步开发。
 
-第一批已实现未加密 Binlog 的文件标识校验及 v4 公共事件头解析。
+当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述及 CRC32 校验。
 输入使用 `BytesView`，不依赖数据库连接或第三方解析程序。
 
 ## 使用示例
@@ -28,8 +28,16 @@ test "validate a file signature and decode a common header" {
 - 调用者传入真实 `file_offset`；它与日志头中的 `next_position` 分开保存。
 - 事件长度下限为 19 字节；默认上限为 16 MiB，可显式调整。
 - 数据截断、错误文件标识、非法事件长度及上限配置通过 `DecodeError` 返回。
-- 当前仅解析头部，允许输入尚未包含负载；完整事件、格式描述、CRC 和行解码尚未实现。
-- 测试数据是依据协议手工构造的字节序列，尚未完成真实 MySQL 文件集成验证。
+- `EventHeader::parse` 允许仅输入头部；格式描述及 payload 接口要求包含完整事件。
+- `FormatDescription::parse` 验证 MySQL 8.0.x、Binlog v4、19 字节公共头和事件长度表，建立不可变校验上下文。
+- `FormatDescription::payload` 检查后续事件的完整性，返回去除公共头和校验尾部的 body；它不解码 body 的业务语义。
+- CRC32 策略验证普通事件并移除四字节 CRC；OFF 策略保留普通事件的全部 body。
+- 格式描述自身始终校验 CRC32，校验时仅忽略它的 in-use 标志位。
+- 遇到新格式描述必须重新解析建立上下文；未知算法、版本和格式明确报错。
+- 当前不包含文件遍历 CLI、表映射、字段/行解码和事务处理。
+- 样本由协议构造和独立 zlib 校验生成，尚未完成真实 MySQL 文件集成验证。
+
+格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
 
 ## 验证
 
@@ -39,6 +47,7 @@ moon test
 moon build
 moon fmt --check
 moon info
+python scripts/generate_format_fixtures.py --check
 ```
 
 公共接口由 `moon info` 生成在 `pkg.generated.mbti`。
@@ -61,4 +70,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批拟实现 FORMAT_DESCRIPTION_EVENT 与校验上下文，等待用户继续指令。
+下一批拟实现 TABLE_MAP_EVENT 和表结构上下文，等待用户继续指令。

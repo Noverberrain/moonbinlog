@@ -15,12 +15,29 @@ pub(all) suberror DecodeError {
   InvalidEventLength(file_offset~ : UInt64, event_size~ : UInt)
   EventTooLarge(file_offset~ : UInt64, event_size~ : UInt, max_event_size~ : UInt)
   InvalidEventLimit(max_event_size~ : UInt)
+  TruncatedEvent(file_offset~ : UInt64, expected~ : UInt, actual~ : UInt)
+  UnexpectedEventType(file_offset~ : UInt64, expected~ : Byte, actual~ : Byte)
+  UnsupportedBinlogVersion(file_offset~ : UInt64, version~ : UInt16)
+  UnsupportedServerVersion(file_offset~ : UInt64, server_version~ : String)
+  UnsupportedHeaderLength(file_offset~ : UInt64, length~ : Byte)
+  InvalidFormatDescription(file_offset~ : UInt64, reason~ : String)
+  UnsupportedChecksumAlgorithm(file_offset~ : UInt64, algorithm~ : Byte)
+  ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt, actual~ : UInt)
+  FormatContextResetRequired(file_offset~ : UInt64)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
 pub fn DecodeError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+pub(all) enum ChecksumAlgorithm {
+  Off
+  Crc32
+} derive(Eq, @debug.Debug)
+pub fn ChecksumAlgorithm::equal(Self, Self) -> Bool
+pub fn ChecksumAlgorithm::not_equal(Self, Self) -> Bool
+pub fn ChecksumAlgorithm::to_repr(Self) -> @debug.Repr
+
 pub struct EventHeader {
   file_offset : UInt64
   timestamp : UInt
@@ -34,6 +51,21 @@ pub fn EventHeader::equal(Self, Self) -> Bool
 pub fn EventHeader::not_equal(Self, Self) -> Bool
 pub fn EventHeader::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
 pub fn EventHeader::to_repr(Self) -> @debug.Repr
+
+pub struct FormatDescription {
+  header : EventHeader
+  binlog_version : UInt16
+  server_version : String
+  created_timestamp : UInt
+  common_header_length : Byte
+  post_header_lengths : Bytes
+  checksum_algorithm : ChecksumAlgorithm
+} derive(Eq, @debug.Debug)
+pub fn FormatDescription::equal(Self, Self) -> Bool
+pub fn FormatDescription::not_equal(Self, Self) -> Bool
+pub fn FormatDescription::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
+pub fn FormatDescription::payload(Self, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> BytesView raise DecodeError
+pub fn FormatDescription::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

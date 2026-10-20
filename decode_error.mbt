@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// Errors from file signature and v4 common event-header decoding.
+/// Errors from file signatures, event framing, format descriptions and checksums.
 /// Offsets are physical file positions, not the header's next-position field.
 pub(all) suberror DecodeError {
   InvalidMagic(actual~ : Bytes)
@@ -14,6 +14,15 @@ pub(all) suberror DecodeError {
     max_event_size~ : UInt32
   )
   InvalidEventLimit(max_event_size~ : UInt32)
+  TruncatedEvent(file_offset~ : UInt64, expected~ : UInt32, actual~ : UInt32)
+  UnexpectedEventType(file_offset~ : UInt64, expected~ : Byte, actual~ : Byte)
+  UnsupportedBinlogVersion(file_offset~ : UInt64, version~ : UInt16)
+  UnsupportedServerVersion(file_offset~ : UInt64, server_version~ : String)
+  UnsupportedHeaderLength(file_offset~ : UInt64, length~ : Byte)
+  InvalidFormatDescription(file_offset~ : UInt64, reason~ : String)
+  UnsupportedChecksumAlgorithm(file_offset~ : UInt64, algorithm~ : Byte)
+  ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt32, actual~ : UInt32)
+  FormatContextResetRequired(file_offset~ : UInt64)
 } derive(Debug, Eq)
 
 ///|

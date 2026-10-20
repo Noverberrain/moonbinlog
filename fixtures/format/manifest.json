@@ -1,0 +1,70 @@
+{
+  "fde_crc32": {
+    "bytes": 122,
+    "sha256": "858db70ad3ce06bc3fa10c485edd7f352632f4c7d13aecc73698a1eb00a5dbf2"
+  },
+  "fde_off": {
+    "bytes": 122,
+    "sha256": "3de7dcca92791f8b5cfc06ae12562321c36507fe65e8956d770a188c7ffdf91c"
+  },
+  "fde_in_use": {
+    "bytes": 122,
+    "sha256": "8d8daad16a674d3bd9ef2667089587a1d6f7b34bc460c92f1629fef4e29e5f03"
+  },
+  "fde_other_flags": {
+    "bytes": 122,
+    "sha256": "16d8410e288c20a7f650529084267d415f56ca35155d512efba34d7fa2645e17"
+  },
+  "fde_bad_algorithm": {
+    "bytes": 122,
+    "sha256": "f57785bda54df66d42cdfdf2ee23b75ca8fa180da07a4ab3b9f5a300424edf50"
+  },
+  "fde_bad_binlog_version": {
+    "bytes": 122,
+    "sha256": "8962bae96024da87baa83450bbf03d68d2bdc01cace9df3bef119253dbd0e718"
+  },
+  "fde_other_server": {
+    "bytes": 122,
+    "sha256": "2333377d8b0d5f8432f17a77ca6702d95e6dee18093f49b16f7ff06554a5e45c"
+  },
+  "fde_bad_version_text": {
+    "bytes": 122,
+    "sha256": "68e6a6c61e76e985273694f3a70d7bca3c82a886b978f1cdfa844cc913826e71"
+  },
+  "fde_unterminated_version": {
+    "bytes": 122,
+    "sha256": "b193c6ab0c42bc8856981d0060cb1ba44947c06812aab10a43c2dcea94a4e3e3"
+  },
+  "fde_non_ascii_version": {
+    "bytes": 122,
+    "sha256": "10cb0c5d7c48e28902536a28c0f16c7de1f718acf13c11fa371a5e0e2228c7dd"
+  },
+  "fde_bad_common_length": {
+    "bytes": 122,
+    "sha256": "6b794449af0e9183039553426b68a1b5fb00eaeb5cd6261cc93b16c7bd4f89e4"
+  },
+  "fde_bad_table": {
+    "bytes": 122,
+    "sha256": "6c1c0e008e4e7530a21fedde961e23e51b154eeb5c7fab5ef38bb50ca66de531"
+  },
+  "fde_short_table": {
+    "bytes": 95,
+    "sha256": "bd352761dca4ec36585d3db95185640566a802c6e9d7267d75d9fe13424146a5"
+  },
+  "event_crc32": {
+    "bytes": 31,
+    "sha256": "d5136efb7f0911c872cad7b1da9eed1c6e3007ba77d66fc3a88822794cf9f728"
+  },
+  "event_off": {
+    "bytes": 27,
+    "sha256": "8ff1da5f8f18661e3ca9892de1bbe8a8cddc83943e88d87f9702d3f9b48cb1af"
+  },
+  "empty_event_crc32": {
+    "bytes": 23,
+    "sha256": "c1737ee806f8e815cabc9d6d118515d4f832a2f922f44cd26fa5079551525329"
+  },
+  "empty_event_off": {
+    "bytes": 19,
+    "sha256": "2f2604dac1de58631da75e33b6b6a0052bf4857ea81ac6d4df991983e2095c78"
+  }
+}

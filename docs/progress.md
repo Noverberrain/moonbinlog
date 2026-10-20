@@ -18,3 +18,22 @@
 当前测试均使用依据协议构造的数据；完整 MySQL 日志和 Java 交叉验证尚未开始。本批未实现 FORMAT_DESCRIPTION、CRC、负载或行数据解析。
 
 下一批候选：FORMAT_DESCRIPTION_EVENT 与 checksum 上下文。用户发出继续指令之前不开始。
+
+## 功能 2：格式描述与 CRC32 校验（2026-10-20）
+
+状态：完成并暂停，等待用户继续。
+
+- 解析完整 FORMAT_DESCRIPTION_EVENT，保留 Binlog/服务端版本、创建时间、公共头长度和 post-header 长度表。
+- 验证 MySQL 8.0.x、Binlog v4、19 字节头及类型表结构，建立不可变格式上下文。
+- 支持普通事件 CRC32/OFF 策略；FDE 在 OFF 下仍验证 CRC，并正确处理它的 in-use 标志位。
+- 增加完整事件边界检查，先验证 UInt32 长度再转换索引，避免高位长度溢出。
+- 提供 payload 接口，返回移除公共头及 CRC 的 body；遇到新 FDE 要求重建上下文。
+- 由 Python 标准库 zlib 独立计算 17 组可重建合成样本，包含正确 CRC 的语义错误样本。
+
+验证：新增 20 个测试块，总计 37 项通过；严格检查无警告、native 构建、格式检查及样本重建一致性检查通过。
+
+本批新增：MoonBit 实现 241 行，测试 478 行（其中生成样本 196 行），Python 验证脚本 104 行，生成接口 32 行。包含注释与空行；Git 删除行另计。
+
+协议说明及固定上游 commit 见 format-checksum.md；真实 MySQL 样本和 Java 客户端差分仍待后续完成。
+
+下一批候选：TABLE_MAP_EVENT 与表结构上下文。等待用户继续指令。
