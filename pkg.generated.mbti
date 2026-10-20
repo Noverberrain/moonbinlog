@@ -30,6 +30,8 @@ pub(all) suberror DecodeError {
   ColumnLimitExceeded(file_offset~ : UInt64, count~ : UInt64, max_columns~ : Int)
   InvalidTableContextLimit(max_tables~ : Int, max_bytes~ : UInt64)
   TableContextLimitExceeded(file_offset~ : UInt64, reason~ : String)
+  UnsupportedIntegerColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  TruncatedColumnValue(file_offset~ : UInt64, column_index~ : Int, expected~ : Int, actual~ : Int)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -43,6 +45,14 @@ pub(all) enum ChecksumAlgorithm {
 pub fn ChecksumAlgorithm::equal(Self, Self) -> Bool
 pub fn ChecksumAlgorithm::not_equal(Self, Self) -> Bool
 pub fn ChecksumAlgorithm::to_repr(Self) -> @debug.Repr
+
+pub struct DecodedInteger {
+  value : IntegerValue
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn DecodedInteger::equal(Self, Self) -> Bool
+pub fn DecodedInteger::not_equal(Self, Self) -> Bool
+pub fn DecodedInteger::to_repr(Self) -> @debug.Repr
 
 pub struct EventHeader {
   file_offset : UInt64
@@ -73,11 +83,20 @@ pub fn FormatDescription::parse(BytesView, file_offset~ : UInt64, max_event_size
 pub fn FormatDescription::payload(Self, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> BytesView raise DecodeError
 pub fn FormatDescription::to_repr(Self) -> @debug.Repr
 
+pub(all) enum IntegerValue {
+  Signed(Int64)
+  Unsigned(UInt64)
+} derive(Eq, @debug.Debug)
+pub fn IntegerValue::equal(Self, Self) -> Bool
+pub fn IntegerValue::not_equal(Self, Self) -> Bool
+pub fn IntegerValue::to_repr(Self) -> @debug.Repr
+
 pub struct TableColumn {
   wire_type : Byte
   metadata : Bytes
   nullable : Bool
 } derive(Eq, @debug.Debug)
+pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int) -> DecodedInteger raise DecodeError
 pub fn TableColumn::equal(Self, Self) -> Bool
 pub fn TableColumn::not_equal(Self, Self) -> Bool
 pub fn TableColumn::to_repr(Self) -> @debug.Repr

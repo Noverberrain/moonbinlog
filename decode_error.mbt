@@ -37,6 +37,17 @@ pub(all) suberror DecodeError {
   )
   InvalidTableContextLimit(max_tables~ : Int32, max_bytes~ : UInt64)
   TableContextLimitExceeded(file_offset~ : UInt64, reason~ : String)
+  UnsupportedIntegerColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  TruncatedColumnValue(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    expected~ : Int32,
+    actual~ : Int32
+  )
 } derive(Debug, Eq)
 
 ///|
