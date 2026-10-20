@@ -1,3 +1,6 @@
+// Copyright 2026 Noverberrain.
+// SPDX-License-Identifier: Apache-2.0
+
 ///|
 /// Validate the first four bytes of an unencrypted binlog file.
 /// Bytes after the signature are ignored. This does not establish the binlog

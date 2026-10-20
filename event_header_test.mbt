@@ -1,3 +1,6 @@
+// Copyright 2026 Noverberrain.
+// SPDX-License-Identifier: Apache-2.0
+
 ///|
 // Independent, asymmetric wire values make byte order and field overlap visible.
 let header_bytes : Bytes = [

@@ -1,3 +1,6 @@
+// Copyright 2026 Noverberrain.
+// SPDX-License-Identifier: Apache-2.0
+
 ///|
 /// Read-only decoded fields of a v4 common event header.
 /// `event_size` includes the common header and any checksum trailer.

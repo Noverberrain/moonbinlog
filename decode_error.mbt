@@ -1,3 +1,6 @@
+// Copyright 2026 Noverberrain.
+// SPDX-License-Identifier: Apache-2.0
+
 ///|
 /// Errors from file signature and v4 common event-header decoding.
 /// Offsets are physical file positions, not the header's next-position field.

@@ -1,3 +1,6 @@
+// Copyright 2026 Noverberrain.
+// SPDX-License-Identifier: Apache-2.0
+
 ///|
 test "file signature accepts the magic and ignores the following bytes" {
   @moonbinlog.validate_file_header([0xfe, 0x62, 0x69, 0x6e])

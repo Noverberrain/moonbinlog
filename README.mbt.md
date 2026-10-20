@@ -50,6 +50,12 @@ moon info
 
 实现根据格式独立编写，当前没有复制上游实现代码或测试数据。
 
+## 开源许可证
+
+Copyright 2026 Noverberrain.
+
+本项目采用 [Apache License 2.0](LICENSE)，版权声明见 [NOTICE](NOTICE)。
+
 ## 开发节奏
 
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
