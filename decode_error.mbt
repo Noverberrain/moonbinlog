@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// Errors from file signatures, event framing, formats, checksums and table maps.
+/// Errors from file signatures, events, table maps and column values.
 /// Offsets are physical file positions, not the header's next-position field.
 pub(all) suberror DecodeError {
   InvalidMagic(actual~ : Bytes)
@@ -47,6 +47,22 @@ pub(all) suberror DecodeError {
     column_index~ : Int32,
     expected~ : Int32,
     actual~ : Int32
+  )
+  UnsupportedStringColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidStringMetadata(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
+  StringLengthExceeded(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    length~ : Int32,
+    max_length~ : Int32
   )
 } derive(Debug, Eq)
 

@@ -1,0 +1,28 @@
+{
+  "varchar_max_bytes": [
+    0,
+    1,
+    255,
+    256,
+    600,
+    65535
+  ],
+  "string_max_bytes": [
+    0,
+    1,
+    255,
+    256,
+    511,
+    512,
+    767,
+    768,
+    1023
+  ],
+  "unsupported_embedded_types": [
+    247,
+    248,
+    0
+  ],
+  "event_bytes": 104,
+  "sha256": "4bb3117a665cf8aca6551b582c8e99e467d81ce4f58fb11613b56e11aea24674"
+}

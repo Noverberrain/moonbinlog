@@ -32,6 +32,9 @@ pub(all) suberror DecodeError {
   TableContextLimitExceeded(file_offset~ : UInt64, reason~ : String)
   UnsupportedIntegerColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
   TruncatedColumnValue(file_offset~ : UInt64, column_index~ : Int, expected~ : Int, actual~ : Int)
+  UnsupportedStringColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  InvalidStringMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
+  StringLengthExceeded(file_offset~ : UInt64, column_index~ : Int, length~ : Int, max_length~ : Int)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -53,6 +56,14 @@ pub struct DecodedInteger {
 pub fn DecodedInteger::equal(Self, Self) -> Bool
 pub fn DecodedInteger::not_equal(Self, Self) -> Bool
 pub fn DecodedInteger::to_repr(Self) -> @debug.Repr
+
+pub struct DecodedString {
+  value : Bytes
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn DecodedString::equal(Self, Self) -> Bool
+pub fn DecodedString::not_equal(Self, Self) -> Bool
+pub fn DecodedString::to_repr(Self) -> @debug.Repr
 
 pub struct EventHeader {
   file_offset : UInt64
@@ -97,6 +108,7 @@ pub struct TableColumn {
   nullable : Bool
 } derive(Eq, @debug.Debug)
 pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int) -> DecodedInteger raise DecodeError
+pub fn TableColumn::decode_string(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedString raise DecodeError
 pub fn TableColumn::equal(Self, Self) -> Bool
 pub fn TableColumn::not_equal(Self, Self) -> Bool
 pub fn TableColumn::to_repr(Self) -> @debug.Repr
