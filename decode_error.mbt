@@ -111,6 +111,22 @@ pub(all) suberror DecodeError {
     column_index~ : Int32,
     reason~ : String
   )
+  UnsupportedFloatingColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidFloatingMetadata(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    expected_width~ : Int32
+  )
+  NonFiniteFloatingValue(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte,
+    bits~ : UInt64
+  )
 } derive(Debug, Eq)
 
 ///|

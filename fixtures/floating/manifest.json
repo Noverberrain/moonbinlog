@@ -1,0 +1,7 @@
+{
+  "seed": 20261021,
+  "table_sha256": "d3a5ab1c088e06aca634af1ac92558e975687f1f16a0e866a105d153e7d77dd0",
+  "finite_vectors": 64,
+  "nonfinite_vectors": 10,
+  "vectors_sha256": "22f8d4cbece440c2d9560ba2faac0e2e66a29ed05e6717ec87bf0ec3100eb0af"
+}

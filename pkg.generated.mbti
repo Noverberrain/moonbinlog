@@ -45,6 +45,9 @@ pub(all) suberror DecodeError {
   UnsupportedTemporalColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
   InvalidTemporalMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
   InvalidTemporalValue(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
+  UnsupportedFloatingColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  InvalidFloatingMetadata(file_offset~ : UInt64, column_index~ : Int, expected_width~ : Int)
+  NonFiniteFloatingValue(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte, bits~ : UInt64)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -76,6 +79,15 @@ pub struct DecodedDecimal {
 pub fn DecodedDecimal::equal(Self, Self) -> Bool
 pub fn DecodedDecimal::not_equal(Self, Self) -> Bool
 pub fn DecodedDecimal::to_repr(Self) -> @debug.Repr
+
+pub struct DecodedFloating {
+  value : FloatingValue
+  bits : UInt64
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn DecodedFloating::equal(Self, Self) -> Bool
+pub fn DecodedFloating::not_equal(Self, Self) -> Bool
+pub fn DecodedFloating::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedInteger {
   value : IntegerValue
@@ -116,6 +128,14 @@ pub fn EventHeader::not_equal(Self, Self) -> Bool
 pub fn EventHeader::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
 pub fn EventHeader::to_repr(Self) -> @debug.Repr
 
+pub(all) enum FloatingValue {
+  Single(Float)
+  DoublePrecision(Double)
+} derive(Eq, @debug.Debug)
+pub fn FloatingValue::equal(Self, Self) -> Bool
+pub fn FloatingValue::not_equal(Self, Self) -> Bool
+pub fn FloatingValue::to_repr(Self) -> @debug.Repr
+
 pub struct FormatDescription {
   header : EventHeader
   binlog_version : UInt16
@@ -146,6 +166,7 @@ pub struct TableColumn {
 } derive(Eq, @debug.Debug)
 pub fn TableColumn::decode_blob(Self, BytesView, file_offset~ : UInt64, column_index~ : Int, max_value_bytes? : Int) -> DecodedBlob raise DecodeError
 pub fn TableColumn::decode_decimal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedDecimal raise DecodeError
+pub fn TableColumn::decode_floating(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedFloating raise DecodeError
 pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int) -> DecodedInteger raise DecodeError
 pub fn TableColumn::decode_string(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedString raise DecodeError
 pub fn TableColumn::decode_temporal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedTemporal raise DecodeError
