@@ -2,7 +2,7 @@
 
 纯 MoonBit 的 MySQL Binlog 解析库，正在按功能逐步开发。
 
-当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验、表映射、整数和字符串值解码。
+当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验、表映射、整数、字符串及 BLOB/TEXT 值解码。
 输入使用 `BytesView`，不依赖数据库连接或第三方解析程序。
 
 ## 使用示例
@@ -38,6 +38,7 @@ test "validate a file signature and decode a common header" {
 - `TableMapContext` 提供有容量及原始事件字节预算的映射缓存；同 ID 覆盖，失败清空，语句结束须显式 clear，新文件/格式须 reset。
 - `TableColumn::decode_integer` 解码五种整数类型，显式指定 signed/unsigned，保留完整 Int64/UInt64 精度并返回消费字节数。
 - `TableColumn::decode_string` 解码 VARCHAR/STRING 的长度前缀，返回原始字节及消费长度；不推断字符集，不转换或补齐 CHAR/BINARY 填充。
+- `TableColumn::decode_blob` 支持 BLOB/TEXT 的 1～4 字节长度前缀，返回原始字节及消费长度；默认内容上限为 16 MiB，可显式配置。
 - 当前不包含文件遍历 CLI、其他字段类型、行事件解码、外部 schema 配置或事务处理。
 - 样本由协议构造和独立 zlib 校验生成，尚未完成真实 MySQL 文件集成验证。
 
@@ -45,6 +46,7 @@ test "validate a file signature and decode a common header" {
 表映射范围、元数据宽度及上下文生命周期见 [表映射说明](docs/table-map.md)。
 整数类型、符号属性及 NULL 边界见 [整数值说明](docs/integer-values.md)。
 字符串类型、长度元数据及字符集边界见 [字符串值说明](docs/string-values.md)。
+BLOB/TEXT 长度、安全边界及支持范围见 [BLOB 值说明](docs/blob-values.md)。
 
 ## 验证
 
@@ -58,6 +60,7 @@ python scripts/generate_format_fixtures.py --check
 python scripts/generate_table_map_fixtures.py --check
 python scripts/generate_integer_fixtures.py --check
 python scripts/generate_string_fixtures.py --check
+python scripts/generate_blob_fixtures.py --check
 ```
 
 公共接口由 `moon info` 生成在 `pkg.generated.mbti`。
@@ -80,4 +83,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：BLOB/TEXT 字段值解码，等待用户继续指令。
+下一批候选：DECIMAL 字段值解码，等待用户继续指令。

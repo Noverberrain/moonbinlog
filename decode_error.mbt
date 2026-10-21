@@ -64,6 +64,23 @@ pub(all) suberror DecodeError {
     length~ : Int32,
     max_length~ : Int32
   )
+  UnsupportedBlobColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidBlobMetadata(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
+  InvalidBlobLimit(max_value_bytes~ : Int32)
+  BlobTooLarge(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    length~ : UInt64,
+    max_value_bytes~ : Int32
+  )
 } derive(Debug, Eq)
 
 ///|
