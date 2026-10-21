@@ -96,6 +96,21 @@ pub(all) suberror DecodeError {
     column_index~ : Int32,
     value_offset~ : Int32
   )
+  UnsupportedTemporalColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidTemporalMetadata(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
+  InvalidTemporalValue(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
 } derive(Debug, Eq)
 
 ///|

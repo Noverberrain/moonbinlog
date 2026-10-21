@@ -42,6 +42,9 @@ pub(all) suberror DecodeError {
   UnsupportedDecimalColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
   InvalidDecimalMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
   InvalidDecimalValue(file_offset~ : UInt64, column_index~ : Int, value_offset~ : Int)
+  UnsupportedTemporalColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  InvalidTemporalMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
+  InvalidTemporalValue(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -90,6 +93,15 @@ pub fn DecodedString::equal(Self, Self) -> Bool
 pub fn DecodedString::not_equal(Self, Self) -> Bool
 pub fn DecodedString::to_repr(Self) -> @debug.Repr
 
+pub struct DecodedTemporal {
+  value : TemporalValue
+  fractional_precision : Int
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn DecodedTemporal::equal(Self, Self) -> Bool
+pub fn DecodedTemporal::not_equal(Self, Self) -> Bool
+pub fn DecodedTemporal::to_repr(Self) -> @debug.Repr
+
 pub struct EventHeader {
   file_offset : UInt64
   timestamp : UInt
@@ -136,6 +148,7 @@ pub fn TableColumn::decode_blob(Self, BytesView, file_offset~ : UInt64, column_i
 pub fn TableColumn::decode_decimal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedDecimal raise DecodeError
 pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int) -> DecodedInteger raise DecodeError
 pub fn TableColumn::decode_string(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedString raise DecodeError
+pub fn TableColumn::decode_temporal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedTemporal raise DecodeError
 pub fn TableColumn::equal(Self, Self) -> Bool
 pub fn TableColumn::not_equal(Self, Self) -> Bool
 pub fn TableColumn::to_repr(Self) -> @debug.Repr
@@ -171,6 +184,17 @@ pub struct TableMetadataField {
 pub fn TableMetadataField::equal(Self, Self) -> Bool
 pub fn TableMetadataField::not_equal(Self, Self) -> Bool
 pub fn TableMetadataField::to_repr(Self) -> @debug.Repr
+
+pub(all) enum TemporalValue {
+  Year(Int)
+  Date(year~ : Int, month~ : Int, day~ : Int)
+  DateTime(year~ : Int, month~ : Int, day~ : Int, hour~ : Int, minute~ : Int, second~ : Int, microsecond~ : Int)
+  Time(negative~ : Bool, hour~ : Int, minute~ : Int, second~ : Int, microsecond~ : Int)
+  Timestamp(seconds~ : UInt, microsecond~ : Int)
+} derive(Eq, @debug.Debug)
+pub fn TemporalValue::equal(Self, Self) -> Bool
+pub fn TemporalValue::not_equal(Self, Self) -> Bool
+pub fn TemporalValue::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

@@ -1,0 +1,7 @@
+{
+  "table_sha256": "66a578703329f4b2dc5e469e60e2c4ec8865dde072a1eca801df122684acae06",
+  "columns": 29,
+  "valid_vectors": 124,
+  "invalid_vectors": 23,
+  "vectors_sha256": "c97fd8160a873e4f4a4e47dce10a4e84bbcb81faa25d735b2f02bf085b8a3ca5"
+}
