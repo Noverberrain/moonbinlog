@@ -39,6 +39,9 @@ pub(all) suberror DecodeError {
   InvalidBlobMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
   InvalidBlobLimit(max_value_bytes~ : Int)
   BlobTooLarge(file_offset~ : UInt64, column_index~ : Int, length~ : UInt64, max_value_bytes~ : Int)
+  UnsupportedDecimalColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  InvalidDecimalMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
+  InvalidDecimalValue(file_offset~ : UInt64, column_index~ : Int, value_offset~ : Int)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -60,6 +63,16 @@ pub struct DecodedBlob {
 pub fn DecodedBlob::equal(Self, Self) -> Bool
 pub fn DecodedBlob::not_equal(Self, Self) -> Bool
 pub fn DecodedBlob::to_repr(Self) -> @debug.Repr
+
+pub struct DecodedDecimal {
+  value : String
+  precision : Int
+  scale : Int
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn DecodedDecimal::equal(Self, Self) -> Bool
+pub fn DecodedDecimal::not_equal(Self, Self) -> Bool
+pub fn DecodedDecimal::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedInteger {
   value : IntegerValue
@@ -120,6 +133,7 @@ pub struct TableColumn {
   nullable : Bool
 } derive(Eq, @debug.Debug)
 pub fn TableColumn::decode_blob(Self, BytesView, file_offset~ : UInt64, column_index~ : Int, max_value_bytes? : Int) -> DecodedBlob raise DecodeError
+pub fn TableColumn::decode_decimal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedDecimal raise DecodeError
 pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int) -> DecodedInteger raise DecodeError
 pub fn TableColumn::decode_string(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedString raise DecodeError
 pub fn TableColumn::equal(Self, Self) -> Bool

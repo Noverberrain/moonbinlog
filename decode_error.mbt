@@ -81,6 +81,21 @@ pub(all) suberror DecodeError {
     length~ : UInt64,
     max_value_bytes~ : Int32
   )
+  UnsupportedDecimalColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidDecimalMetadata(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
+  InvalidDecimalValue(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    value_offset~ : Int32
+  )
 } derive(Debug, Eq)
 
 ///|
