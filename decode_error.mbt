@@ -127,6 +127,16 @@ pub(all) suberror DecodeError {
     wire_type~ : Byte,
     bits~ : UInt64
   )
+  UnsupportedBitColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidBitMetadata(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
 } derive(Debug, Eq)
 
 ///|

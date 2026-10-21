@@ -48,6 +48,8 @@ pub(all) suberror DecodeError {
   UnsupportedFloatingColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
   InvalidFloatingMetadata(file_offset~ : UInt64, column_index~ : Int, expected_width~ : Int)
   NonFiniteFloatingValue(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte, bits~ : UInt64)
+  UnsupportedBitColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  InvalidBitMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -61,6 +63,15 @@ pub(all) enum ChecksumAlgorithm {
 pub fn ChecksumAlgorithm::equal(Self, Self) -> Bool
 pub fn ChecksumAlgorithm::not_equal(Self, Self) -> Bool
 pub fn ChecksumAlgorithm::to_repr(Self) -> @debug.Repr
+
+pub struct DecodedBit {
+  value : UInt64
+  bit_length : Int
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn DecodedBit::equal(Self, Self) -> Bool
+pub fn DecodedBit::not_equal(Self, Self) -> Bool
+pub fn DecodedBit::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedBlob {
   value : Bytes
@@ -164,6 +175,7 @@ pub struct TableColumn {
   metadata : Bytes
   nullable : Bool
 } derive(Eq, @debug.Debug)
+pub fn TableColumn::decode_bit(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedBit raise DecodeError
 pub fn TableColumn::decode_blob(Self, BytesView, file_offset~ : UInt64, column_index~ : Int, max_value_bytes? : Int) -> DecodedBlob raise DecodeError
 pub fn TableColumn::decode_decimal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedDecimal raise DecodeError
 pub fn TableColumn::decode_floating(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedFloating raise DecodeError
