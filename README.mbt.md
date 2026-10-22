@@ -52,7 +52,7 @@ test "validate a file signature and decode a common header" {
 - `TableMapContext::decode_rows` 校验 v2 行事件、查找表映射并解码多行/更新配对，成功遇到 STMT_END_F 或任意解析失败均清空缓存，返回表定义快照。
 - `TransactionBoundary::parse` 校验 QUERY/XID 边界；`TransactionDecoder` 缓存显式 BEGIN 后的行事件，在 XID/COMMIT 返回事务，ROLLBACK 或错误时丢弃，EOF 必须调用 finish 检查未结束事务。
 - 当前不包含文件遍历 CLI、其他字段类型、外部 schema 配置、GTID/XA/DDL/隐式事务或非事务表语义。单独的行事件输出仍不代表已经提交。
-- 样本由协议构造和独立 zlib 校验生成，尚未完成真实 MySQL 文件集成验证。
+- 合成样本由协议构造和独立 zlib 校验生成；另有三组真实 MySQL 8.0.43 日志，已与官方 mysqlbinlog 逐字段对照，详见[集成验证](docs/mysql-integration.md)。Java 客户端差分尚未完成。
 
 格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
 表映射范围、元数据宽度及上下文生命周期见 [表映射说明](docs/table-map.md)。
@@ -89,6 +89,7 @@ python scripts/generate_enum_set_fixtures.py --check
 python scripts/generate_row_image_fixtures.py --check
 python scripts/generate_rows_event_fixtures.py --check
 python scripts/generate_transaction_fixtures.py --check
+python scripts/verify_mysql_fixtures.py --check
 ```
 
 公共接口由 `moon info` 生成在 `pkg.generated.mbti`。
@@ -111,4 +112,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：真实 MySQL 文件集成验证。等待用户继续指令。
+下一批候选：最小离线 CLI，输出事件列表与统计。等待用户继续指令。

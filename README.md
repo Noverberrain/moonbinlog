@@ -17,7 +17,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 - **保留数据含义**：区分缺失列、NULL 和实际值；整数保留完整精度，DECIMAL 使用精确字符串。
 - **显式管理状态**：表映射按语句清理，待定行变化在事务提交后才作为提交结果返回。
 - **可定位的错误**：通过 `DecodeError` 报告截断、非法元数据、校验失败和资源上限等问题。
-- **可重建的样本**：使用 Python 独立构造协议样本，记录 SHA-256，并用标准库 zlib 计算 CRC32。
+- **可复现的验证**：独立构造协议样本，并固定三组真实 MySQL 日志与官方工具输出，记录 SHA-256，逐字段比较行镜像。
 
 离线分析、CDC 和审计是后续应用方向；目前没有数据库订阅、数据投递或 SQL 回放功能。
 
@@ -38,7 +38,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：213 项测试通过，运行验证使用 native 后端。** 样本目前均为协议构造数据，真实 MySQL Binlog 文件及 Java 客户端交叉验证尚未完成。
+**验证状态：219 项测试通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
 
 ## 解析流程
 
@@ -124,7 +124,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 - JSON、GEOMETRY 等字段类型、字符集转换、列名和完整外部 schema 配置尚未实现。
 - 事务汇总以调用者已知使用事务型表为前提，无法从当前表映射推断存储引擎及非事务表回滚语义。
 - 默认单事件上限 16 MiB；事务上限为 4096 个事件、10000 个行变化、64 MiB 编码字节。详细配额及配置范围见各层文档。
-- 尚未进行真实 MySQL 文件集成、性能基准或生产环境验证。
+- 真实文件验证目前仅覆盖 Windows / MySQL 8.0.43 的三组固定样本；性能基准和生产环境验证尚未完成。
 
 ## 文档导航
 
@@ -133,6 +133,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | API 总览与可执行示例 | [README.mbt.md](README.mbt.md) · [生成的公共接口](pkg.generated.mbti) |
 | 事件格式与校验 | [格式描述 / CRC32](docs/format-checksum.md) |
 | 文件级遍历 | [内存文件遍历、偏移与错误处理](docs/file-traversal.md) |
+| 真实文件验证 | [MySQL 8.0.43 与官方 mysqlbinlog 对照](docs/mysql-integration.md) |
 | 表结构上下文 | [TABLE_MAP 与缓存生命周期](docs/table-map.md) |
 | 整数与精确小数 | [整数](docs/integer-values.md) · [DECIMAL](docs/decimal-values.md) |
 | 字符串与二进制 | [字符串](docs/string-values.md) · [BLOB / TEXT](docs/blob-values.md) |
@@ -153,7 +154,11 @@ Get-ChildItem scripts/generate_*_fixtures.py | ForEach-Object {
   python $_.FullName --check
   if ($LASTEXITCODE -ne 0) { throw "Fixture check failed: $($_.Name)" }
 }
+python scripts/verify_mysql_fixtures.py --check
+if ($LASTEXITCODE -ne 0) { throw 'MySQL fixture check failed' }
 ```
+
+[真实 MySQL 样本](fixtures/mysql-8.0/README.md)包含采集 SQL、原始日志、官方解码输出和摘要。普通回归直接使用仓库中的固定数据，无需启动 MySQL；重新采集可使用独立临时实例的脚本。
 
 协议参考固定到 MySQL 源码 commit `9fc8d60003b4eee32767c1e30942f222c3508c31`，具体依据记录在各功能文档中。实现和测试样本独立编写，当前没有复制上游实现代码或测试数据。
 
@@ -164,9 +169,9 @@ Get-ChildItem scripts/generate_*_fixtures.py | ForEach-Object {
 - [x] ROWS v2 多行解析与 UPDATE 配对
 - [x] 显式事务边界、提交 / 回滚与配额检查
 - [x] 离线 Binlog 文件字节遍历（内存视图接口）
-- [ ] 真实 MySQL 文件集成及与成熟客户端的交叉验证（下一步候选）
+- [x] 三组真实 MySQL 8.0.43 文件集成及官方 mysqlbinlog 对照
 - [ ] 外部 schema 配置与更多字段 / 事件类型
-- [ ] 面向离线分析的 CLI 与使用示例
+- [ ] 面向离线分析的 CLI 与使用示例（下一步候选）
 
 路线会根据真实样本验证结果调整，勾选项只代表当前限定范围内的实现。
 

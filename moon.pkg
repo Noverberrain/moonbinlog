@@ -2,3 +2,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8",
 }
+
+import {
+  "moonbitlang/core/encoding/hex",
+} for "test"

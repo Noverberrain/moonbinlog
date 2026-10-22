@@ -49,4 +49,4 @@ ROWS 的 STMT_END_F 只清理语句级表映射，不提交事务。一份事务
 
 Python 独立构造 36 个控制事件、格式变体及连续 RBR 流。完整流重写 next_position 并重新计算 CRC，覆盖 XID/QUERY 提交、回滚、多语句、多事务、EOF、OFF、配额和错误恢复。测试还验证未提交状态不输出结果、快照独立、所有控制事件截断点，以及不将业务 SQL 中的 COMMIT 当作边界。
 
-协议依据固定在 MySQL commit `9fc8d60003b4eee32767c1e30942f222c3508c31` 的 [QUERY post-header 和 status/database/query 布局](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/statement_events.h) 与 [XID 事件定义](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/control_events.h)。实现与样本独立编写，尚未完成真实 MySQL/Java 交叉验证。
+协议依据固定在 MySQL commit `9fc8d60003b4eee32767c1e30942f222c3508c31` 的 [QUERY post-header 和 status/database/query 布局](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/statement_events.h) 与 [XID 事件定义](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/control_events.h)。实现与合成样本独立编写；另有[三组真实 MySQL 8.0.43 日志及官方工具对照](mysql-integration.md)，Java 客户端差分尚未完成。

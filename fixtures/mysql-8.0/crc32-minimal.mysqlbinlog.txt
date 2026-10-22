@@ -1,0 +1,99 @@
+# The proper term is pseudo_replica_mode, but we use this compatibility alias
+# to make the statement usable on server versions 8.0.24 and older.
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/;
+/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/;
+DELIMITER /*!*/;
+# at 4
+#261023  0:18:39 server id 810043  end_log_pos 126 CRC32 0x89d7dc28 	Start: binlog v 4, server v 8.0.43 created 261023  0:18:39
+# at 126
+#261023  0:18:39 server id 810043  end_log_pos 157 CRC32 0xc876c558 	Previous-GTIDs
+# [empty]
+# at 157
+#261023  0:18:39 server id 810043  end_log_pos 236 CRC32 0x14231b12 	Anonymous_GTID	last_committed=0	sequence_number=1	rbr_only=yes	original_committed_timestamp=1792685919175603	immediate_commit_timestamp=1792685919175603	transaction_length=2044
+/*!50718 SET TRANSACTION ISOLATION LEVEL READ COMMITTED*//*!*/;
+# original_commit_timestamp=1792685919175603 (2026-10-23 00:18:39.175603 ÖÐ¹ú±ê×¼Ê±¼ä)
+# immediate_commit_timestamp=1792685919175603 (2026-10-23 00:18:39.175603 ÖÐ¹ú±ê×¼Ê±¼ä)
+/*!80001 SET @@session.original_commit_timestamp=1792685919175603*//*!*/;
+/*!80014 SET @@session.original_server_version=80043*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80043*//*!*/;
+SET @@SESSION.GTID_NEXT= 'ANONYMOUS'/*!*/;
+# at 236
+#261023  0:18:39 server id 810043  end_log_pos 333 CRC32 0x250413b7 	Query	thread_id=18	exec_time=0	error_code=0
+SET TIMESTAMP=1792685919/*!*/;
+SET @@session.pseudo_thread_id=18/*!*/;
+SET @@session.foreign_key_checks=1, @@session.sql_auto_is_null=0, @@session.unique_checks=1, @@session.autocommit=1/*!*/;
+SET @@session.sql_mode=1168113696/*!*/;
+SET @@session.auto_increment_increment=1, @@session.auto_increment_offset=1/*!*/;
+/*!\C utf8mb4 *//*!*/;
+SET @@session.character_set_client=255,@@session.collation_connection=255,@@session.collation_server=255/*!*/;
+SET @@session.time_zone='+00:00'/*!*/;
+SET @@session.lc_time_names=0/*!*/;
+SET @@session.collation_database=DEFAULT/*!*/;
+/*!80011 SET @@session.default_collation_for_utf8mb4=255*//*!*/;
+BEGIN
+/*!*/;
+# at 333
+#261023  0:18:39 server id 810043  end_log_pos 722 CRC32 0x9ae34d8b 	Table_map: `moonbinlog_fixture`.`sample` mapped to number 106
+# has_generated_invisible_primary_key=0
+# at 722
+#261023  0:18:39 server id 810043  end_log_pos 853 CRC32 0x436f304f 	Write_rows: table id 106 flags: STMT_END_F
+### INSERT INTO `moonbinlog_fixture`.`sample`
+### SET
+###   @1=1 /* INT meta=0 nullable=0 is_null=0 */
+###   @2=-128 (128) /* TINYINT meta=0 nullable=1 is_null=0 */
+###   @3=32767 /* SHORTINT meta=0 nullable=1 is_null=0 */
+###   @4=-8388608 (8388608) /* MEDIUMINT meta=0 nullable=1 is_null=0 */
+###   @5=-1 (18446744073709551615) /* LONGINT meta=0 nullable=1 is_null=0 */
+###   @6='æœˆå…”' /* VARSTRING(400) meta=400 nullable=1 is_null=0 */
+###   @7='\x00ÿ\x01\x00' /* BLOB/TEXT meta=2 nullable=1 is_null=0 */
+###   @8=-12345678901234.123456 /* DECIMAL(20,6) meta=5126 nullable=1 is_null=0 */
+###   @9='2024:02:29' /* DATE meta=0 nullable=1 is_null=0 */
+###   @10=2024 /* YEAR meta=0 nullable=1 is_null=0 */
+###   @11='2024-02-29 12:34:56.123456' /* DATETIME(6) meta=6 nullable=1 is_null=0 */
+###   @12='-25:02:03.456789' /* TIME(6) meta=6 nullable=1 is_null=0 */
+###   @13=1704067200.654321 /* TIMESTAMP(6) meta=6 nullable=1 is_null=0 */
+###   @14=1.5                  /* FLOAT meta=4 nullable=1 is_null=0 */
+###   @15=-2.25 /* DOUBLE meta=8 nullable=1 is_null=0 */
+###   @16=b'100000001' /* BIT(9) meta=257 nullable=1 is_null=0 */
+###   @17=2 /* ENUM(1 byte) meta=63233 nullable=1 is_null=0 */
+###   @18=b'00000101' /* SET(1 bytes) meta=63489 nullable=1 is_null=0 */
+###   @19='\x00\x00ÿ' /* VARSTRING(16) meta=16 nullable=1 is_null=0 */
+###   @20='abc' /* STRING(32) meta=65056 nullable=1 is_null=0 */
+# at 853
+#261023  0:18:39 server id 810043  end_log_pos 1242 CRC32 0x49549fff 	Table_map: `moonbinlog_fixture`.`sample` mapped to number 106
+# has_generated_invisible_primary_key=0
+# at 1242
+#261023  0:18:39 server id 810043  end_log_pos 1284 CRC32 0xfc247d2f 	Write_rows: table id 106 flags: STMT_END_F
+### INSERT INTO `moonbinlog_fixture`.`sample`
+### SET
+###   @1=2 /* INT meta=0 nullable=0 is_null=0 */
+# at 1284
+#261023  0:18:39 server id 810043  end_log_pos 1673 CRC32 0xf214726e 	Table_map: `moonbinlog_fixture`.`sample` mapped to number 106
+# has_generated_invisible_primary_key=0
+# at 1673
+#261023  0:18:39 server id 810043  end_log_pos 1739 CRC32 0x0276d54d 	Update_rows: table id 106 flags: STMT_END_F
+### UPDATE `moonbinlog_fixture`.`sample`
+### WHERE
+###   @1=1 /* INT meta=0 nullable=0 is_null=0 */
+### SET
+###   @6='æ›´æ–°' /* VARSTRING(400) meta=400 nullable=1 is_null=0 */
+###   @8=0.000001 /* DECIMAL(20,6) meta=5126 nullable=1 is_null=0 */
+###   @16=b'000000011' /* BIT(9) meta=257 nullable=1 is_null=0 */
+# at 1739
+#261023  0:18:39 server id 810043  end_log_pos 2128 CRC32 0x8df3d01a 	Table_map: `moonbinlog_fixture`.`sample` mapped to number 106
+# has_generated_invisible_primary_key=0
+# at 2128
+#261023  0:18:39 server id 810043  end_log_pos 2170 CRC32 0x8acf5bfd 	Delete_rows: table id 106 flags: STMT_END_F
+### DELETE FROM `moonbinlog_fixture`.`sample`
+### WHERE
+###   @1=1 /* INT meta=0 nullable=0 is_null=0 */
+# at 2170
+#261023  0:18:39 server id 810043  end_log_pos 2201 CRC32 0x0ca36c73 	Xid = 58
+COMMIT/*!*/;
+# at 2201
+#261023  0:18:39 server id 810043  end_log_pos 2246 CRC32 0xc6a7940d 	Rotate to capture.000007  pos: 4
+SET @@SESSION.GTID_NEXT= 'AUTOMATIC' /* added by mysqlbinlog */ /*!*/;
+DELIMITER ;
+# End of log file
+/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;

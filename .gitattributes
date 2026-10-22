@@ -2,3 +2,6 @@
 *.mbt text eol=lf
 *.mbti text eol=lf
 *.bin -text
+# Preserve exact captured bytes and their SHA-256 across Git checkouts.
+fixtures/mysql-8.0/*.binlog binary
+fixtures/mysql-8.0/*.mysqlbinlog.txt binary
