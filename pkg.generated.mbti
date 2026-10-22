@@ -70,12 +70,32 @@ pub(all) suberror DecodeError {
   InvalidTransactionLimits(max_events~ : Int, max_changes~ : Int, max_bytes~ : UInt64)
   TransactionLimitExceeded(file_offset~ : UInt64, reason~ : String)
   IncompleteTransaction(start_offset~ : UInt64)
+  MissingFormatDescription(file_offset~ : UInt64)
+  FileReaderFailed(file_offset~ : UInt64)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
 pub fn DecodeError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+pub struct BinlogFileEvent {
+  header : EventHeader
+  raw : BytesView
+  body : BytesView
+  format : FormatDescription
+} derive(Eq, @debug.Debug)
+pub fn BinlogFileEvent::equal(Self, Self) -> Bool
+pub fn BinlogFileEvent::not_equal(Self, Self) -> Bool
+pub fn BinlogFileEvent::to_repr(Self) -> @debug.Repr
+
+pub struct BinlogFileReader {
+  // private fields
+}
+pub fn BinlogFileReader::format(Self) -> FormatDescription?
+pub fn BinlogFileReader::new(BytesView, max_event_size? : UInt) -> Self raise DecodeError
+pub fn BinlogFileReader::next(Self) -> BinlogFileEvent? raise DecodeError
+pub fn BinlogFileReader::position(Self) -> UInt64
+
 pub(all) enum ChecksumAlgorithm {
   Off
   Crc32

@@ -5,6 +5,8 @@
 当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验、表映射、常用字段值、ROWS v2 事件，以及显式边界的事务型 RBR 汇总。
 输入使用 `BytesView`，不依赖数据库连接或第三方解析程序。
 
+现已提供 `BinlogFileReader`，可顺序遍历已读入内存的完整文件字节，并为每个事件返回原始视图、body、真实偏移和当前格式上下文。
+
 ## 使用示例
 
 ```mbt check
@@ -22,6 +24,8 @@ test "validate a file signature and decode a common header" {
 ```
 
 ## 当前接口与边界
+
+- `BinlogFileReader::new` 校验文件标识；`next()` 按事件大小遍历并校验，首个事件要求 FDE。未知类型保留原始数据，错误后永久停止；本层不进行业务事件分发。详见[文件遍历说明](docs/file-traversal.md)。
 
 - `validate_file_header` 校验前四字节 `FE 62 69 6E`，不据此确认 Binlog 版本。
 - `EventHeader::parse` 读取前 19 字节，保留时间、类型、服务端 ID、事件长度、日志位置和标志。
@@ -107,4 +111,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：离线 Binlog 文件遍历。等待用户继续指令。
+下一批候选：真实 MySQL 文件集成验证。等待用户继续指令。

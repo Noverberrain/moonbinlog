@@ -7,7 +7,7 @@
 
 MoonBinlog 是一个纯 MoonBit 的 MySQL 8.0 Binlog 解析库。它接收 `BytesView`，完成事件校验、表映射和字段解码，将 ROWS v2 事件转换为 INSERT / UPDATE / DELETE 行变化，并支持显式事务区间的提交与回滚汇总。
 
-项目面向 MoonBit 十月黑客松，正在逐步开发。当前定位是可组合的协议解析库，尚未提供完整文件遍历 CLI 或实时订阅服务。
+项目面向 MoonBit 十月黑客松，正在逐步开发。当前定位是可组合的协议解析库，支持遍历完整的内存文件字节，尚未提供文件读取 CLI 或实时订阅服务。
 
 ## 为什么做 MoonBinlog
 
@@ -26,6 +26,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 层次 | 已实现能力 | 说明 |
 | --- | --- | --- |
 | 文件标识与事件头 | 未加密 Binlog magic、v4 公共事件头 | 保存真实物理偏移，事件长度有上限 |
+| 离线文件遍历 | 顺序切分、FDE 上下文切换、事件完整性校验 | 输入完整内存视图，未知事件保留原始数据 |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
 | 整数 | TINYINT / SMALLINT / MEDIUMINT / INT / BIGINT | signed / unsigned 由调用者明确提供 |
@@ -37,12 +38,12 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：197 项测试通过，运行验证使用 native 后端。** 样本目前均为协议构造数据，真实 MySQL Binlog 文件及 Java 客户端交叉验证尚未完成。
+**验证状态：213 项测试通过，运行验证使用 native 后端。** 样本目前均为协议构造数据，真实 MySQL Binlog 文件及 Java 客户端交叉验证尚未完成。
 
 ## 解析流程
 
 ```text
-调用者提供 Binlog 字节
+调用者提供 Binlog 字节 → BinlogFileReader 逐事件遍历
         │
         ├── 文件标识 + EventHeader
         │
@@ -57,7 +58,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
                         └── ROLLBACK / 错误 / EOF 截断 → 丢弃待定数据
 ```
 
-这里展示的是已有解析层的组合关系。完整文件读取、事件分发和不支持事件的处理仍需调用者负责；事务解码器只接受受支持的连续显式事务区间。
+这里展示的是已有解析层的组合关系。文件系统读取、业务事件分发和不支持事件的处理仍需调用者负责；事务解码器只接受受支持的连续显式事务区间。
 
 ## 快速上手
 
@@ -107,6 +108,8 @@ test "decode a binlog event header" {
 
 ### 继续使用行事件与事务接口
 
+对完整文件字节，可先使用 `BinlogFileReader::new(data)`，循环调用 `next()`，直到返回 `None`。每个结果提供 `header`、`raw`、`body` 和 `format`；遍历错误后需丢弃活动的上层状态。完整说明见[离线文件遍历](docs/file-traversal.md)。
+
 1. 用 `FormatDescription::parse` 解析格式描述，建立校验上下文。
 2. 用 `TableMapContext` 管理表映射，调用 `decode_rows` 获取行变化；整数列的符号属性需由外部 schema 提供。
 3. 需要提交语义时，使用 `TransactionDecoder::new`，从明确的 BEGIN 开始逐事件调用 `feed`。
@@ -129,6 +132,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | --- | --- |
 | API 总览与可执行示例 | [README.mbt.md](README.mbt.md) · [生成的公共接口](pkg.generated.mbti) |
 | 事件格式与校验 | [格式描述 / CRC32](docs/format-checksum.md) |
+| 文件级遍历 | [内存文件遍历、偏移与错误处理](docs/file-traversal.md) |
 | 表结构上下文 | [TABLE_MAP 与缓存生命周期](docs/table-map.md) |
 | 整数与精确小数 | [整数](docs/integer-values.md) · [DECIMAL](docs/decimal-values.md) |
 | 字符串与二进制 | [字符串](docs/string-values.md) · [BLOB / TEXT](docs/blob-values.md) |
@@ -159,8 +163,8 @@ Get-ChildItem scripts/generate_*_fixtures.py | ForEach-Object {
 - [x] 表映射、常用字段值与行镜像
 - [x] ROWS v2 多行解析与 UPDATE 配对
 - [x] 显式事务边界、提交 / 回滚与配额检查
-- [ ] 离线 Binlog 文件遍历（下一步候选）
-- [ ] 真实 MySQL 文件集成及与成熟客户端的交叉验证
+- [x] 离线 Binlog 文件字节遍历（内存视图接口）
+- [ ] 真实 MySQL 文件集成及与成熟客户端的交叉验证（下一步候选）
 - [ ] 外部 schema 配置与更多字段 / 事件类型
 - [ ] 面向离线分析的 CLI 与使用示例
 

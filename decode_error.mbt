@@ -177,6 +177,8 @@ pub(all) suberror DecodeError {
   )
   TransactionLimitExceeded(file_offset~ : UInt64, reason~ : String)
   IncompleteTransaction(start_offset~ : UInt64)
+  MissingFormatDescription(file_offset~ : UInt64)
+  FileReaderFailed(file_offset~ : UInt64)
 } derive(Debug, Eq)
 
 ///|
