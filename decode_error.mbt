@@ -137,6 +137,16 @@ pub(all) suberror DecodeError {
     column_index~ : Int32,
     reason~ : String
   )
+  UnsupportedEnumSetColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidEnumSetMetadata(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
 } derive(Debug, Eq)
 
 ///|
