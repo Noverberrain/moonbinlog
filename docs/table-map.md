@@ -38,7 +38,7 @@ nullable 位图之后按 TLV 读取：类型一字节，长度为 packed integer
 
 `TableMapContext::new(format)` 将缓存绑定到一个格式上下文；`apply` 验证后安装映射，`get` 查找，重复 table_id 替换旧定义。返回的旧只读值不会因替换而改变。
 
-- `clear()`：调用者在语句结束时清空当前映射；后续行事件解析器需要根据 STMT_END_F 驱动该动作。当前功能不读取行事件 flags，也不自动推断语句结束。
+- `clear()`：手动消费者须在语句结束时清理。`decode_rows` 已根据 ROWS flags 的 STMT_END_F 自动清理；该方法解析失败时也清空整个映射作用域，详见 [ROWS 事件说明](rows-events.md)。
 - `reset(format)`：新文件或新 FDE 后清空缓存并使用新的校验策略。仅有 table_id 或 event offset 不能证明文件身份。
 - `apply` 失败：清空整个当前映射范围，防止调用者捕获错误后继续使用旧定义；包括解析、CRC 和配额错误。
 - 默认最多 1,024 个表 ID，以及 32 MiB 已保留 wire 事件大小预算。预算替换时扣除旧事件，不把同 ID 重复累计。此数字不代表精确堆内存，峰值解析内存还受事件与列数上限控制。

@@ -58,6 +58,11 @@ pub(all) suberror DecodeError {
   UnexpectedRowNull(file_offset~ : UInt64, column_index~ : Int)
   MissingIntegerSignedness(file_offset~ : UInt64, column_index~ : Int)
   UnsupportedRowColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  UnsupportedRowsEvent(file_offset~ : UInt64, event_type~ : Byte)
+  InvalidRowsEvent(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
+  MissingTableMap(file_offset~ : UInt64, table_id~ : UInt64)
+  InvalidRowsLimit(max_rows~ : Int)
+  RowsLimitExceeded(file_offset~ : UInt64, max_rows~ : Int)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -210,6 +215,15 @@ pub fn RowCell::equal(Self, Self) -> Bool
 pub fn RowCell::not_equal(Self, Self) -> Bool
 pub fn RowCell::to_repr(Self) -> @debug.Repr
 
+pub(all) enum RowChange {
+  Insert(RowImage)
+  Update(before~ : RowImage, after~ : RowImage)
+  Delete(RowImage)
+} derive(Eq, @debug.Debug)
+pub fn RowChange::equal(Self, Self) -> Bool
+pub fn RowChange::not_equal(Self, Self) -> Bool
+pub fn RowChange::to_repr(Self) -> @debug.Repr
+
 pub struct RowImage {
   columns : ReadOnlyArray[RowCell]
   bytes_read : Int
@@ -217,6 +231,19 @@ pub struct RowImage {
 pub fn RowImage::equal(Self, Self) -> Bool
 pub fn RowImage::not_equal(Self, Self) -> Bool
 pub fn RowImage::to_repr(Self) -> @debug.Repr
+
+pub struct RowsEvent {
+  header : EventHeader
+  table : TableMap
+  flags : UInt16
+  extra_data : Bytes
+  columns_before : Bytes?
+  columns_after : Bytes?
+  changes : ReadOnlyArray[RowChange]
+} derive(Eq, @debug.Debug)
+pub fn RowsEvent::equal(Self, Self) -> Bool
+pub fn RowsEvent::not_equal(Self, Self) -> Bool
+pub fn RowsEvent::to_repr(Self) -> @debug.Repr
 
 pub struct TableColumn {
   wire_type : Byte
@@ -255,6 +282,7 @@ pub struct TableMapContext {
 }
 pub fn TableMapContext::apply(Self, BytesView, file_offset~ : UInt64, max_columns? : Int, max_event_size? : UInt) -> TableMap raise DecodeError
 pub fn TableMapContext::clear(Self) -> Unit
+pub fn TableMapContext::decode_rows(Self, BytesView, integer_unsigned~ : ReadOnlyArray[Bool?], file_offset~ : UInt64, max_rows? : Int, max_row_bytes? : Int, max_event_size? : UInt) -> RowsEvent raise DecodeError
 pub fn TableMapContext::get(Self, UInt64) -> TableMap?
 pub fn TableMapContext::length(Self) -> Int
 pub fn TableMapContext::new(FormatDescription, max_tables? : Int, max_bytes? : UInt64) -> Self raise DecodeError

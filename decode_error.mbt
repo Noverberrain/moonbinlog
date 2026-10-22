@@ -157,6 +157,15 @@ pub(all) suberror DecodeError {
     column_index~ : Int32,
     wire_type~ : Byte
   )
+  UnsupportedRowsEvent(file_offset~ : UInt64, event_type~ : Byte)
+  InvalidRowsEvent(
+    file_offset~ : UInt64,
+    body_offset~ : Int32,
+    reason~ : String
+  )
+  MissingTableMap(file_offset~ : UInt64, table_id~ : UInt64)
+  InvalidRowsLimit(max_rows~ : Int32)
+  RowsLimitExceeded(file_offset~ : UInt64, max_rows~ : Int32)
 } derive(Debug, Eq)
 
 ///|

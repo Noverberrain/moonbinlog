@@ -2,7 +2,7 @@
 
 纯 MoonBit 的 MySQL Binlog 解析库，正在按功能逐步开发。
 
-当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验、表映射、常用字段值和单个行镜像解码。
+当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验、表映射、常用字段值、行镜像及 WRITE/UPDATE/DELETE_ROWS v2 事件解码。
 输入使用 `BytesView`，不依赖数据库连接或第三方解析程序。
 
 ## 使用示例
@@ -35,7 +35,7 @@ test "validate a file signature and decode a common header" {
 - 格式描述自身始终校验 CRC32，校验时仅忽略它的 in-use 标志位。
 - 遇到新格式描述必须重新解析建立上下文；未知算法、版本和格式明确报错。
 - `TableMap::parse` 解析表 ID、库表名、列类型、逐列原始元数据及 nullable 标志，可选元数据按 TLV 保留。
-- `TableMapContext` 提供有容量及原始事件字节预算的映射缓存；同 ID 覆盖，失败清空，语句结束须显式 clear，新文件/格式须 reset。
+- `TableMapContext` 提供有容量及原始事件字节预算的映射缓存；同 ID 覆盖，失败清空。decode_rows 会在语句结束时清理，手动消费仍须显式 clear，新文件/格式须 reset。
 - `TableColumn::decode_integer` 解码五种整数类型，显式指定 signed/unsigned，保留完整 Int64/UInt64 精度并返回消费字节数。
 - `TableColumn::decode_string` 解码 VARCHAR/STRING 的长度前缀，返回原始字节及消费长度；不推断字符集，不转换或补齐 CHAR/BINARY 填充。
 - `TableColumn::decode_blob` 支持 BLOB/TEXT 的 1～4 字节长度前缀，返回原始字节及消费长度；默认内容上限为 16 MiB，可显式配置。
@@ -45,7 +45,8 @@ test "validate a file signature and decode a common header" {
 - `TableColumn::decode_bit` 支持 BIT(1)～BIT(64)，返回 UInt64、声明位宽和消费长度；大端解码并屏蔽部分首字节的未使用高位。
 - `TableColumn::decode_enum_set` 解析 STRING 元数据中内嵌的 ENUM/SET，分别返回枚举索引或集合位掩码及消费长度，不推断成员名称或数量。
 - `TableMap::decode_row_image` 组合已有字段解码器，处理列存在/紧凑 NULL 位图，区分缺失列、NULL 和实际值，返回按表列号排列的结果及消费长度；整数符号属性必须显式提供。
-- 当前不包含文件遍历 CLI、其他字段类型、行事件解码、外部 schema 配置或事务处理。
+- `TableMapContext::decode_rows` 校验 v2 行事件、查找表映射并解码多行/更新配对，成功遇到 STMT_END_F 或任意解析失败均清空缓存，返回表定义快照。
+- 当前不包含文件遍历 CLI、其他字段类型、外部 schema 配置或事务提交/回滚处理；行事件输出不代表已经提交。
 - 样本由协议构造和独立 zlib 校验生成，尚未完成真实 MySQL 文件集成验证。
 
 格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
@@ -59,6 +60,7 @@ FLOAT/DOUBLE 的精度、位模式及非有限值策略见 [浮点值说明](doc
 BIT 的元数据、字节序和填充位策略见 [BIT 值说明](docs/bit-values.md)。
 ENUM/SET 的元数据、存储宽度和成员边界见 [ENUM/SET 值说明](docs/enum-set-values.md)。
 单个行镜像的位图、字段分派和资源边界见 [行镜像说明](docs/row-images.md)。
+行事件布局、多行配对及缓存生命周期见 [ROWS 事件说明](docs/rows-events.md)。
 
 ## 验证
 
@@ -79,6 +81,7 @@ python scripts/generate_floating_fixtures.py --check
 python scripts/generate_bit_fixtures.py --check
 python scripts/generate_enum_set_fixtures.py --check
 python scripts/generate_row_image_fixtures.py --check
+python scripts/generate_rows_event_fixtures.py --check
 ```
 
 公共接口由 `moon info` 生成在 `pkg.generated.mbti`。
@@ -101,4 +104,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：WRITE/UPDATE/DELETE_ROWS v2 事件解析与表映射上下文集成。等待用户继续指令。
+下一批候选：事务边界与提交/回滚处理。等待用户继续指令。

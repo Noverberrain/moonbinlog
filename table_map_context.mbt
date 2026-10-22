@@ -3,8 +3,8 @@
 
 ///|
 /// Bounded table-id cache associated with one format and caller-managed scope.
-/// Call clear at statement ends and reset for a new file or format description.
-/// Any failed apply clears cached maps to prevent reuse of stale definitions.
+/// decode_rows clears at statement ends; manual consumers must call clear.
+/// Reset for a new file or format. Failed apply/decode_rows clears cached maps.
 pub struct TableMapContext {
   priv tables : Map[UInt64, TableMap]
   priv mut format : FormatDescription
