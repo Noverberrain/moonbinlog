@@ -166,6 +166,17 @@ pub(all) suberror DecodeError {
   MissingTableMap(file_offset~ : UInt64, table_id~ : UInt64)
   InvalidRowsLimit(max_rows~ : Int32)
   RowsLimitExceeded(file_offset~ : UInt64, max_rows~ : Int32)
+  UnsupportedTransactionEvent(file_offset~ : UInt64, event_type~ : Byte)
+  InvalidTransactionEvent(file_offset~ : UInt64, reason~ : String)
+  UnsupportedTransactionStatement(file_offset~ : UInt64)
+  InvalidTransactionState(file_offset~ : UInt64, reason~ : String)
+  InvalidTransactionLimits(
+    max_events~ : Int32,
+    max_changes~ : Int32,
+    max_bytes~ : UInt64
+  )
+  TransactionLimitExceeded(file_offset~ : UInt64, reason~ : String)
+  IncompleteTransaction(start_offset~ : UInt64)
 } derive(Debug, Eq)
 
 ///|

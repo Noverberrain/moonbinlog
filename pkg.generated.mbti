@@ -63,6 +63,13 @@ pub(all) suberror DecodeError {
   MissingTableMap(file_offset~ : UInt64, table_id~ : UInt64)
   InvalidRowsLimit(max_rows~ : Int)
   RowsLimitExceeded(file_offset~ : UInt64, max_rows~ : Int)
+  UnsupportedTransactionEvent(file_offset~ : UInt64, event_type~ : Byte)
+  InvalidTransactionEvent(file_offset~ : UInt64, reason~ : String)
+  UnsupportedTransactionStatement(file_offset~ : UInt64)
+  InvalidTransactionState(file_offset~ : UInt64, reason~ : String)
+  InvalidTransactionLimits(max_events~ : Int, max_changes~ : Int, max_bytes~ : UInt64)
+  TransactionLimitExceeded(file_offset~ : UInt64, reason~ : String)
+  IncompleteTransaction(start_offset~ : UInt64)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -76,6 +83,19 @@ pub(all) enum ChecksumAlgorithm {
 pub fn ChecksumAlgorithm::equal(Self, Self) -> Bool
 pub fn ChecksumAlgorithm::not_equal(Self, Self) -> Bool
 pub fn ChecksumAlgorithm::to_repr(Self) -> @debug.Repr
+
+pub struct CommittedTransaction {
+  start_offset : UInt64
+  end_offset : UInt64
+  xid : UInt64?
+  events : ReadOnlyArray[RowsEvent]
+  event_count : Int
+  change_count : Int
+  wire_bytes : UInt64
+} derive(Eq, @debug.Debug)
+pub fn CommittedTransaction::equal(Self, Self) -> Bool
+pub fn CommittedTransaction::not_equal(Self, Self) -> Bool
+pub fn CommittedTransaction::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedBit {
   value : UInt64
@@ -306,6 +326,49 @@ pub(all) enum TemporalValue {
 pub fn TemporalValue::equal(Self, Self) -> Bool
 pub fn TemporalValue::not_equal(Self, Self) -> Bool
 pub fn TemporalValue::to_repr(Self) -> @debug.Repr
+
+pub(all) enum TransactionAction {
+  Begin
+  Commit
+  Rollback
+  Xid(UInt64)
+} derive(Eq, @debug.Debug)
+pub fn TransactionAction::equal(Self, Self) -> Bool
+pub fn TransactionAction::not_equal(Self, Self) -> Bool
+pub fn TransactionAction::to_repr(Self) -> @debug.Repr
+
+pub struct TransactionBoundary {
+  header : EventHeader
+  action : TransactionAction
+} derive(Eq, @debug.Debug)
+pub fn TransactionBoundary::equal(Self, Self) -> Bool
+pub fn TransactionBoundary::not_equal(Self, Self) -> Bool
+pub fn TransactionBoundary::parse(FormatDescription, BytesView, file_offset~ : UInt64) -> Self raise DecodeError
+pub fn TransactionBoundary::to_repr(Self) -> @debug.Repr
+
+pub struct TransactionDecoder {
+  // private fields
+}
+pub fn TransactionDecoder::feed(Self, BytesView, file_offset~ : UInt64, integer_unsigned? : ReadOnlyArray[Bool?]) -> TransactionStep raise DecodeError
+pub fn TransactionDecoder::finish(Self) -> Unit raise DecodeError
+pub fn TransactionDecoder::is_active(Self) -> Bool
+pub fn TransactionDecoder::new(FormatDescription, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self raise DecodeError
+
+pub(all) enum TransactionOutcome {
+  Committed(CommittedTransaction)
+  RolledBack(start_offset~ : UInt64, end_offset~ : UInt64, discarded_changes~ : Int)
+} derive(Eq, @debug.Debug)
+pub fn TransactionOutcome::equal(Self, Self) -> Bool
+pub fn TransactionOutcome::not_equal(Self, Self) -> Bool
+pub fn TransactionOutcome::to_repr(Self) -> @debug.Repr
+
+pub struct TransactionStep {
+  header : EventHeader
+  outcome : TransactionOutcome?
+} derive(Eq, @debug.Debug)
+pub fn TransactionStep::equal(Self, Self) -> Bool
+pub fn TransactionStep::not_equal(Self, Self) -> Bool
+pub fn TransactionStep::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
