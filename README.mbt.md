@@ -2,7 +2,7 @@
 
 纯 MoonBit 的 MySQL Binlog 解析库，正在按功能逐步开发。
 
-当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验、表映射，以及整数、浮点数、BIT、ENUM/SET、字符串、BLOB/TEXT、DECIMAL 和日期时间值解码。
+当前已实现未加密 Binlog 的文件标识、v4 公共事件头、MySQL 8.0 格式描述、CRC32 校验、表映射、常用字段值和单个行镜像解码。
 输入使用 `BytesView`，不依赖数据库连接或第三方解析程序。
 
 ## 使用示例
@@ -44,6 +44,7 @@ test "validate a file signature and decode a common header" {
 - `TableColumn::decode_floating` 解码 FLOAT/DOUBLE，返回相应精度的有限值、原始位模式及消费长度；保留负零和次正规数，明确拒绝 NaN/无穷大。
 - `TableColumn::decode_bit` 支持 BIT(1)～BIT(64)，返回 UInt64、声明位宽和消费长度；大端解码并屏蔽部分首字节的未使用高位。
 - `TableColumn::decode_enum_set` 解析 STRING 元数据中内嵌的 ENUM/SET，分别返回枚举索引或集合位掩码及消费长度，不推断成员名称或数量。
+- `TableMap::decode_row_image` 组合已有字段解码器，处理列存在/紧凑 NULL 位图，区分缺失列、NULL 和实际值，返回按表列号排列的结果及消费长度；整数符号属性必须显式提供。
 - 当前不包含文件遍历 CLI、其他字段类型、行事件解码、外部 schema 配置或事务处理。
 - 样本由协议构造和独立 zlib 校验生成，尚未完成真实 MySQL 文件集成验证。
 
@@ -57,6 +58,7 @@ DECIMAL 的精度、符号及分组校验见 [DECIMAL 值说明](docs/decimal-va
 FLOAT/DOUBLE 的精度、位模式及非有限值策略见 [浮点值说明](docs/floating-values.md)。
 BIT 的元数据、字节序和填充位策略见 [BIT 值说明](docs/bit-values.md)。
 ENUM/SET 的元数据、存储宽度和成员边界见 [ENUM/SET 值说明](docs/enum-set-values.md)。
+单个行镜像的位图、字段分派和资源边界见 [行镜像说明](docs/row-images.md)。
 
 ## 验证
 
@@ -76,6 +78,7 @@ python scripts/generate_temporal_fixtures.py --check
 python scripts/generate_floating_fixtures.py --check
 python scripts/generate_bit_fixtures.py --check
 python scripts/generate_enum_set_fixtures.py --check
+python scripts/generate_row_image_fixtures.py --check
 ```
 
 公共接口由 `moon info` 生成在 `pkg.generated.mbti`。
@@ -98,4 +101,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：行镜像解码，组合已支持的字段类型与列存在/NULL 位图。等待用户继续指令。
+下一批候选：WRITE/UPDATE/DELETE_ROWS v2 事件解析与表映射上下文集成。等待用户继续指令。

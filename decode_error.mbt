@@ -147,6 +147,16 @@ pub(all) suberror DecodeError {
     column_index~ : Int32,
     reason~ : String
   )
+  InvalidRowImage(file_offset~ : UInt64, reason~ : String)
+  InvalidRowImageLimit(max_bytes~ : Int32)
+  RowImageLimitExceeded(file_offset~ : UInt64, max_bytes~ : Int32)
+  UnexpectedRowNull(file_offset~ : UInt64, column_index~ : Int32)
+  MissingIntegerSignedness(file_offset~ : UInt64, column_index~ : Int32)
+  UnsupportedRowColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
 } derive(Debug, Eq)
 
 ///|

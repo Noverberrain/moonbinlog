@@ -52,6 +52,12 @@ pub(all) suberror DecodeError {
   InvalidBitMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
   UnsupportedEnumSetColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
   InvalidEnumSetMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
+  InvalidRowImage(file_offset~ : UInt64, reason~ : String)
+  InvalidRowImageLimit(max_bytes~ : Int)
+  RowImageLimitExceeded(file_offset~ : UInt64, max_bytes~ : Int)
+  UnexpectedRowNull(file_offset~ : UInt64, column_index~ : Int)
+  MissingIntegerSignedness(file_offset~ : UInt64, column_index~ : Int)
+  UnsupportedRowColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -188,6 +194,30 @@ pub fn IntegerValue::equal(Self, Self) -> Bool
 pub fn IntegerValue::not_equal(Self, Self) -> Bool
 pub fn IntegerValue::to_repr(Self) -> @debug.Repr
 
+pub(all) enum RowCell {
+  Absent
+  Null
+  Integer(IntegerValue)
+  Floating(DecodedFloating)
+  StringBytes(Bytes)
+  BlobBytes(Bytes)
+  Decimal(DecodedDecimal)
+  Bit(DecodedBit)
+  EnumSet(EnumSetValue)
+  Temporal(DecodedTemporal)
+} derive(Eq, @debug.Debug)
+pub fn RowCell::equal(Self, Self) -> Bool
+pub fn RowCell::not_equal(Self, Self) -> Bool
+pub fn RowCell::to_repr(Self) -> @debug.Repr
+
+pub struct RowImage {
+  columns : ReadOnlyArray[RowCell]
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn RowImage::equal(Self, Self) -> Bool
+pub fn RowImage::not_equal(Self, Self) -> Bool
+pub fn RowImage::to_repr(Self) -> @debug.Repr
+
 pub struct TableColumn {
   wire_type : Byte
   metadata : Bytes
@@ -214,6 +244,7 @@ pub struct TableMap {
   columns : ReadOnlyArray[TableColumn]
   optional_metadata : ReadOnlyArray[TableMetadataField]
 } derive(Eq, @debug.Debug)
+pub fn TableMap::decode_row_image(Self, BytesView, columns_present~ : BytesView, integer_unsigned~ : ReadOnlyArray[Bool?], file_offset~ : UInt64, max_bytes? : Int) -> RowImage raise DecodeError
 pub fn TableMap::equal(Self, Self) -> Bool
 pub fn TableMap::not_equal(Self, Self) -> Bool
 pub fn TableMap::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_columns? : Int, max_event_size? : UInt) -> Self raise DecodeError
