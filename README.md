@@ -1,8 +1,176 @@
 # MoonBinlog
 
-纯 MoonBit 的 MySQL Binlog 解析库。
+**用 MoonBit 读取 MySQL Binlog，从二进制事件到有类型的行变化。**
 
-使用方式、当前范围和可执行示例见 [README.mbt.md](README.mbt.md)。
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Language: MoonBit](https://img.shields.io/badge/Language-MoonBit-orange.svg)](https://www.moonbitlang.com/)
+
+MoonBinlog 是一个纯 MoonBit 的 MySQL 8.0 Binlog 解析库。它接收 `BytesView`，完成事件校验、表映射和字段解码，将 ROWS v2 事件转换为 INSERT / UPDATE / DELETE 行变化，并支持显式事务区间的提交与回滚汇总。
+
+项目面向 MoonBit 十月黑客松，正在逐步开发。当前定位是可组合的协议解析库，尚未提供完整文件遍历 CLI 或实时订阅服务。
+
+## 为什么做 MoonBinlog
+
+Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审计的重要入口。MoonBinlog 希望为 MoonBit 提供可复用的 MySQL Binlog 解码能力，让上层工具可以基于结构化事件继续开发。
+
+- **纯 MoonBit 实现**：解析过程不依赖 MySQL 连接、Java 服务或外部解析程序。
+- **保留数据含义**：区分缺失列、NULL 和实际值；整数保留完整精度，DECIMAL 使用精确字符串。
+- **显式管理状态**：表映射按语句清理，待定行变化在事务提交后才作为提交结果返回。
+- **可定位的错误**：通过 `DecodeError` 报告截断、非法元数据、校验失败和资源上限等问题。
+- **可重建的样本**：使用 Python 独立构造协议样本，记录 SHA-256，并用标准库 zlib 计算 CRC32。
+
+离线分析、CDC 和审计是后续应用方向；目前没有数据库订阅、数据投递或 SQL 回放功能。
+
+## 当前支持什么
+
+| 层次 | 已实现能力 | 说明 |
+| --- | --- | --- |
+| 文件标识与事件头 | 未加密 Binlog magic、v4 公共事件头 | 保存真实物理偏移，事件长度有上限 |
+| 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
+| 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
+| 整数 | TINYINT / SMALLINT / MEDIUMINT / INT / BIGINT | signed / unsigned 由调用者明确提供 |
+| 字符串与二进制 | VARCHAR / STRING、常规 BLOB / TEXT | 保留原始字节，不推断字符集 |
+| 精确小数 | NEWDECIMAL | 最高 65 位精度、30 位小数，保留 scale |
+| 日期与时间 | DATE / YEAR / TIMESTAMP2 / DATETIME2 / TIME2 | 支持 0～6 位小数，不进行时区转换 |
+| 其他标量 | FLOAT / DOUBLE、BIT、ENUM / SET | 浮点拒绝非有限值；枚举返回索引，集合返回位掩码 |
+| 行镜像 | 列存在位图、紧凑 NULL 位图、有类型字段 | 区分 `Absent`、`Null` 和实际值 |
+| 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
+| 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
+
+**验证状态：197 项测试通过，运行验证使用 native 后端。** 样本目前均为协议构造数据，真实 MySQL Binlog 文件及 Java 客户端交叉验证尚未完成。
+
+## 解析流程
+
+```text
+调用者提供 Binlog 字节
+        │
+        ├── 文件标识 + EventHeader
+        │
+        └── FormatDescription：格式及 CRC32 / OFF 校验
+                │
+                ├── TableMapContext：表定义与列元数据
+                │       └── RowsEvent：Insert / Update / Delete
+                │               └── RowImage：Absent / Null / 有类型的值
+                │
+                └── TransactionDecoder：缓存显式事务内的行事件
+                        ├── XID / COMMIT → CommittedTransaction
+                        └── ROLLBACK / 错误 / EOF 截断 → 丢弃待定数据
+```
+
+这里展示的是已有解析层的组合关系。完整文件读取、事件分发和不支持事件的处理仍需调用者负责；事务解码器只接受受支持的连续显式事务区间。
+
+## 快速上手
+
+### 从源码验证
+
+安装 MoonBit 工具链后，在终端执行：
+
+```sh
+git clone https://github.com/Noverberrain/moonbinlog.git
+cd moonbinlog
+moon check --warn-list +unnecessary_annotation --deny-warn
+moon test --target native
+moon build --target native
+```
+
+当前开发环境为 Windows、MoonBit v0.10.15、moon 0.1.20261012，native 构建使用 MSVC。其他环境和后端的运行兼容性仍待验证。重建协议样本还需要 Python 3。
+
+### 最小解析示例
+
+下面的示例演示文件标识校验与公共头解析；相同逻辑在 [可执行文档](README.mbt.md) 中接受工具链检查。
+
+在使用该库的 MoonBit 包中导入 `Noverberrain/moonbinlog`，别名为 `moonbinlog`：
+
+```text
+import {
+  "Noverberrain/moonbinlog",
+}
+```
+
+将以下测试放入已配置依赖的包中：
+
+```moonbit
+///|
+test "decode a binlog event header" {
+  @moonbinlog.validate_file_header([0xfe, 0x62, 0x69, 0x6e])
+  let header : Bytes = [
+    0x78, 0x56, 0x34, 0x12, 0x1e, 0x01, 0x00, 0x00, 0x00, 0x13, 0x00, 0x00, 0x00,
+    0x17, 0x00, 0x00, 0x00, 0x00, 0x00,
+  ]
+  let decoded = @moonbinlog.EventHeader::parse(header, file_offset=4)
+  assert_eq(decoded.event_size, 19U)
+  assert_eq(decoded.next_position, 23U)
+}
+```
+
+这份 19 字节数据只用于演示公共头，不是完整 ROWS 事件。`EventHeader::parse` 可以只接收头部；格式、表映射、行事件和事务接口需要完整事件数据。
+
+### 继续使用行事件与事务接口
+
+1. 用 `FormatDescription::parse` 解析格式描述，建立校验上下文。
+2. 用 `TableMapContext` 管理表映射，调用 `decode_rows` 获取行变化；整数列的符号属性需由外部 schema 提供。
+3. 需要提交语义时，使用 `TransactionDecoder::new`，从明确的 BEGIN 开始逐事件调用 `feed`。
+4. 处理返回的 `Committed` 或 `RolledBack` 结果，并在输入结束时调用 `finish()` 检查截断事务。
+
+ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇到不支持的事件会报错并丢弃待定结果，不能直接跳过后继续提交。
+
+## 使用边界
+
+- 当前面向 MySQL **8.0.x、Binlog v4、未加密、常规 ROWS v2** 子集，不承诺兼容 MariaDB 或其他 MySQL 版本。
+- 尚未实现 GTID、XA、DDL / 隐式事务、自动提交推断、SAVEPOINT、压缩事务及旧版 / partial 行事件。
+- JSON、GEOMETRY 等字段类型、字符集转换、列名和完整外部 schema 配置尚未实现。
+- 事务汇总以调用者已知使用事务型表为前提，无法从当前表映射推断存储引擎及非事务表回滚语义。
+- 默认单事件上限 16 MiB；事务上限为 4096 个事件、10000 个行变化、64 MiB 编码字节。详细配额及配置范围见各层文档。
+- 尚未进行真实 MySQL 文件集成、性能基准或生产环境验证。
+
+## 文档导航
+
+| 主题 | 文档 |
+| --- | --- |
+| API 总览与可执行示例 | [README.mbt.md](README.mbt.md) · [生成的公共接口](pkg.generated.mbti) |
+| 事件格式与校验 | [格式描述 / CRC32](docs/format-checksum.md) |
+| 表结构上下文 | [TABLE_MAP 与缓存生命周期](docs/table-map.md) |
+| 整数与精确小数 | [整数](docs/integer-values.md) · [DECIMAL](docs/decimal-values.md) |
+| 字符串与二进制 | [字符串](docs/string-values.md) · [BLOB / TEXT](docs/blob-values.md) |
+| 日期与时间 | [日期时间](docs/temporal-values.md) |
+| 其他字段 | [浮点](docs/floating-values.md) · [BIT](docs/bit-values.md) · [ENUM / SET](docs/enum-set-values.md) |
+| 行变化 | [行镜像](docs/row-images.md) · [ROWS v2 事件](docs/rows-events.md) |
+| 提交与回滚 | [事务边界、状态和资源限制](docs/transactions.md) |
+| 开发记录 | [逐功能实现与验证记录](docs/progress.md) |
+
+## 验证与样本
+
+测试覆盖正常解码、截断输入、非法元数据、CRC 损坏、资源配额、表映射生命周期、事务提交 / 回滚及错误后的状态清理。完整验证命令见 [可执行文档的验证部分](README.mbt.md#验证)。
+
+`fixtures/` 保存各类样本说明和清单，`scripts/generate_*_fixtures.py` 生成对应的 MoonBit 测试数据。可在 PowerShell 中检查全部生成结果是否与仓库一致：
+
+```powershell
+Get-ChildItem scripts/generate_*_fixtures.py | ForEach-Object {
+  python $_.FullName --check
+  if ($LASTEXITCODE -ne 0) { throw "Fixture check failed: $($_.Name)" }
+}
+```
+
+协议参考固定到 MySQL 源码 commit `9fc8d60003b4eee32767c1e30942f222c3508c31`，具体依据记录在各功能文档中。实现和测试样本独立编写，当前没有复制上游实现代码或测试数据。
+
+## 开发路线
+
+- [x] 文件标识、事件头、格式描述与 CRC32
+- [x] 表映射、常用字段值与行镜像
+- [x] ROWS v2 多行解析与 UPDATE 配对
+- [x] 显式事务边界、提交 / 回滚与配额检查
+- [ ] 离线 Binlog 文件遍历（下一步候选）
+- [ ] 真实 MySQL 文件集成及与成熟客户端的交叉验证
+- [ ] 外部 schema 配置与更多字段 / 事件类型
+- [ ] 面向离线分析的 CLI 与使用示例
+
+路线会根据真实样本验证结果调整，勾选项只代表当前限定范围内的实现。
+
+## 参与贡献
+
+欢迎通过 Issue 提供使用场景、最小复现或协议兼容性问题。提交问题时请附上工具链版本、MySQL 版本、校验模式、事件类型、错误偏移和预期行为；提交日志样本前请移除业务敏感数据。
+
+修改后请运行检查、native 测试、构建、`moon fmt --check`、`moon info` 及相关样本一致性检查。项目目前按功能逐批推进，公共 API 仍可能调整。
 
 ## 开源许可证
 
