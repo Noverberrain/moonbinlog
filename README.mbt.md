@@ -7,6 +7,8 @@
 
 现已提供 `BinlogFileReader`，可顺序遍历已读入内存的完整文件字节，并为每个事件返回原始视图、body、真实偏移和当前格式上下文。
 
+查看本地文件可运行 `moon run --target native cmd/moonbinlog -- FILE`；仅查看统计添加 `--summary`。文件默认上限 64 MiB，参数、TSV 格式和退出码见 [CLI 文档](docs/cli.md)。
+
 ## 使用示例
 
 ```mbt check
@@ -51,7 +53,7 @@ test "validate a file signature and decode a common header" {
 - `TableMap::decode_row_image` 组合已有字段解码器，处理列存在/紧凑 NULL 位图，区分缺失列、NULL 和实际值，返回按表列号排列的结果及消费长度；整数符号属性必须显式提供。
 - `TableMapContext::decode_rows` 校验 v2 行事件、查找表映射并解码多行/更新配对，成功遇到 STMT_END_F 或任意解析失败均清空缓存，返回表定义快照。
 - `TransactionBoundary::parse` 校验 QUERY/XID 边界；`TransactionDecoder` 缓存显式 BEGIN 后的行事件，在 XID/COMMIT 返回事务，ROLLBACK 或错误时丢弃，EOF 必须调用 finish 检查未结束事务。
-- 当前不包含文件遍历 CLI、其他字段类型、外部 schema 配置、GTID/XA/DDL/隐式事务或非事务表语义。单独的行事件输出仍不代表已经提交。
+- CLI 已支持文件读取、事件列表与统计；尚未实现其他字段类型、外部 schema 配置、GTID/XA/DDL/隐式事务或非事务表语义。单独的行事件输出仍不代表已经提交。
 - 合成样本由协议构造和独立 zlib 校验生成；另有三组真实 MySQL 8.0.43 日志，已与官方 mysqlbinlog 逐字段对照，详见[集成验证](docs/mysql-integration.md)。Java 客户端差分尚未完成。
 
 格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
@@ -90,6 +92,7 @@ python scripts/generate_row_image_fixtures.py --check
 python scripts/generate_rows_event_fixtures.py --check
 python scripts/generate_transaction_fixtures.py --check
 python scripts/verify_mysql_fixtures.py --check
+python scripts/test_cli.py
 ```
 
 公共接口由 `moon info` 生成在 `pkg.generated.mbti`。
@@ -112,4 +115,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：最小离线 CLI，输出事件列表与统计。等待用户继续指令。
+下一批候选：CLI 的 JSON 输出。等待用户继续指令。

@@ -1,0 +1,13 @@
+import {
+  "Noverberrain/moonbinlog" @binlog,
+  "Noverberrain/moonbinlog/internal/cli",
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/stdio",
+  "moonbitlang/core/env",
+  "moonbitlang/x/sys",
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")

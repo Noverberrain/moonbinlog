@@ -11,3 +11,8 @@ keywords = [ "mysql", "binlog", "parser" ]
 description = "Pure MoonBit MySQL binlog decoding library"
 
 preferred_target = "native"
+
+import {
+  "moonbitlang/x@0.5.5",
+  "moonbitlang/async@0.21.3",
+}

@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Noverberrain/moonbinlog/internal/cli"
+
+import {
+  "Noverberrain/moonbinlog",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn event_columns() -> String
+
+pub fn event_line(@moonbinlog.EventHeader, @moonbinlog.ChecksumAlgorithm) -> String
+
+pub fn event_name(Byte) -> String
+
+pub fn parse_args(ArrayView[String]) -> Command raise ArgumentError
+
+pub fn usage() -> String
+
+// Errors
+pub(all) suberror ArgumentError {
+  InvalidArguments(String)
+} derive(Eq, @debug.Debug)
+pub fn ArgumentError::equal(Self, Self) -> Bool
+pub fn ArgumentError::not_equal(Self, Self) -> Bool
+pub fn ArgumentError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub(all) enum Command {
+  Help
+  Inspect(Config)
+} derive(Eq, @debug.Debug)
+pub fn Command::equal(Self, Self) -> Bool
+pub fn Command::not_equal(Self, Self) -> Bool
+pub fn Command::to_repr(Self) -> @debug.Repr
+
+pub struct Config {
+  path : String
+  summary_only : Bool
+  max_event_bytes : UInt
+  max_file_bytes : Int
+} derive(Eq, @debug.Debug)
+pub fn Config::equal(Self, Self) -> Bool
+pub fn Config::not_equal(Self, Self) -> Bool
+pub fn Config::to_repr(Self) -> @debug.Repr
+
+pub struct Stats {
+  // private fields
+}
+pub fn Stats::lines(Self, Int) -> Array[String]
+pub fn Stats::new() -> Self
+pub fn Stats::record(Self, @moonbinlog.EventHeader) -> Unit
+
+// Type aliases
+
+// Traits

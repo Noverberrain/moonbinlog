@@ -55,4 +55,4 @@ FDE 自身始终验证 CRC，它的 `body` 仍包含末尾的 checksum-algorithm
 
 本批测试复用此前由 Python struct/zlib 独立生成的 FDE、CRC/OFF、事务及错误事件样本，组合为包含文件 magic 的输入，并覆盖每个 FDE/末尾事件的截断点、未知类型、错误重试、大小上限、格式切换、切片偏移及事务集成。没有新增协议样本生成器。
 
-这是对完整内存视图的惰性遍历，并非分块流式 I/O；总文件大小受 BytesView 和可用内存限制。没有文件系统 API、CLI、目录轮转、远程订阅或自动语义分发。后续已补充[三组真实 MySQL 8.0.43 文件验证](mysql-integration.md)。底层支持版本及协议依据沿用[格式与校验说明](format-checksum.md)，本层未扩大协议兼容范围。
+这是对完整内存视图的惰性遍历，并非分块流式 I/O；总文件大小受 BytesView 和可用内存限制。库本层没有文件系统 API、目录轮转、远程订阅或自动语义分发；另有[离线 CLI](cli.md) 封装本地文件读取与统计。后续已补充[三组真实 MySQL 8.0.43 文件验证](mysql-integration.md)。底层支持版本及协议依据沿用[格式与校验说明](format-checksum.md)，本层未扩大协议兼容范围。
