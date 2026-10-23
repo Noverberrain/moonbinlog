@@ -28,11 +28,11 @@ pub fn event_columns() -> String {
 }
 
 ///|
-pub fn event_line(
+fn event_checksum(
   header : @moonbinlog.EventHeader,
   algorithm : @moonbinlog.ChecksumAlgorithm,
 ) -> String {
-  let checksum = if header.event_type == 15 {
+  if header.event_type == 15 {
     "CRC32"
   } else {
     match algorithm {
@@ -40,6 +40,14 @@ pub fn event_line(
       Off => "OFF"
     }
   }
+}
+
+///|
+pub fn event_line(
+  header : @moonbinlog.EventHeader,
+  algorithm : @moonbinlog.ChecksumAlgorithm,
+) -> String {
+  let checksum = event_checksum(header, algorithm)
   "\{header.file_offset}\t\{header.event_type.to_int()}\t\{event_name(header.event_type)}\t\{header.event_size}\t\{header.next_position}\t\{header.timestamp}\t\{header.server_id}\t\{header.flags.to_uint()}\t\{checksum}"
 }
 

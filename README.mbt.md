@@ -7,7 +7,7 @@
 
 现已提供 `BinlogFileReader`，可顺序遍历已读入内存的完整文件字节，并为每个事件返回原始视图、body、真实偏移和当前格式上下文。
 
-查看本地文件可运行 `moon run --target native cmd/moonbinlog -- FILE`；仅查看统计添加 `--summary`。文件默认上限 64 MiB，参数、TSV 格式和退出码见 [CLI 文档](docs/cli.md)。
+查看本地文件可运行 `moon run --target native cmd/moonbinlog -- FILE`；仅查看统计添加 `--summary`，机器处理可添加 `--json` 输出 JSON Lines。文件默认上限 64 MiB，参数、输出协议和退出码见 [CLI 文档](docs/cli.md)。
 
 ## 使用示例
 
@@ -115,4 +115,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：CLI 的 JSON 输出。等待用户继续指令。
+下一批候选：外部 schema 配置，供后续 CLI 行变化解码使用。等待用户继续指令。

@@ -27,7 +27,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | --- | --- | --- |
 | 文件标识与事件头 | 未加密 Binlog magic、v4 公共事件头 | 保存真实物理偏移，事件长度有上限 |
 | 离线文件遍历 | 顺序切分、FDE 上下文切换、事件完整性校验 | 输入完整内存视图，未知事件保留原始数据 |
-| 离线 CLI | 文件读取、TSV 事件列表、按类型统计 | 支持大小上限和错误退出码，不自动解码 body |
+| 离线 CLI | 文件读取、TSV / JSON Lines 事件与类型统计 | 支持大小上限和错误退出码，不自动解码 body |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
 | 整数 | TINYINT / SMALLINT / MEDIUMINT / INT / BIGINT | signed / unsigned 由调用者明确提供 |
@@ -39,7 +39,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：227 项测试和 34 个 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
+**验证状态：232 项测试和 58 个 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
 
 ## 解析流程
 
@@ -82,9 +82,10 @@ moon build --target native
 ```sh
 moon run --target native cmd/moonbinlog -- fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --summary fixtures/mysql-8.0/off-full.binlog
+moon run --target native cmd/moonbinlog -- --json --summary fixtures/mysql-8.0/crc32-full.binlog
 ```
 
-默认显示 TSV 事件表及类型统计，`--summary` 仅输出统计。文件默认限制 64 MiB，单事件默认限制 16 MiB。退出码 0 表示遍历成功，1 表示读取或解析失败，2 表示参数错误。该命令不输出行变化或事务结果；完整参数和构建产物路径见 [CLI 使用说明](docs/cli.md)。
+默认显示 TSV 事件表及类型统计，`--json` 切换为逐行 JSON 对象，`--summary` 仅输出统计。JSON 的 UInt64 字段用十进制字符串保留精度。文件默认限制 64 MiB，单事件默认限制 16 MiB。退出码 0 表示遍历成功，1 表示读取或解析失败，2 表示参数错误。该命令不输出行变化或事务结果；完整参数和构建产物路径见 [CLI 使用说明](docs/cli.md)。
 
 ### 最小解析示例
 
@@ -181,9 +182,10 @@ if ($LASTEXITCODE -ne 0) { throw 'MySQL fixture check failed' }
 - [x] 显式事务边界、提交 / 回滚与配额检查
 - [x] 离线 Binlog 文件字节遍历（内存视图接口）
 - [x] 三组真实 MySQL 8.0.43 文件集成及官方 mysqlbinlog 对照
-- [ ] 外部 schema 配置与更多字段 / 事件类型
+- [ ] 更多字段 / 事件类型
 - [x] 最小离线 CLI：文件读取、事件列表与统计
-- [ ] CLI 的 JSON 输出与更多机器处理示例（下一步候选）
+- [x] CLI 的 JSON Lines 输出与机器处理示例
+- [ ] 外部 schema 配置，供后续 CLI 行变化解码使用（下一步候选）
 
 路线会根据真实样本验证结果调整，勾选项只代表当前限定范围内的实现。
 

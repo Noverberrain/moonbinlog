@@ -1,6 +1,6 @@
 # 离线事件检查 CLI
 
-CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog，输出 TSV 事件表、总数和按类型统计。它检查文件标识、事件完整性、格式与校验和；不解析行值、SQL、GTID 语义或事务提交结果。
+CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog，输出 TSV 或 JSON Lines 事件与统计。它检查文件标识、事件完整性、格式与校验和；不解析行值、SQL、GTID 语义或事务提交结果。
 
 ## 运行与构建
 
@@ -9,6 +9,8 @@ CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog，输出 TSV �
 ```text
 moon run --target native cmd/moonbinlog -- fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --summary fixtures/mysql-8.0/crc32-minimal.binlog
+moon run --target native cmd/moonbinlog -- --json fixtures/mysql-8.0/crc32-full.binlog
+moon run --target native cmd/moonbinlog -- --json --summary fixtures/mysql-8.0/off-full.binlog
 moon run --target native cmd/moonbinlog -- --help
 ```
 
@@ -26,12 +28,13 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--summary] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+moonbinlog [--json] [--summary] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
 ```
 
 | 参数 | 含义 | 默认值 |
 | --- | --- | --- |
 | FILE | 一个现有普通文件的路径 | 必填 |
+| --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
 | --max-event-bytes N | 每个事件的编码字节上限，包含头和 CRC | 16777216（16 MiB） |
 | --max-file-bytes N | 读取到内存的文件大小上限 | 67108864（64 MiB） |
@@ -68,6 +71,36 @@ summary	events=14	event_bytes=2495	file_bytes=2499
 
 `event_bytes` 为所有事件编码长度之和，`file_bytes` 还包含四字节文件标识。后续每行依次为 `type`、数值类型、名称和数量。`--summary` 仅省略事件表，仍执行全部解析；空白尾部、损坏事件和未知格式均不会被跳过。
 
+## JSON Lines 输出协议（v1）
+
+`--json` 输出逐行独立的紧凑 JSON 对象，不输出 TSV 表头，也不是一个顶层 JSON 数组。每个对象包含数字 `schema_version: 1`。完整事件使用 `kind: "event"`，完整遍历成功后最后一行使用 `kind: "summary"`。对象键的排列顺序不作为协议保证。
+
+以下展示仅含一个 122 字节 FDE 的文件的输出形状，每行都是独立 JSON：
+
+```jsonl
+{"schema_version":1,"kind":"event","offset":"4","type":15,"name":"FORMAT_DESCRIPTION_EVENT","bytes":122,"next_position":126,"timestamp":1792685918,"server_id":810043,"flags":0,"checksum":"CRC32"}
+{"schema_version":1,"kind":"summary","events":1,"event_bytes":"122","file_bytes":126,"types":[{"type":15,"name":"FORMAT_DESCRIPTION_EVENT","count":1}]}
+```
+
+| 对象 | 字段类型与含义 |
+| --- | --- |
+| event | `offset` 为十进制字符串；`type`、`bytes`、`next_position`、`timestamp`、`server_id`、`flags` 为 JSON 整数；`name`、`checksum` 为字符串，与 TSV 的含义一致 |
+| summary | `events`、`file_bytes` 为 JSON 整数；`event_bytes` 为十进制字符串；`types` 为按数字类型码升序排列的数组 |
+| types 数组元素 | `type`、`count` 为 JSON 整数，`name` 为字符串；只包含出现过的类型 |
+
+所有 UInt64 字段始终使用十进制字符串，包括很小的偏移和总字节数，避免 JSON 消费端经过 IEEE-754 double 时丢失精度。其余数值的当前范围可以被 double 精确表示。Java 程序可按需把字符串转换为 `BigInteger`，不要先转为 double；JavaScript 可使用 `BigInt`。
+
+`--json --summary` 只输出最后一个统计对象，仍完整检查所有事件。失败时不输出统计对象；普通 JSON 模式可能已输出若干完整事件对象，消费方必须检查进程退出码和最后的 summary，不能把事件前缀当作完整结果。错误信息仍是 stderr 中的文本，不混入 stdout；帮助输出仍为普通文本。
+
+PowerShell 中读取 JSON Lines 的例子（在仓库根目录，先构建 native）：
+
+```powershell
+$records = & './_build/native/debug/build/cmd/moonbinlog/moonbinlog.exe' --json 'fixtures/mysql-8.0/crc32-full.binlog' |
+  ForEach-Object { $_ | ConvertFrom-Json }
+if ($LASTEXITCODE -ne 0) { throw 'Binlog scan failed' }
+$records | Where-Object { $_.kind -eq 'event' } | Select-Object offset, name, bytes
+```
+
 ## 错误和退出码
 
 | 退出码 | 含义 |
@@ -88,4 +121,4 @@ moon build --target native
 python scripts/test_cli.py
 ```
 
-8 项纯逻辑测试覆盖参数、边界值、TSV 和统计；34 个子进程场景覆盖真实文件、中文/空格路径、以选项形式命名的文件、错误退出码、CRC/截断、资源上限及未知类型。端到端脚本默认使用上面的 debug 构建路径，也可传 `--executable PATH` 指向其他构建产物。
+13 项纯逻辑测试覆盖参数、边界值、TSV、JSON 字段类型和统计；58 个子进程场景覆盖真实文件、中文/空格路径、以选项形式命名的文件、错误退出码、CRC/截断、资源上限、未知类型及 JSON/TSV 两种输出。JSON 单元测试验证 UInt64 最大偏移保留为字符串，端到端测试验证高位 UInt32 头字段仍为精确 JSON 整数。脚本默认使用上面的 debug 构建路径，也可传 `--executable PATH` 指向其他构建产物。

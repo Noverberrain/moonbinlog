@@ -5,6 +5,7 @@
 pub struct Config {
   path : String
   summary_only : Bool
+  json_output : Bool
   max_event_bytes : UInt32
   max_file_bytes : Int32
 } derive(Debug, Eq)
@@ -41,9 +42,10 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--summary] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
     #|
-    #|Inspect an unencrypted MySQL 8.0 binlog file; output TSV events and counts.
+    #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
+    #|  --json                Output JSON Lines: event objects, then one summary.
     #|  --summary             Show counts only; still validate the entire file.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
     #|  --max-file-bytes N    In-memory file limit (default 67108864, max 2147483647).
@@ -78,6 +80,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   }
   let mut path = None
   let mut summary_only = false
+  let mut json_output = false
   let mut event_limit = None
   let mut file_limit = None
   let mut positional = false
@@ -89,6 +92,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     } else if !positional && arg == "--summary" {
       guard !summary_only else { raise InvalidArguments("duplicate --summary") }
       summary_only = true
+    } else if !positional && arg == "--json" {
+      guard !json_output else { raise InvalidArguments("duplicate --json") }
+      json_output = true
     } else if !positional &&
       (arg == "--max-event-bytes" || arg == "--max-file-bytes") {
       guard cursor + 1 < argv.length() else {
@@ -130,6 +136,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   Inspect({
     path,
     summary_only,
+    json_output,
     max_event_bytes: event_limit.unwrap_or(16_777_216),
     max_file_bytes: file_limit.unwrap_or(67_108_864),
   })

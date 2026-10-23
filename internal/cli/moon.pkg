@@ -1,5 +1,6 @@
 import {
   "Noverberrain/moonbinlog",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "moonbitlang/core/string",
 }

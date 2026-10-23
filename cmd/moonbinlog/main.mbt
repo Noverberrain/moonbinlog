@@ -29,19 +29,26 @@ async fn inspect(config : @cli.Config) -> Unit {
     max_event_size=config.max_event_bytes,
   )
   let stats = @cli.Stats::new()
-  if !config.summary_only {
+  if !config.summary_only && !config.json_output {
     @stdio.stdout.write(@cli.event_columns() + "\n")
   }
   while reader.next() is Some(event) {
     stats.record(event.header)
     if !config.summary_only {
-      @stdio.stdout.write(
-        @cli.event_line(event.header, event.format.checksum_algorithm) + "\n",
-      )
+      let line = if config.json_output {
+        @cli.event_json_line(event.header, event.format.checksum_algorithm)
+      } else {
+        @cli.event_line(event.header, event.format.checksum_algorithm)
+      }
+      @stdio.stdout.write(line + "\n")
     }
   }
-  for line in stats.lines(data.length()) {
-    @stdio.stdout.write(line + "\n")
+  if config.json_output {
+    @stdio.stdout.write(stats.json_line(data.length()) + "\n")
+  } else {
+    for line in stats.lines(data.length()) {
+      @stdio.stdout.write(line + "\n")
+    }
   }
 }
 
