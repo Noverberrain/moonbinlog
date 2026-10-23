@@ -77,6 +77,17 @@ pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
 pub fn DecodeError::to_repr(Self) -> @debug.Repr
 
+pub(all) suberror SchemaError {
+  InvalidSchema(path~ : String, reason~ : String)
+  InvalidSchemaLimits(max_tables~ : Int, max_columns~ : Int, max_input_units~ : Int)
+  SchemaLimitExceeded(path~ : String, reason~ : String)
+  MissingTableSchema(file_offset~ : UInt64, database~ : String, table~ : String)
+  SchemaMismatch(file_offset~ : UInt64, database~ : String, table~ : String, column_index~ : Int?, reason~ : String)
+} derive(Eq, @debug.Debug)
+pub fn SchemaError::equal(Self, Self) -> Bool
+pub fn SchemaError::not_equal(Self, Self) -> Bool
+pub fn SchemaError::to_repr(Self) -> @debug.Repr
+
 // Types and methods
 pub struct BinlogFileEvent {
   header : EventHeader
@@ -95,6 +106,15 @@ pub fn BinlogFileReader::format(Self) -> FormatDescription?
 pub fn BinlogFileReader::new(BytesView, max_event_size? : UInt) -> Self raise DecodeError
 pub fn BinlogFileReader::next(Self) -> BinlogFileEvent? raise DecodeError
 pub fn BinlogFileReader::position(Self) -> UInt64
+
+pub struct BoundTableSchema {
+  table_map : TableMap
+  schema : TableSchema
+  integer_unsigned : ReadOnlyArray[Bool?]
+} derive(Eq, @debug.Debug)
+pub fn BoundTableSchema::equal(Self, Self) -> Bool
+pub fn BoundTableSchema::not_equal(Self, Self) -> Bool
+pub fn BoundTableSchema::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ChecksumAlgorithm {
   Off
@@ -285,6 +305,25 @@ pub fn RowsEvent::equal(Self, Self) -> Bool
 pub fn RowsEvent::not_equal(Self, Self) -> Bool
 pub fn RowsEvent::to_repr(Self) -> @debug.Repr
 
+pub struct SchemaColumn {
+  name : String
+  wire_type : Byte
+  metadata : Bytes
+  nullable : Bool
+  unsigned : Bool?
+} derive(Eq, @debug.Debug)
+pub fn SchemaColumn::equal(Self, Self) -> Bool
+pub fn SchemaColumn::not_equal(Self, Self) -> Bool
+pub fn SchemaColumn::to_repr(Self) -> @debug.Repr
+
+pub struct SchemaConfig {
+  // private fields
+}
+pub fn SchemaConfig::bind(Self, TableMap) -> BoundTableSchema raise SchemaError
+pub fn SchemaConfig::get(Self, String, String) -> TableSchema?
+pub fn SchemaConfig::length(Self) -> Int
+pub fn SchemaConfig::parse(StringView, max_tables? : Int, max_columns? : Int, max_input_units? : Int) -> Self raise SchemaError
+
 pub struct TableColumn {
   wire_type : Byte
   metadata : Bytes
@@ -335,6 +374,15 @@ pub struct TableMetadataField {
 pub fn TableMetadataField::equal(Self, Self) -> Bool
 pub fn TableMetadataField::not_equal(Self, Self) -> Bool
 pub fn TableMetadataField::to_repr(Self) -> @debug.Repr
+
+pub struct TableSchema {
+  database : String
+  table : String
+  columns : ReadOnlyArray[SchemaColumn]
+} derive(Eq, @debug.Debug)
+pub fn TableSchema::equal(Self, Self) -> Bool
+pub fn TableSchema::not_equal(Self, Self) -> Bool
+pub fn TableSchema::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TemporalValue {
   Year(Int)

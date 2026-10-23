@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "tables": [
+    {
+      "database": "moonbinlog_fixture",
+      "table": "sample",
+      "columns": [
+        {
+          "name": "id",
+          "wire_type": 3,
+          "metadata": "",
+          "nullable": false,
+          "unsigned": false
+        },
+        {
+          "name": "tiny_value",
+          "wire_type": 1,
+          "metadata": "",
+          "nullable": true,
+          "unsigned": false
+        },
+        {
+          "name": "small_value",
+          "wire_type": 2,
+          "metadata": "",
+          "nullable": true,
+          "unsigned": false
+        },
+        {
+          "name": "medium_value",
+          "wire_type": 9,
+          "metadata": "",
+          "nullable": true,
+          "unsigned": false
+        },
+        {
+          "name": "big_value",
+          "wire_type": 8,
+          "metadata": "",
+          "nullable": true,
+          "unsigned": true
+        },
+        {
+          "name": "text_value",
+          "wire_type": 15,
+          "metadata": "9001",
+          "nullable": true
+        },
+        {
+          "name": "blob_value",
+          "wire_type": 252,
+          "metadata": "02",
+          "nullable": true
+        },
+        {
+          "name": "decimal_value",
+          "wire_type": 246,
+          "metadata": "1406",
+          "nullable": true
+        },
+        {
+          "name": "date_value",
+          "wire_type": 10,
+          "metadata": "",
+          "nullable": true
+        },
+        {
+          "name": "year_value",
+          "wire_type": 13,
+          "metadata": "",
+          "nullable": true
+        },
+        {
+          "name": "datetime_value",
+          "wire_type": 18,
+          "metadata": "06",
+          "nullable": true
+        },
+        {
+          "name": "time_value",
+          "wire_type": 19,
+          "metadata": "06",
+          "nullable": true
+        },
+        {
+          "name": "timestamp_value",
+          "wire_type": 17,
+          "metadata": "06",
+          "nullable": true
+        },
+        {
+          "name": "float_value",
+          "wire_type": 4,
+          "metadata": "04",
+          "nullable": true
+        },
+        {
+          "name": "double_value",
+          "wire_type": 5,
+          "metadata": "08",
+          "nullable": true
+        },
+        {
+          "name": "bit_value",
+          "wire_type": 16,
+          "metadata": "0101",
+          "nullable": true
+        },
+        {
+          "name": "enum_value",
+          "wire_type": 254,
+          "metadata": "f701",
+          "nullable": true
+        },
+        {
+          "name": "set_value",
+          "wire_type": 254,
+          "metadata": "f801",
+          "nullable": true
+        },
+        {
+          "name": "binary_value",
+          "wire_type": 15,
+          "metadata": "1000",
+          "nullable": true
+        },
+        {
+          "name": "char_value",
+          "wire_type": 254,
+          "metadata": "fe20",
+          "nullable": true
+        }
+      ]
+    }
+  ]
+}

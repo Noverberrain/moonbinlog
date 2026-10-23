@@ -30,6 +30,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 离线 CLI | 文件读取、TSV / JSON Lines 事件与类型统计 | 支持大小上限和错误退出码，不自动解码 body |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
+| 外部 schema | JSON 配置、列名与整数符号属性、表映射绑定 | 核对逐列物理描述，不推导历史 DDL |
 | 整数 | TINYINT / SMALLINT / MEDIUMINT / INT / BIGINT | signed / unsigned 由调用者明确提供 |
 | 字符串与二进制 | VARCHAR / STRING、常规 BLOB / TEXT | 保留原始字节，不推断字符集 |
 | 精确小数 | NEWDECIMAL | 最高 65 位精度、30 位小数，保留 scale |
@@ -39,7 +40,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：232 项测试和 58 个 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
+**验证状态：250 项测试和 58 个 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
 
 ## 解析流程
 
@@ -122,7 +123,7 @@ test "decode a binlog event header" {
 对完整文件字节，可先使用 `BinlogFileReader::new(data)`，循环调用 `next()`，直到返回 `None`。每个结果提供 `header`、`raw`、`body` 和 `format`；遍历错误后需丢弃活动的上层状态。完整说明见[离线文件遍历](docs/file-traversal.md)。
 
 1. 用 `FormatDescription::parse` 解析格式描述，建立校验上下文。
-2. 用 `TableMapContext` 管理表映射，调用 `decode_rows` 获取行变化；整数列的符号属性需由外部 schema 提供。
+2. 用 `TableMapContext` 管理表映射，调用 `decode_rows` 获取行变化；可用 `SchemaConfig::parse` 与 `bind` 校验外部配置并提供整数符号属性及列标签，见 [schema 说明](docs/schema.md)。
 3. 需要提交语义时，使用 `TransactionDecoder::new`，从明确的 BEGIN 开始逐事件调用 `feed`。
 4. 处理返回的 `Committed` 或 `RolledBack` 结果，并在输入结束时调用 `finish()` 检查截断事务。
 
@@ -132,7 +133,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 
 - 当前面向 MySQL **8.0.x、Binlog v4、未加密、常规 ROWS v2** 子集，不承诺兼容 MariaDB 或其他 MySQL 版本。
 - 尚未实现 GTID、XA、DDL / 隐式事务、自动提交推断、SAVEPOINT、压缩事务及旧版 / partial 行事件。
-- JSON、GEOMETRY 等字段类型、字符集转换、列名和完整外部 schema 配置尚未实现。
+- JSON、GEOMETRY 等字段类型和字符集转换尚未实现；外部 schema 目前提供列名与整数符号属性，历史演进及自动推导尚未实现。
 - 事务汇总以调用者已知使用事务型表为前提，无法从当前表映射推断存储引擎及非事务表回滚语义。
 - 默认单事件上限 16 MiB；事务上限为 4096 个事件、10000 个行变化、64 MiB 编码字节。详细配额及配置范围见各层文档。
 - 真实文件验证目前仅覆盖 Windows / MySQL 8.0.43 的三组固定样本；性能基准和生产环境验证尚未完成。
@@ -147,6 +148,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
 | 真实文件验证 | [MySQL 8.0.43 与官方 mysqlbinlog 对照](docs/mysql-integration.md) |
 | 表结构上下文 | [TABLE_MAP 与缓存生命周期](docs/table-map.md) |
+| 外部配置 | [schema v1 格式、绑定及可信范围](docs/schema.md) · [真实样本配置](examples/mysql-8.0-schema.json) |
 | 整数与精确小数 | [整数](docs/integer-values.md) · [DECIMAL](docs/decimal-values.md) |
 | 字符串与二进制 | [字符串](docs/string-values.md) · [BLOB / TEXT](docs/blob-values.md) |
 | 日期与时间 | [日期时间](docs/temporal-values.md) |
@@ -168,6 +170,8 @@ Get-ChildItem scripts/generate_*_fixtures.py | ForEach-Object {
 }
 python scripts/verify_mysql_fixtures.py --check
 if ($LASTEXITCODE -ne 0) { throw 'MySQL fixture check failed' }
+python scripts/generate_schema_example.py --check
+if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 ```
 
 [真实 MySQL 样本](fixtures/mysql-8.0/README.md)包含采集 SQL、原始日志、官方解码输出和摘要。普通回归直接使用仓库中的固定数据，无需启动 MySQL；重新采集可使用独立临时实例的脚本。
@@ -185,7 +189,8 @@ if ($LASTEXITCODE -ne 0) { throw 'MySQL fixture check failed' }
 - [ ] 更多字段 / 事件类型
 - [x] 最小离线 CLI：文件读取、事件列表与统计
 - [x] CLI 的 JSON Lines 输出与机器处理示例
-- [ ] 外部 schema 配置，供后续 CLI 行变化解码使用（下一步候选）
+- [x] 外部 schema 配置与表映射绑定（库接口）
+- [ ] CLI 接入 schema 并显示行变化（下一步候选）
 
 路线会根据真实样本验证结果调整，勾选项只代表当前限定范围内的实现。
 

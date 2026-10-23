@@ -111,7 +111,7 @@ $records | Where-Object { $_.kind -eq 'event' } | Select-Object offset, name, by
 
 正常结果写 stdout，错误写 stderr，参数错误同时在 stderr 显示用法。失败时不输出成功摘要：默认模式可能已输出成功读取的事件前缀，使用者必须同时检查退出码；`--summary` 模式的输入/解码失败不会输出统计前缀。输出通道本身损坏时，已经写出的内容可能不完整。
 
-完整事件边界上的 EOF 只表明文件遍历完成，不代表事务已提交。即使文件最后一个完整事件属于未结束事务，CLI 仍可能返回 0；需要提交语义的应用应另外使用 `TransactionDecoder` 并调用 `finish()`。当前 CLI 未接入 schema 配置、行变化显示、事务汇总、实时追踪或多文件轮转。
+完整事件边界上的 EOF 只表明文件遍历完成，不代表事务已提交。即使文件最后一个完整事件属于未结束事务，CLI 仍可能返回 0；需要提交语义的应用应另外使用 `TransactionDecoder` 并调用 `finish()`。当前 CLI 未接入 schema 配置、行变化显示、事务汇总、实时追踪或多文件轮转。[外部 schema 库接口](schema.md) 已单独提供，但当前命令尚无 `--schema` 参数。
 
 ## 验证
 
