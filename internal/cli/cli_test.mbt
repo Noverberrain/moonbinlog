@@ -28,6 +28,7 @@ test "CLI defaults and a Unicode filename" {
   assert_false(config.json_output)
   assert_false(config.rows)
   assert_false(config.transactions)
+  assert_false(config.include_rows)
   assert_eq(config.schema_path, None)
   assert_eq(config.max_event_bytes, 16_777_216U)
   assert_eq(config.max_file_bytes, 67_108_864)

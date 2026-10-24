@@ -155,6 +155,17 @@ pub fn row_change_line(
   bound : @moonbinlog.BoundTableSchema,
   index : Int32,
 ) -> String raise RowScanError {
+  let fields = row_change_fields(event, bound, index)
+  fields["transaction_status"] = "unconfirmed"
+  Json::object(fields).stringify()
+}
+
+///|
+fn row_change_fields(
+  event : @moonbinlog.RowsEvent,
+  bound : @moonbinlog.BoundTableSchema,
+  index : Int32,
+) -> Map[String, Json] raise RowScanError {
   guard event.table == bound.table_map &&
     index >= 0 &&
     index < event.changes.length() else {
@@ -170,10 +181,9 @@ pub fn row_change_line(
         row_image_json(after, bound.schema),
       )
   }
-  Json::object({
+  {
     "schema_version": @json.to_json(1),
     "kind": "row_change",
-    "transaction_status": "unconfirmed",
     "offset": Json::string(event.header.file_offset.to_string()),
     "type": @json.to_json(event.header.event_type.to_int()),
     "database": Json::string(event.table.database),
@@ -183,5 +193,5 @@ pub fn row_change_line(
     "operation": Json::string(operation),
     "before": before,
     "after": after,
-  }).stringify()
+  }
 }

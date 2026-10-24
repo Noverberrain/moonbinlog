@@ -8,6 +8,7 @@ pub struct Config {
   json_output : Bool
   rows : Bool
   transactions : Bool
+  include_rows : Bool
   schema_path : String?
   max_event_bytes : UInt32
   max_file_bytes : Int32
@@ -45,13 +46,14 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--rows | --transactions] [--schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
     #|  --summary             Show counts only; still validate the entire file.
     #|  --rows                Decode unconfirmed row changes as JSON Lines.
     #|  --transactions        Summarize explicit transactional RBR commits/rollbacks.
+    #|  --include-rows        Include committed row values; requires --transactions.
     #|  --schema PATH         Schema v1 UTF-8 JSON file; required by either mode.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
     #|  --max-file-bytes N    In-memory file limit (default 67108864, max 2147483647).
@@ -90,6 +92,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut json_output = false
   let mut rows = false
   let mut transactions = false
+  let mut include_rows = false
   let mut schema_path = None
   let mut event_limit = None
   let mut file_limit = None
@@ -113,6 +116,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
         raise InvalidArguments("duplicate --transactions")
       }
       transactions = true
+    } else if !positional && arg == "--include-rows" {
+      guard !include_rows else {
+        raise InvalidArguments("duplicate --include-rows")
+      }
+      include_rows = true
     } else if !positional && arg == "--schema" {
       guard schema_path is None else {
         raise InvalidArguments("duplicate --schema")
@@ -163,6 +171,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   guard !(rows && transactions) else {
     raise InvalidArguments("--rows and --transactions are mutually exclusive")
   }
+  guard !include_rows || transactions else {
+    raise InvalidArguments("--include-rows requires --transactions")
+  }
   guard (rows || transactions) == (schema_path is Some(_)) else {
     raise InvalidArguments(
       "--rows or --transactions requires --schema, and vice versa",
@@ -174,6 +185,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     json_output: json_output || rows || transactions,
     rows,
     transactions,
+    include_rows,
     schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),
     max_file_bytes: file_limit.unwrap_or(67_108_864),

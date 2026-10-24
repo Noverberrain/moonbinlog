@@ -27,7 +27,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | --- | --- | --- |
 | 文件标识与事件头 | 未加密 Binlog magic、v4 公共事件头 | 保存真实物理偏移，事件长度有上限 |
 | 离线文件遍历 | 顺序切分、FDE 上下文切换、事件完整性校验 | 输入完整内存视图，未知事件保留原始数据 |
-| 离线 CLI | 事件统计、外部 schema 行变化、显式事务汇总 | 行模式标记 unconfirmed，事务模式只报告完成的提交/回滚 |
+| 离线 CLI | 事件统计、外部 schema 行变化、显式事务汇总与已提交行导出 | 行模式标记 unconfirmed，事务模式可按整笔提交导出行值 |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
 | 外部 schema | JSON 配置、列名与整数符号属性、表映射绑定 | 核对逐列物理描述，不推导历史 DDL |
@@ -40,7 +40,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：267 项 MoonBit 测试、58 个事件 CLI、28 个行变化 CLI 和 50 个事务 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
+**验证状态：272 项 MoonBit 测试、58 个事件 CLI、28 个行变化 CLI 和 72 个事务 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
 
 ## 解析流程
 
@@ -102,9 +102,12 @@ moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-sc
 
 ```sh
 moon run --target native cmd/moonbinlog -- --transactions --schema examples/mysql-8.0-schema.json fixtures/mysql-8.0/crc32-full.binlog
+moon run --target native cmd/moonbinlog -- --transactions --include-rows --schema examples/mysql-8.0-schema.json fixtures/mysql-8.0/crc32-full.binlog
 ```
 
-每笔 BEGIN → XID / COMMIT 完成后输出起止偏移、XID、行变化数与各表计数，ROLLBACK 输出丢弃数量；`--summary` 只输出全文件统计。事务未结束、遇到未知事件或超过配额会失败，不输出该笔待定事务。此模式要求调用者已知涉及的表支持事务，不推断 GTID、DDL 或隐式提交，也暂不导出事务中的逐行值；详见[事务 CLI](docs/cli-transactions.md)。
+每笔 BEGIN → XID / COMMIT 完成后输出起止偏移、XID、行变化数与各表计数，ROLLBACK 输出丢弃数量；增加 `--include-rows` 在提交对象内附带 `row_changes`，其中行记录均标记 committed，保留列名及有类型的 before/after。默认仍只导出计数，`--summary` 只输出全文件统计。
+
+事务未结束、遇到未知事件或超过配额会失败，不输出该笔待定事务。此模式要求调用者已知涉及的表支持事务，不推断 GTID、DDL 或隐式提交；详见[事务 CLI](docs/cli-transactions.md)。
 
 ### 最小解析示例
 
@@ -212,7 +215,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] 外部 schema 配置与表映射绑定（库接口）
 - [x] CLI 接入 schema 并显示未确认提交的行变化
 - [x] CLI 显式事务提交/回滚汇总
-- [ ] 事务模式导出已提交行变化
+- [x] 事务模式按整笔提交导出有类型行变化
+- [ ] CLI 按库表筛选输出
 
 路线会根据真实样本验证结果调整，勾选项只代表当前限定范围内的实现。
 

@@ -15,6 +15,8 @@ import tempfile
 sys.dont_write_bytecode = True
 from generate_format_fixtures import event
 from generate_transaction_fixtures import query, stream
+from test_rows_cli import canonical
+from verify_mysql_fixtures import oracle_images
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "fixtures/mysql-8.0"
@@ -56,6 +58,10 @@ def main(executable):
     for args in [["--transactions", full_path],
                  ["--transactions", "--rows", "--schema", SCHEMA, full_path],
                  ["--transactions", "--transactions", "--schema", SCHEMA, full_path],
+                 ["--include-rows", full_path],
+                 ["--include-rows", "--schema", SCHEMA, full_path],
+                 ["--rows", "--include-rows", "--schema", SCHEMA, full_path],
+                 ["--transactions", "--include-rows", "--include-rows", "--schema", SCHEMA, full_path],
                  ["--transactions", "--schema"]]:
         result, records = run(args, 2)
         assert not records and "Usage:" in result.stderr
@@ -65,8 +71,9 @@ def main(executable):
         data = path.read_bytes()
         dump = (FIXTURES / f"{profile}.mysqlbinlog.txt").read_bytes()
         offsets = [int(n) for n in re.findall(rb"^# at (\d+)\r?$", dump, re.M)]
-        for summary_only in [False, True]:
+        for summary_only, include_rows in [(False, False), (True, False), (False, True), (True, True)]:
             _, records = run(["--transactions", "--schema", SCHEMA,
+                              *(["--include-rows"] if include_rows else []),
                               *(["--json", "--summary"] if summary_only else []), path])
             summary = records[-1]
             assert summary["schema_version"] == 1 and summary["events"] == 14
@@ -89,6 +96,24 @@ def main(executable):
                 assert transaction["changes"] == 4
                 assert transaction["tables"] == [{"database": "moonbinlog_fixture", "table": "sample",
                                                    "row_events": 4, "changes": 4}]
+                if include_rows:
+                    changes = transaction["row_changes"]
+                    assert len(changes) == 4
+                    assert [change["operation"] for change in changes] == ["insert", "insert", "update", "delete"]
+                    assert [change["offset"] for change in changes] == [str(offsets[i]) for i in [5, 7, 9, 11]]
+                    names = [column["name"] for column in json.loads(SCHEMA.read_text(encoding="utf-8"))["tables"][0]["columns"]]
+                    images = []
+                    for change in changes:
+                        assert change["kind"] == "row_change" and change["schema_version"] == 1
+                        assert change["transaction_status"] == "committed" and change["change_index"] == 0
+                        for side in ["before", "after"]:
+                            if change[side] is not None:
+                                assert [cell["index"] for cell in change[side]] == list(range(20))
+                                assert [cell["name"] for cell in change[side]] == names
+                                images.append([canonical(cell) for cell in change[side]])
+                    assert images == oracle_images(dump), (profile, images)
+                else:
+                    assert "row_changes" not in transaction
 
     original = packets(full_path.read_bytes())
     fde, begin, table, rows, xid = [original[i] for i in [0, 3, 4, 5, 12]]
@@ -97,9 +122,10 @@ def main(executable):
         work = Path(directory)
         source = work / "事务 日志.binlog"
 
-        def scan(parts, code=0, error=None, summary=False, schema=SCHEMA):
+        def scan(parts, code=0, error=None, summary=False, schema=SCHEMA, include_rows=False):
             source.write_bytes(b"\xfebin" + stream([fde, *parts]))
             result, records = run(["--transactions", "--schema", schema,
+                                   *(["--include-rows"] if include_rows else []),
                                    *(["--summary"] if summary else []), source], code)
             if error:
                 assert error in result.stderr, result.stderr
@@ -131,6 +157,14 @@ def main(executable):
         records = scan([begin, table, rows, second_table, rows, xid], schema=custom_schema)
         assert [item["table"] for item in records[0]["tables"]] == ["sample", "second"]
         assert all(item["changes"] == 1 for item in records[0]["tables"])
+        schema["tables"][0]["columns"][0]["name"] = '原始列"\\\n'
+        schema["tables"][1]["columns"][0]["name"] = "第二张表"
+        custom_schema.write_bytes(b"\xef\xbb\xbf" + json.dumps(schema, ensure_ascii=False).encode())
+        records = scan([begin, table, rows, second_table, rows, xid], schema=custom_schema, include_rows=True)
+        changes = records[0]["row_changes"]
+        assert changes[0]["table_id"] == changes[1]["table_id"]
+        assert [change["table"] for change in changes] == ["sample", "second"]
+        assert [change["after"][0]["name"] for change in changes] == ['原始列"\\\n', "第二张表"]
 
         custom_schema.write_text('{"schema_version":1,"tables":[]}', encoding="utf-8")
         scan(committed, 1, "MissingTableSchema", schema=custom_schema)
@@ -168,6 +202,28 @@ def main(executable):
         thousand_rows = event(30, body[:14] + body[14:] * 1000)
         scan([begin, *([table, thousand_rows] * 11), xid], 1, "TransactionLimitExceeded", summary=True)
 
+        # Export has the same transaction boundary checks, without leaking pending values.
+        records = scan([begin, query(b"COMMIT")], include_rows=True)
+        assert records[0]["row_changes"] == [] and records[0]["xid"] is None
+        records = scan([*committed[:-1], query(b"COMMIT")], include_rows=True)
+        assert len(records[0]["row_changes"]) == 4 and records[0]["xid"] is None
+        records = scan([*committed, begin, table, rows, query(b"ROLLBACK")], include_rows=True)
+        assert len(records[0]["row_changes"]) == 4 and "row_changes" not in records[1]
+        assert records[-1]["committed_changes"] == 4 and records[-1]["discarded_changes"] == 1
+        records = scan([*committed, *committed], include_rows=True)
+        assert len(records[0]["row_changes"]) == len(records[1]["row_changes"]) == 4
+        assert records[0]["row_changes"][0]["offset"] != records[1]["row_changes"][0]["offset"]
+        two_rows = event(30, body[:14] + body[14:] * 2)
+        records = scan([begin, table, two_rows, xid], include_rows=True)
+        assert [change["change_index"] for change in records[0]["row_changes"]] == [0, 1]
+        assert not scan(committed[:-1], 1, "IncompleteTransaction", include_rows=True)
+        scan(committed[:-1], 1, "IncompleteTransaction", summary=True, include_rows=True)
+        records = scan([*committed, *committed[:-1]], 1, "IncompleteTransaction", include_rows=True)
+        assert len(records) == 1 and len(records[0]["row_changes"]) == 4
+        assert not scan([begin, table, event(30, bad_body), xid], 1, "InvalidRowsEvent", include_rows=True)
+        assert not scan([begin, event(255, b"unknown"), xid], 1, "UnsupportedTransactionEvent", include_rows=True)
+        scan([begin, *([table, thousand_rows] * 11), xid], 1, "TransactionLimitExceeded", include_rows=True)
+
         # Failures after previously completed transactions retain only that prefix.
         source.write_bytes(b"\xfebin" + stream([fde, *committed, *committed])[:-1])
         _, records = run(["--transactions", "--schema", SCHEMA, source], 1)
@@ -179,7 +235,7 @@ def main(executable):
         assert not records and "ChecksumMismatch" in result.stderr
 
     assert all(hashlib.sha256(path.read_bytes()).hexdigest() == digest for path, digest in digests.items())
-    print(f"Verified {cases} transaction CLI scenarios; input fixtures unchanged")
+    print(f"Verified {cases} transaction CLI scenarios and 300 exported oracle column positions; inputs unchanged")
 
 
 if __name__ == "__main__":

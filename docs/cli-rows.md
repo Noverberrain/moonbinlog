@@ -82,7 +82,7 @@ ROWS（30/31/32）按当前 table_id 查找映射并完整解码；STMT_END_F �
 
 其他类型立即报 UnsupportedEvent，不尝试恢复后继续；包含旧版行事件、PARTIAL_UPDATE_ROWS（39）和未知类型。字段支持范围与现有行解码器一致，JSON、GEOMETRY、压缩事务等尚不支持。
 
-完整事件边界 EOF、成功退出码或 row_summary 只能说明本模式扫描完成，均不能证明事务已提交。即使文件在完整 ROWS 后、XID 前结束，仍可扫描成功，行与摘要继续标记 unconfirmed；需要提交/回滚计数可使用[事务 CLI](cli-transactions.md)，需要有类型的提交行结果可使用[显式事务库接口](transactions.md)。
+完整事件边界 EOF、成功退出码或 row_summary 只能说明本模式扫描完成，均不能证明事务已提交。即使文件在完整 ROWS 后、XID 前结束，仍可扫描成功，行与摘要继续标记 unconfirmed；需要提交语义可使用[事务 CLI 的 --include-rows](cli-transactions.md#导出已提交行变化)或[显式事务库接口](transactions.md)。
 
 ## 验证
 

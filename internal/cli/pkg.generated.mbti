@@ -23,6 +23,8 @@ pub fn row_change_line(@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema, Int)
 
 pub fn transaction_line(@moonbinlog.TransactionOutcome) -> String
 
+pub fn transaction_rows_line(@moonbinlog.TransactionOutcome, @moonbinlog.SchemaConfig) -> String raise
+
 pub fn usage() -> String
 
 // Errors
@@ -55,6 +57,7 @@ pub struct Config {
   json_output : Bool
   rows : Bool
   transactions : Bool
+  include_rows : Bool
   schema_path : String?
   max_event_bytes : UInt
   max_file_bytes : Int

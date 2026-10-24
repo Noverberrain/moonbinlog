@@ -4,6 +4,13 @@
 ///|
 /// One record per completed explicit span; no row values or pending data.
 pub fn transaction_line(outcome : @moonbinlog.TransactionOutcome) -> String {
+  Json::object(transaction_fields(outcome)).stringify()
+}
+
+///|
+fn transaction_fields(
+  outcome : @moonbinlog.TransactionOutcome,
+) -> Map[String, Json] {
   let fields : Map[String, Json] = {
     "schema_version": 1,
     "kind": "transaction",
@@ -53,6 +60,29 @@ pub fn transaction_line(outcome : @moonbinlog.TransactionOutcome) -> String {
       fields["end_offset"] = Json::string(end_offset.to_string())
       fields["discarded_changes"] = @json.to_json(discarded_changes)
     }
+  }
+  fields
+}
+
+///|
+/// Render the entire completed transaction before returning any text. Bind each
+/// saved TABLE_MAP snapshot, never a live table_id cache from a later statement.
+pub fn transaction_rows_line(
+  outcome : @moonbinlog.TransactionOutcome,
+  schema : @moonbinlog.SchemaConfig,
+) -> String raise {
+  let fields = transaction_fields(outcome)
+  if outcome is Committed(transaction) {
+    let changes = []
+    for event in transaction.events {
+      let bound = schema.bind(event.table)
+      for i in 0..<event.changes.length() {
+        let row = row_change_fields(event, bound, i)
+        row["transaction_status"] = "committed"
+        changes.push(Json::object(row))
+      }
+    }
+    fields["row_changes"] = Json::array(changes)
   }
   Json::object(fields).stringify()
 }

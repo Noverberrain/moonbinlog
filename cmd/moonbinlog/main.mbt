@@ -27,12 +27,15 @@ async fn read_input(path : String, max_bytes : Int32) -> Bytes {
 
 ///|
 async fn inspect(config : @cli.Config) -> Unit {
-  let (scanner, transactions) = match config.schema_path {
+  let schema = match config.schema_path {
     Some(path) => {
       let bytes = read_input(path, 4_194_304)
-      let schema = @binlog.SchemaConfig::parse(
-        @utf8.decode(bytes, ignore_bom=true),
-      )
+      Some(@binlog.SchemaConfig::parse(@utf8.decode(bytes, ignore_bom=true)))
+    }
+    None => None
+  }
+  let (scanner, transactions) = match schema {
+    Some(schema) =>
       if config.transactions {
         (None, Some(@cli.TransactionScanner::new(schema)))
       } else {
@@ -43,7 +46,6 @@ async fn inspect(config : @cli.Config) -> Unit {
           None,
         )
       }
-    }
     None => (None, None)
   }
   let data = read_input(config.path, config.max_file_bytes)
@@ -64,7 +66,15 @@ async fn inspect(config : @cli.Config) -> Unit {
       if transactions.feed(event) is Some(outcome) {
         transaction_stats.record(outcome)
         if !config.summary_only {
-          @stdio.stdout.write(@cli.transaction_line(outcome) + "\n")
+          let line = if config.include_rows {
+            guard schema is Some(schema) else {
+              raise InvalidFile("transaction row export requires schema")
+            }
+            @cli.transaction_rows_line(outcome, schema)
+          } else {
+            @cli.transaction_line(outcome)
+          }
+          @stdio.stdout.write(line + "\n")
         }
       }
     } else if scanner is Some(scanner) {
