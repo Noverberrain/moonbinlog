@@ -7,34 +7,60 @@ suberror InputError {
 } derive(Debug)
 
 ///|
-async fn inspect(config : @cli.Config) -> Unit {
-  let file = @fs.open(config.path, mode=ReadOnly)
+async fn read_input(path : String, max_bytes : Int32) -> Bytes {
+  let file = @fs.open(path, mode=ReadOnly)
   defer file.close()
   guard file.kind() == Regular else {
     raise InvalidFile("input must be a regular file")
   }
   let size = file.size()
-  guard size >= 0 && size <= config.max_file_bytes.to_int64() else {
-    raise InvalidFile(
-      "file size \{size} exceeds limit \{config.max_file_bytes}",
-    )
+  guard size >= 0 && size <= max_bytes.to_int64() else {
+    raise InvalidFile("file size \{size} exceeds limit \{max_bytes}: \{path}")
   }
   // Bound allocation first. Shrinking files raise EOF; detect growth after read.
   let data = file.read_exactly(size.to_int())
   guard file.read_some(max_len=1) is None else {
     raise InvalidFile("file grew while reading; use a closed binlog file")
   }
+  data
+}
+
+///|
+async fn inspect(config : @cli.Config) -> Unit {
+  let scanner = match config.schema_path {
+    Some(path) => {
+      let bytes = read_input(path, 4_194_304)
+      let schema = @binlog.SchemaConfig::parse(
+        @utf8.decode(bytes, ignore_bom=true),
+      )
+      Some(@cli.RowScanner::new(schema, max_event_size=config.max_event_bytes))
+    }
+    None => None
+  }
+  let data = read_input(config.path, config.max_file_bytes)
   let reader = @binlog.BinlogFileReader::new(
     data,
     max_event_size=config.max_event_bytes,
   )
   let stats = @cli.Stats::new()
+  let mut row_events = 0
+  let mut changes = 0
   if !config.summary_only && !config.json_output {
     @stdio.stdout.write(@cli.event_columns() + "\n")
   }
   while reader.next() is Some(event) {
     stats.record(event.header)
-    if !config.summary_only {
+    if scanner is Some(scanner) {
+      if scanner.feed(event) is Some((rows, bound)) {
+        row_events += 1
+        changes += rows.changes.length()
+        if !config.summary_only {
+          for i in 0..<rows.changes.length() {
+            @stdio.stdout.write(@cli.row_change_line(rows, bound, i) + "\n")
+          }
+        }
+      }
+    } else if !config.summary_only {
       let line = if config.json_output {
         @cli.event_json_line(event.header, event.format.checksum_algorithm)
       } else {
@@ -43,7 +69,11 @@ async fn inspect(config : @cli.Config) -> Unit {
       @stdio.stdout.write(line + "\n")
     }
   }
-  if config.json_output {
+  if scanner is Some(_) {
+    @stdio.stdout.write(
+      stats.row_json_line(data.length(), row_events, changes) + "\n",
+    )
+  } else if config.json_output {
     @stdio.stdout.write(stats.json_line(data.length()) + "\n")
   } else {
     for line in stats.lines(data.length()) {

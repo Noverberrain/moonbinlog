@@ -17,6 +17,10 @@ pub fn event_name(Byte) -> String
 
 pub fn parse_args(ArrayView[String]) -> Command raise ArgumentError
 
+pub fn row_cell_json(@moonbinlog.RowCell, Int, String) -> Json
+
+pub fn row_change_line(@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema, Int) -> String raise RowScanError
+
 pub fn usage() -> String
 
 // Errors
@@ -26,6 +30,13 @@ pub(all) suberror ArgumentError {
 pub fn ArgumentError::equal(Self, Self) -> Bool
 pub fn ArgumentError::not_equal(Self, Self) -> Bool
 pub fn ArgumentError::to_repr(Self) -> @debug.Repr
+
+pub(all) suberror RowScanError {
+  MissingFormat(file_offset~ : UInt64)
+  UnsupportedEvent(file_offset~ : UInt64, event_type~ : Byte)
+  InvalidOutput(String)
+} derive(@debug.Debug)
+pub fn RowScanError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) enum Command {
@@ -40,12 +51,20 @@ pub struct Config {
   path : String
   summary_only : Bool
   json_output : Bool
+  rows : Bool
+  schema_path : String?
   max_event_bytes : UInt
   max_file_bytes : Int
 } derive(Eq, @debug.Debug)
 pub fn Config::equal(Self, Self) -> Bool
 pub fn Config::not_equal(Self, Self) -> Bool
 pub fn Config::to_repr(Self) -> @debug.Repr
+
+pub struct RowScanner {
+  // private fields
+}
+pub fn RowScanner::feed(Self, @moonbinlog.BinlogFileEvent) -> (@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema)? raise
+pub fn RowScanner::new(@moonbinlog.SchemaConfig, max_event_size? : UInt) -> Self
 
 pub struct Stats {
   // private fields
@@ -54,6 +73,7 @@ pub fn Stats::json_line(Self, Int) -> String
 pub fn Stats::lines(Self, Int) -> Array[String]
 pub fn Stats::new() -> Self
 pub fn Stats::record(Self, @moonbinlog.EventHeader) -> Unit
+pub fn Stats::row_json_line(Self, Int, Int, Int) -> String
 
 // Type aliases
 

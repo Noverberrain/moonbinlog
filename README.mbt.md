@@ -9,6 +9,8 @@
 
 查看本地文件可运行 `moon run --target native cmd/moonbinlog -- FILE`；仅查看统计添加 `--summary`，机器处理可添加 `--json` 输出 JSON Lines。文件默认上限 64 MiB，参数、输出协议和退出码见 [CLI 文档](docs/cli.md)。
 
+`--rows --schema PATH` 自动以 JSON Lines 显示带列名的 INSERT / UPDATE / DELETE，所有行与摘要标记为 `unconfirmed`。精确值、原始字节和缺失列规则见[行变化 CLI](docs/cli-rows.md)。
+
 ## 使用示例
 
 ```mbt check
@@ -54,7 +56,7 @@ test "validate a file signature and decode a common header" {
 - `TableMap::decode_row_image` 组合已有字段解码器，处理列存在/紧凑 NULL 位图，区分缺失列、NULL 和实际值，返回按表列号排列的结果及消费长度；整数符号属性必须显式提供。
 - `TableMapContext::decode_rows` 校验 v2 行事件、查找表映射并解码多行/更新配对，成功遇到 STMT_END_F 或任意解析失败均清空缓存，返回表定义快照。
 - `TransactionBoundary::parse` 校验 QUERY/XID 边界；`TransactionDecoder` 缓存显式 BEGIN 后的行事件，在 XID/COMMIT 返回事务，ROLLBACK 或错误时丢弃，EOF 必须调用 finish 检查未结束事务。
-- CLI 已支持文件读取、事件列表与统计；schema 库接口已实现但尚未接入 CLI 行变化显示。其他字段类型、GTID/XA/DDL/隐式事务或非事务表语义尚未实现。单独的行事件输出仍不代表已经提交。
+- CLI 已支持文件读取、事件列表与统计，以及外部 schema 驱动的行变化 JSON；没有启用事务汇总，单独的行输出仍不代表已经提交。其他字段类型、GTID/XA/DDL/隐式事务或非事务表语义尚未实现。
 - 合成样本由协议构造和独立 zlib 校验生成；另有三组真实 MySQL 8.0.43 日志，已与官方 mysqlbinlog 逐字段对照，详见[集成验证](docs/mysql-integration.md)。Java 客户端差分尚未完成。
 
 格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
@@ -75,8 +77,8 @@ ENUM/SET 的元数据、存储宽度和成员边界见 [ENUM/SET 值说明](docs
 
 ```text
 moon check --warn-list +unnecessary_annotation --deny-warn
-moon test
-moon build
+moon test --target native
+moon build --target native
 moon fmt --check
 moon info
 python scripts/generate_format_fixtures.py --check
@@ -94,6 +96,7 @@ python scripts/generate_rows_event_fixtures.py --check
 python scripts/generate_transaction_fixtures.py --check
 python scripts/verify_mysql_fixtures.py --check
 python scripts/test_cli.py
+python scripts/test_rows_cli.py
 python scripts/generate_schema_example.py --check
 ```
 
@@ -117,4 +120,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：CLI 接入 schema 并显示行变化。等待用户继续指令。
+下一批候选：CLI 显式事务汇总。等待用户继续指令。

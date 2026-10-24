@@ -1,6 +1,6 @@
-# 离线事件检查 CLI
+# 离线 Binlog CLI
 
-CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog，输出 TSV 或 JSON Lines 事件与统计。它检查文件标识、事件完整性、格式与校验和；不解析行值、SQL、GTID 语义或事务提交结果。
+CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog。默认检查文件标识、事件完整性、格式与校验和，输出 TSV 或 JSON Lines 事件与统计；`--rows --schema PATH` 另启用有类型的行变化 JSON，详见[行变化 CLI](cli-rows.md)。两种模式都不解释 SQL、GTID 语义或事务提交结果。
 
 ## 运行与构建
 
@@ -11,6 +11,7 @@ moon run --target native cmd/moonbinlog -- fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --summary fixtures/mysql-8.0/crc32-minimal.binlog
 moon run --target native cmd/moonbinlog -- --json fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --json --summary fixtures/mysql-8.0/off-full.binlog
+moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-schema.json fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --help
 ```
 
@@ -28,7 +29,7 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+moonbinlog [--json] [--summary] [--rows --schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
 ```
 
 | 参数 | 含义 | 默认值 |
@@ -36,6 +37,8 @@ moonbinlog [--json] [--summary] [--max-event-bytes N] [--max-file-bytes N] [--] 
 | FILE | 一个现有普通文件的路径 | 必填 |
 | --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
+| --rows | 解码行变化，自动输出 JSON Lines；必须指定 --schema | 关闭 |
+| --schema PATH | UTF-8 schema v1 JSON 文件；必须与 --rows 一起使用 | 无 |
 | --max-event-bytes N | 每个事件的编码字节上限，包含头和 CRC | 16777216（16 MiB） |
 | --max-file-bytes N | 读取到内存的文件大小上限 | 67108864（64 MiB） |
 | -- | 其后参数按文件名处理，可用于以 `-` 开头的路径 | 无 |
@@ -51,7 +54,11 @@ moon run --target native cmd/moonbinlog -- --summary --max-file-bytes 134217728 
 
 本批仍整份读入内存，不是分块扫描。打开文件后先验证它是普通文件，并检查大小上限，之后才分配读取数据。读取期间文件缩短会失败，读取结束时若发现新增字节也会失败。该检查不能提供操作系统级原子快照，应使用已经关闭或稳定复制的文件。
 
+schema 文件使用同样的普通文件与稳定性检查，硬上限为 4 MiB；严格 UTF-8 解码，接受一个开头 BOM，然后按配置库默认的 1048576 个 UTF-16 单位、1024 张表、每表 1024 列、16 层嵌套检查。此上限不受 --max-file-bytes 改变，详见 [schema 格式](schema.md)。
+
 ## 输出
+
+本节及下一节说明事件模式。行模式使用独立的 `row_change` / `row_summary` 对象，字段见[行输出协议](cli-rows.md)。
 
 默认首行为字段名，后续每个事件一行：
 
@@ -106,12 +113,12 @@ $records | Where-Object { $_.kind -eq 'event' } | Select-Object offset, name, by
 | 退出码 | 含义 |
 | --- | --- |
 | 0 | 文件遍历成功，或显示帮助成功 |
-| 1 | 读取、文件大小、格式、CRC、截断或输出失败 |
+| 1 | 读取、文件大小、格式、CRC、截断、schema、行解码或输出失败 |
 | 2 | 参数错误 |
 
 正常结果写 stdout，错误写 stderr，参数错误同时在 stderr 显示用法。失败时不输出成功摘要：默认模式可能已输出成功读取的事件前缀，使用者必须同时检查退出码；`--summary` 模式的输入/解码失败不会输出统计前缀。输出通道本身损坏时，已经写出的内容可能不完整。
 
-完整事件边界上的 EOF 只表明文件遍历完成，不代表事务已提交。即使文件最后一个完整事件属于未结束事务，CLI 仍可能返回 0；需要提交语义的应用应另外使用 `TransactionDecoder` 并调用 `finish()`。当前 CLI 未接入 schema 配置、行变化显示、事务汇总、实时追踪或多文件轮转。[外部 schema 库接口](schema.md) 已单独提供，但当前命令尚无 `--schema` 参数。
+完整事件边界上的 EOF 只表明文件遍历完成，不代表事务已提交。即使文件最后一个完整事件属于未结束事务，CLI 仍可能返回 0；需要提交语义的应用应另外使用 `TransactionDecoder` 并调用 `finish()`。行模式的所有结果均标记 `unconfirmed`，遇到未支持的事件立即失败；CLI 尚未提供事务汇总、实时追踪或多文件轮转。
 
 ## 验证
 
@@ -119,6 +126,7 @@ $records | Where-Object { $_.kind -eq 'event' } | Select-Object offset, name, by
 moon test --target native internal/cli
 moon build --target native
 python scripts/test_cli.py
+python scripts/test_rows_cli.py
 ```
 
-13 项纯逻辑测试覆盖参数、边界值、TSV、JSON 字段类型和统计；58 个子进程场景覆盖真实文件、中文/空格路径、以选项形式命名的文件、错误退出码、CRC/截断、资源上限、未知类型及 JSON/TSV 两种输出。JSON 单元测试验证 UInt64 最大偏移保留为字符串，端到端测试验证高位 UInt32 头字段仍为精确 JSON 整数。脚本默认使用上面的 debug 构建路径，也可传 `--executable PATH` 指向其他构建产物。
+15 项内部包测试覆盖参数、边界值、TSV、JSON 字段类型和统计；根包另有 7 项行分发及序列化测试。58 个事件子进程场景覆盖真实文件、中文/空格路径、以选项形式命名的文件、错误退出码、CRC/截断、资源上限、未知类型及 JSON/TSV 两种输出；28 个行模式场景包含 300 个官方列位置对照及 schema/行结构错误。JSON 单元测试验证 UInt64 最大偏移保留为字符串，端到端测试验证高位 UInt32 头字段仍为精确 JSON 整数。脚本默认使用上面的 debug 构建路径，也可传 `--executable PATH` 指向其他构建产物。

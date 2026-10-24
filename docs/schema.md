@@ -1,6 +1,6 @@
 # 外部 schema 配置 v1
 
-`SchemaConfig` 为调用者提供列名和整数 signed/unsigned 信息，并在使用前与 TABLE_MAP 的物理列描述逐位置匹配。它是解析库接口，本批没有新增 CLI `--schema` 参数，也没有改变现有事件列表或 JSON Lines 输出协议。
+`SchemaConfig` 为调用者提供列名和整数 signed/unsigned 信息，并在使用前与 TABLE_MAP 的物理列描述逐位置匹配。库接口接收 JSON 文本；CLI 可使用 `--rows --schema PATH` 读取 UTF-8 配置并输出行变化，详见[行变化 CLI](cli-rows.md)。原有事件模式输出协议保持不变。
 
 ## 配置格式
 
@@ -84,6 +84,8 @@ let rows = context.decode_rows(
 | SchemaMismatch | 列数或描述不一致，含真实偏移及可选的零起始列号 |
 
 默认最多 1024 张表、每表 1024 列、输入 1048576 个 UTF-16 code units。三个限制可通过 `max_tables`、`max_columns`、`max_input_units` 设置，均必须为正。输入大小在 JSON 解析前检查；它是字符串单位上限，不能当作 UTF-8 文件字节数或精确堆内存上限。
+
+CLI 在分配文件内容前另行检查 schema 文件不超过 4 MiB，严格解码 UTF-8（接受一个开头 BOM），随后使用上述默认配置配额。`--max-file-bytes` 只控制 Binlog，不改变 schema 的上限。
 
 JSON 嵌套最多 16 层；名字要求 1～256 个 UTF-16 单位且不包含 NUL。未知字段和重复 JSON 对象成员均拒绝，包括转义后同名的键及被覆盖的嵌套对象。字符串中的冒号、引号、反斜杠和括号不会被当作结构字段或嵌套层次。
 

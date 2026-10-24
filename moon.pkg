@@ -4,3 +4,7 @@ import {
   "moonbitlang/core/encoding/hex",
   "moonbitlang/core/json",
 }
+
+import {
+  "Noverberrain/moonbinlog/internal/cli",
+} for "test"

@@ -26,6 +26,11 @@ pub fn event_json_line(
 ///|
 /// Emit only after clean EOF. Type counts are sorted by numeric type code.
 pub fn Stats::json_line(self : Stats, file_bytes : Int32) -> String {
+  Json::object(self.summary_fields(file_bytes)).stringify()
+}
+
+///|
+fn Stats::summary_fields(self : Stats, file_bytes : Int32) -> Map[String, Json] {
   let types = []
   for i in 0..<256 {
     if self.counts[i] > 0 {
@@ -38,12 +43,27 @@ pub fn Stats::json_line(self : Stats, file_bytes : Int32) -> String {
       )
     }
   }
-  Json::object({
+  {
     "schema_version": @json.to_json(1),
     "kind": Json::string("summary"),
     "events": @json.to_json(self.events),
     "event_bytes": Json::string(self.event_bytes.to_string()),
     "file_bytes": @json.to_json(file_bytes),
     "types": Json::array(types),
-  }).stringify()
+  }
+}
+
+///|
+pub fn Stats::row_json_line(
+  self : Stats,
+  file_bytes : Int32,
+  row_events : Int32,
+  changes : Int32,
+) -> String {
+  let fields = self.summary_fields(file_bytes)
+  fields["kind"] = "row_summary"
+  fields["transaction_status"] = "unconfirmed"
+  fields["row_events"] = @json.to_json(row_events)
+  fields["changes"] = @json.to_json(changes)
+  Json::object(fields).stringify()
 }

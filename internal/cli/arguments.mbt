@@ -6,6 +6,8 @@ pub struct Config {
   path : String
   summary_only : Bool
   json_output : Bool
+  rows : Bool
+  schema_path : String?
   max_event_bytes : UInt32
   max_file_bytes : Int32
 } derive(Debug, Eq)
@@ -42,18 +44,21 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--rows --schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
     #|  --summary             Show counts only; still validate the entire file.
+    #|  --rows                Decode unconfirmed row changes as JSON Lines.
+    #|  --schema PATH         Schema v1 UTF-8 JSON file; requires --rows.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
     #|  --max-file-bytes N    In-memory file limit (default 67108864, max 2147483647).
     #|  --                    Treat the remaining argument as a filename.
     #|  -h, --help            Show this help (use as the only argument).
     #|
     #|Exit codes: 0 success/help, 1 file/decoding/output failure, 2 invalid arguments.
-    #|Only event framing/checksums are checked; no row or transaction decoding.
+    #|Default mode checks framing/checksums. --rows requires --schema.
+    #|Row output does not confirm commits; transaction assembly is not enabled.
   text
 }
 
@@ -81,6 +86,8 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut path = None
   let mut summary_only = false
   let mut json_output = false
+  let mut rows = false
+  let mut schema_path = None
   let mut event_limit = None
   let mut file_limit = None
   let mut positional = false
@@ -95,6 +102,18 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     } else if !positional && arg == "--json" {
       guard !json_output else { raise InvalidArguments("duplicate --json") }
       json_output = true
+    } else if !positional && arg == "--rows" {
+      guard !rows else { raise InvalidArguments("duplicate --rows") }
+      rows = true
+    } else if !positional && arg == "--schema" {
+      guard schema_path is None else {
+        raise InvalidArguments("duplicate --schema")
+      }
+      guard cursor + 1 < argv.length() && !argv[cursor + 1].is_empty() else {
+        raise InvalidArguments("--schema requires a nonempty path")
+      }
+      cursor += 1
+      schema_path = Some(argv[cursor])
     } else if !positional &&
       (arg == "--max-event-bytes" || arg == "--max-file-bytes") {
       guard cursor + 1 < argv.length() else {
@@ -133,10 +152,15 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   guard path is Some(path) else {
     raise InvalidArguments("a filename is required")
   }
+  guard rows == (schema_path is Some(_)) else {
+    raise InvalidArguments("--rows and --schema must be used together")
+  }
   Inspect({
     path,
     summary_only,
-    json_output,
+    json_output: json_output || rows,
+    rows,
+    schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),
     max_file_bytes: file_limit.unwrap_or(67_108_864),
   })
