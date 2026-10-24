@@ -77,6 +77,8 @@ ENUM/SET 的元数据、存储宽度和成员边界见 [ENUM/SET 值说明](docs
 
 ## 验证
 
+Windows 可执行 `./scripts/ci.ps1` 运行统一检查入口；[GitHub Actions](.github/workflows/ci.yml) 使用固定工具链调用同一脚本，配置及环境边界见 [CI 说明](docs/ci.md)。下列命令列出各项独立检查：
+
 ```text
 moon check --warn-list +unnecessary_annotation --deny-warn
 moon test --target native

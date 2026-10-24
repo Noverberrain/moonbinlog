@@ -78,6 +78,18 @@ moon build --target native
 
 当前开发环境为 Windows、MoonBit v0.10.15、moon 0.1.20261012，native 构建使用 MSVC。其他环境和后端的运行兼容性仍待验证。重建协议样本还需要 Python 3。
 
+### 持续集成
+
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和三组 CLI 回归，无需启动 MySQL。
+
+Windows 本地已准备好工具链后，也可运行同一入口：
+
+```powershell
+./scripts/ci.ps1
+```
+
+本批已用独立安装的固定版本工具链跑通全部检查；GitHub 托管 runner 的首次结果需在推送工作流后确认。版本更新与排查方法见 [CI 说明](docs/ci.md)。
+
 ### 查看本地 Binlog 文件
 
 ```sh
@@ -179,6 +191,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 行变化 | [行镜像](docs/row-images.md) · [ROWS v2 事件](docs/rows-events.md) |
 | 提交与回滚 | [事务边界、状态和资源限制](docs/transactions.md) |
 | 开发记录 | [逐功能实现与验证记录](docs/progress.md) |
+| 自动化检查 | [CI 触发、固定版本与本地复现](docs/ci.md) |
 
 ## 验证与样本
 
