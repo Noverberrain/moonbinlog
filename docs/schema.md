@@ -1,6 +1,6 @@
 # 外部 schema 配置 v1
 
-`SchemaConfig` 为调用者提供列名和整数 signed/unsigned 信息，并在使用前与 TABLE_MAP 的物理列描述逐位置匹配。库接口接收 JSON 文本；CLI 可使用 `--rows --schema PATH` 读取 UTF-8 配置并输出行变化，详见[行变化 CLI](cli-rows.md)。原有事件模式输出协议保持不变。
+`SchemaConfig` 为调用者提供列名和整数 signed/unsigned 信息，并在使用前与 TABLE_MAP 的物理列描述逐位置匹配。库接口接收 JSON 文本；CLI 的 `--rows --schema PATH` 输出行变化，`--transactions --schema PATH` 解码并汇总显式事务，详见[行变化 CLI](cli-rows.md)与[事务 CLI](cli-transactions.md)。原有事件模式输出协议保持不变。
 
 ## 配置格式
 

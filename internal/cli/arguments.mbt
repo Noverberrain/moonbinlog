@@ -7,6 +7,7 @@ pub struct Config {
   summary_only : Bool
   json_output : Bool
   rows : Bool
+  transactions : Bool
   schema_path : String?
   max_event_bytes : UInt32
   max_file_bytes : Int32
@@ -44,21 +45,22 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--rows --schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--rows | --transactions] [--schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
     #|  --summary             Show counts only; still validate the entire file.
     #|  --rows                Decode unconfirmed row changes as JSON Lines.
-    #|  --schema PATH         Schema v1 UTF-8 JSON file; requires --rows.
+    #|  --transactions        Summarize explicit transactional RBR commits/rollbacks.
+    #|  --schema PATH         Schema v1 UTF-8 JSON file; required by either mode.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
     #|  --max-file-bytes N    In-memory file limit (default 67108864, max 2147483647).
     #|  --                    Treat the remaining argument as a filename.
     #|  -h, --help            Show this help (use as the only argument).
     #|
     #|Exit codes: 0 success/help, 1 file/decoding/output failure, 2 invalid arguments.
-    #|Default mode checks framing/checksums. --rows requires --schema.
-    #|Row output does not confirm commits; transaction assembly is not enabled.
+    #|--rows and --transactions are mutually exclusive and require --schema.
+    #|--rows does not confirm commits. --transactions requires transactional tables.
   text
 }
 
@@ -87,6 +89,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut summary_only = false
   let mut json_output = false
   let mut rows = false
+  let mut transactions = false
   let mut schema_path = None
   let mut event_limit = None
   let mut file_limit = None
@@ -105,6 +108,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     } else if !positional && arg == "--rows" {
       guard !rows else { raise InvalidArguments("duplicate --rows") }
       rows = true
+    } else if !positional && arg == "--transactions" {
+      guard !transactions else {
+        raise InvalidArguments("duplicate --transactions")
+      }
+      transactions = true
     } else if !positional && arg == "--schema" {
       guard schema_path is None else {
         raise InvalidArguments("duplicate --schema")
@@ -152,14 +160,20 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   guard path is Some(path) else {
     raise InvalidArguments("a filename is required")
   }
-  guard rows == (schema_path is Some(_)) else {
-    raise InvalidArguments("--rows and --schema must be used together")
+  guard !(rows && transactions) else {
+    raise InvalidArguments("--rows and --transactions are mutually exclusive")
+  }
+  guard (rows || transactions) == (schema_path is Some(_)) else {
+    raise InvalidArguments(
+      "--rows or --transactions requires --schema, and vice versa",
+    )
   }
   Inspect({
     path,
     summary_only,
-    json_output: json_output || rows,
+    json_output: json_output || rows || transactions,
     rows,
+    transactions,
     schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),
     max_file_bytes: file_limit.unwrap_or(67_108_864),

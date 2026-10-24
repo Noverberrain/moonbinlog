@@ -21,6 +21,8 @@ pub fn row_cell_json(@moonbinlog.RowCell, Int, String) -> Json
 
 pub fn row_change_line(@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema, Int) -> String raise RowScanError
 
+pub fn transaction_line(@moonbinlog.TransactionOutcome) -> String
+
 pub fn usage() -> String
 
 // Errors
@@ -52,6 +54,7 @@ pub struct Config {
   summary_only : Bool
   json_output : Bool
   rows : Bool
+  transactions : Bool
   schema_path : String?
   max_event_bytes : UInt
   max_file_bytes : Int
@@ -74,6 +77,20 @@ pub fn Stats::lines(Self, Int) -> Array[String]
 pub fn Stats::new() -> Self
 pub fn Stats::record(Self, @moonbinlog.EventHeader) -> Unit
 pub fn Stats::row_json_line(Self, Int, Int, Int) -> String
+
+pub struct TransactionScanner {
+  // private fields
+}
+pub fn TransactionScanner::feed(Self, @moonbinlog.BinlogFileEvent) -> @moonbinlog.TransactionOutcome? raise
+pub fn TransactionScanner::finish(Self) -> Unit raise
+pub fn TransactionScanner::new(@moonbinlog.SchemaConfig, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self
+
+pub struct TransactionStats {
+  // private fields
+}
+pub fn TransactionStats::json_line(Self, Stats, Int) -> String
+pub fn TransactionStats::new() -> Self
+pub fn TransactionStats::record(Self, @moonbinlog.TransactionOutcome) -> Unit
 
 // Type aliases
 

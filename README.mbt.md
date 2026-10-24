@@ -11,6 +11,8 @@
 
 `--rows --schema PATH` 自动以 JSON Lines 显示带列名的 INSERT / UPDATE / DELETE，所有行与摘要标记为 `unconfirmed`。精确值、原始字节和缺失列规则见[行变化 CLI](docs/cli-rows.md)。
 
+`--transactions --schema PATH` 输出显式 BEGIN 到 XID/COMMIT/ROLLBACK 的事务计数与各表汇总，EOF 拒绝未结束事务；与 --rows 互斥，详见[事务 CLI](docs/cli-transactions.md)。
+
 ## 使用示例
 
 ```mbt check
@@ -56,7 +58,7 @@ test "validate a file signature and decode a common header" {
 - `TableMap::decode_row_image` 组合已有字段解码器，处理列存在/紧凑 NULL 位图，区分缺失列、NULL 和实际值，返回按表列号排列的结果及消费长度；整数符号属性必须显式提供。
 - `TableMapContext::decode_rows` 校验 v2 行事件、查找表映射并解码多行/更新配对，成功遇到 STMT_END_F 或任意解析失败均清空缓存，返回表定义快照。
 - `TransactionBoundary::parse` 校验 QUERY/XID 边界；`TransactionDecoder` 缓存显式 BEGIN 后的行事件，在 XID/COMMIT 返回事务，ROLLBACK 或错误时丢弃，EOF 必须调用 finish 检查未结束事务。
-- CLI 已支持文件读取、事件列表与统计，以及外部 schema 驱动的行变化 JSON；没有启用事务汇总，单独的行输出仍不代表已经提交。其他字段类型、GTID/XA/DDL/隐式事务或非事务表语义尚未实现。
+- CLI 已支持文件读取、事件列表、外部 schema 行变化及显式事务汇总。--rows 仍不确认提交；--transactions 只对调用者已知为事务型表的受支持显式区间报告提交/回滚，不导出行值。其他字段类型、GTID/XA/DDL/隐式事务或非事务表语义尚未实现。
 - 合成样本由协议构造和独立 zlib 校验生成；另有三组真实 MySQL 8.0.43 日志，已与官方 mysqlbinlog 逐字段对照，详见[集成验证](docs/mysql-integration.md)。Java 客户端差分尚未完成。
 
 格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
@@ -97,6 +99,7 @@ python scripts/generate_transaction_fixtures.py --check
 python scripts/verify_mysql_fixtures.py --check
 python scripts/test_cli.py
 python scripts/test_rows_cli.py
+python scripts/test_transactions_cli.py
 python scripts/generate_schema_example.py --check
 ```
 
@@ -120,4 +123,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：CLI 显式事务汇总。等待用户继续指令。
+下一批候选：事务模式导出已提交行变化。等待用户继续指令。

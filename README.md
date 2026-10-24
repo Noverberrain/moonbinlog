@@ -7,7 +7,7 @@
 
 MoonBinlog 是一个纯 MoonBit 的 MySQL 8.0 Binlog 解析库。它接收 `BytesView`，完成事件校验、表映射和字段解码，将 ROWS v2 事件转换为 INSERT / UPDATE / DELETE 行变化，并支持显式事务区间的提交与回滚汇总。
 
-项目面向 MoonBit 十月黑客松，正在逐步开发。当前提供可组合的协议解析库，以及读取本地文件、显示事件列表、统计和带列名行变化的 native CLI。
+项目面向 MoonBit 十月黑客松，正在逐步开发。当前提供可组合的协议解析库，以及读取本地文件、显示事件列表、带列名行变化和显式事务汇总的 native CLI。
 
 ## 为什么做 MoonBinlog
 
@@ -27,7 +27,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | --- | --- | --- |
 | 文件标识与事件头 | 未加密 Binlog magic、v4 公共事件头 | 保存真实物理偏移，事件长度有上限 |
 | 离线文件遍历 | 顺序切分、FDE 上下文切换、事件完整性校验 | 输入完整内存视图，未知事件保留原始数据 |
-| 离线 CLI | TSV / JSON Lines 事件统计、外部 schema 行变化 | 行模式输出带列名的 JSON Lines，提交状态为 unconfirmed |
+| 离线 CLI | 事件统计、外部 schema 行变化、显式事务汇总 | 行模式标记 unconfirmed，事务模式只报告完成的提交/回滚 |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
 | 外部 schema | JSON 配置、列名与整数符号属性、表映射绑定 | 核对逐列物理描述，不推导历史 DDL |
@@ -40,7 +40,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：259 项 MoonBit 测试、58 个事件 CLI 场景和 28 个行变化 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
+**验证状态：267 项 MoonBit 测试、58 个事件 CLI、28 个行变化 CLI 和 50 个事务 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
 
 ## 解析流程
 
@@ -60,7 +60,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
                         └── ROLLBACK / 错误 / EOF 截断 → 丢弃待定数据
 ```
 
-这里展示的是已有解析层的组合关系。CLI 的行模式已封装文件读取、schema 绑定与行事件分发；事务解码器仍是独立库接口，只接受受支持的连续显式事务区间。
+这里展示的是已有解析层的组合关系。CLI 的行模式封装文件读取、schema 绑定与行事件分发；事务模式组合既有事务解码器，仅处理受支持的连续显式事务区间，并在空闲时跳过明确允许的文件级包络。
 
 ## 快速上手
 
@@ -97,6 +97,14 @@ moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-sc
 `--rows` 与 `--schema PATH` 必须一起使用，自动输出 JSON Lines。每条 INSERT / UPDATE / DELETE 包含库表名、列标签及 before / after，保留缺失列、NULL、精确整数与小数；原始字符串和 BLOB 使用 hex。增加 `--summary` 只输出行变化统计，但仍执行解码。
 
 所有行记录及摘要均标记 `transaction_status: "unconfirmed"`，本模式不组装提交事务。配置必须匹配日志对应的历史 schema，列名及整数符号属性由提供者负责。输出字段与限制见[行变化 CLI](docs/cli-rows.md)和 [schema 配置](docs/schema.md)。
+
+### 查看显式事务汇总
+
+```sh
+moon run --target native cmd/moonbinlog -- --transactions --schema examples/mysql-8.0-schema.json fixtures/mysql-8.0/crc32-full.binlog
+```
+
+每笔 BEGIN → XID / COMMIT 完成后输出起止偏移、XID、行变化数与各表计数，ROLLBACK 输出丢弃数量；`--summary` 只输出全文件统计。事务未结束、遇到未知事件或超过配额会失败，不输出该笔待定事务。此模式要求调用者已知涉及的表支持事务，不推断 GTID、DDL 或隐式提交，也暂不导出事务中的逐行值；详见[事务 CLI](docs/cli-transactions.md)。
 
 ### 最小解析示例
 
@@ -157,6 +165,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 文件级遍历 | [内存文件遍历、偏移与错误处理](docs/file-traversal.md) |
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
 | 命令行行变化 | [schema 接入、行 JSON 与提交状态](docs/cli-rows.md) |
+| 命令行事务 | [显式提交/回滚汇总、统计与配额](docs/cli-transactions.md) |
 | 真实文件验证 | [MySQL 8.0.43 与官方 mysqlbinlog 对照](docs/mysql-integration.md) |
 | 表结构上下文 | [TABLE_MAP 与缓存生命周期](docs/table-map.md) |
 | 外部配置 | [schema v1 格式、绑定及可信范围](docs/schema.md) · [真实样本配置](examples/mysql-8.0-schema.json) |
@@ -202,7 +211,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] CLI 的 JSON Lines 输出与机器处理示例
 - [x] 外部 schema 配置与表映射绑定（库接口）
 - [x] CLI 接入 schema 并显示未确认提交的行变化
-- [ ] CLI 显式事务汇总
+- [x] CLI 显式事务提交/回滚汇总
+- [ ] 事务模式导出已提交行变化
 
 路线会根据真实样本验证结果调整，勾选项只代表当前限定范围内的实现。
 
@@ -210,7 +220,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 
 欢迎通过 Issue 提供使用场景、最小复现或协议兼容性问题。提交问题时请附上工具链版本、MySQL 版本、校验模式、事件类型、错误偏移和预期行为；提交日志样本前请移除业务敏感数据。
 
-修改后请运行检查、native 测试、构建、`moon fmt --check`、`moon info` 及相关样本一致性检查；CLI 的端到端验证运行 `python scripts/test_cli.py` 和 `python scripts/test_rows_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
+修改后请运行检查、native 测试、构建、`moon fmt --check`、`moon info` 及相关样本一致性检查；CLI 的端到端验证运行 `python scripts/test_cli.py`、`python scripts/test_rows_cli.py` 和 `python scripts/test_transactions_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
 
 ## 开源许可证
 

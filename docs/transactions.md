@@ -2,6 +2,8 @@
 
 `TransactionDecoder` 支持调用者已知为事务型表的、连续的显式 BEGIN 到 XID/COMMIT/ROLLBACK 事件区间。它不是完整 Binlog 文件解析器，也不能从当前 TABLE_MAP 判断存储引擎是否支持回滚。
 
+离线命令可使用 `--transactions --schema PATH` 组合本接口与文件遍历器，输出完成事务的计数和各表汇总；文件级包络允许范围与输出协议见[事务 CLI](cli-transactions.md)。本页描述库解码器本身，feed 的支持范围保持不变。
+
 ## 边界解析
 
 `TransactionBoundary::parse` 复用格式描述的 CRC32/OFF 策略：

@@ -27,15 +27,24 @@ async fn read_input(path : String, max_bytes : Int32) -> Bytes {
 
 ///|
 async fn inspect(config : @cli.Config) -> Unit {
-  let scanner = match config.schema_path {
+  let (scanner, transactions) = match config.schema_path {
     Some(path) => {
       let bytes = read_input(path, 4_194_304)
       let schema = @binlog.SchemaConfig::parse(
         @utf8.decode(bytes, ignore_bom=true),
       )
-      Some(@cli.RowScanner::new(schema, max_event_size=config.max_event_bytes))
+      if config.transactions {
+        (None, Some(@cli.TransactionScanner::new(schema)))
+      } else {
+        (
+          Some(
+            @cli.RowScanner::new(schema, max_event_size=config.max_event_bytes),
+          ),
+          None,
+        )
+      }
     }
-    None => None
+    None => (None, None)
   }
   let data = read_input(config.path, config.max_file_bytes)
   let reader = @binlog.BinlogFileReader::new(
@@ -43,6 +52,7 @@ async fn inspect(config : @cli.Config) -> Unit {
     max_event_size=config.max_event_bytes,
   )
   let stats = @cli.Stats::new()
+  let transaction_stats = @cli.TransactionStats::new()
   let mut row_events = 0
   let mut changes = 0
   if !config.summary_only && !config.json_output {
@@ -50,7 +60,14 @@ async fn inspect(config : @cli.Config) -> Unit {
   }
   while reader.next() is Some(event) {
     stats.record(event.header)
-    if scanner is Some(scanner) {
+    if transactions is Some(transactions) {
+      if transactions.feed(event) is Some(outcome) {
+        transaction_stats.record(outcome)
+        if !config.summary_only {
+          @stdio.stdout.write(@cli.transaction_line(outcome) + "\n")
+        }
+      }
+    } else if scanner is Some(scanner) {
       if scanner.feed(event) is Some((rows, bound)) {
         row_events += 1
         changes += rows.changes.length()
@@ -69,7 +86,12 @@ async fn inspect(config : @cli.Config) -> Unit {
       @stdio.stdout.write(line + "\n")
     }
   }
-  if scanner is Some(_) {
+  if transactions is Some(transactions) {
+    transactions.finish()
+    @stdio.stdout.write(
+      transaction_stats.json_line(stats, data.length()) + "\n",
+    )
+  } else if scanner is Some(_) {
     @stdio.stdout.write(
       stats.row_json_line(data.length(), row_events, changes) + "\n",
     )
