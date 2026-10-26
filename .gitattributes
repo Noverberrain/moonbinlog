@@ -5,3 +5,5 @@
 # Preserve exact captured bytes and their SHA-256 across Git checkouts.
 fixtures/mysql-8.0/*.binlog binary
 fixtures/mysql-8.0/*.mysqlbinlog.txt binary
+fixtures/mysql-json/*.binlog binary
+fixtures/mysql-json/*.mysqlbinlog.txt binary

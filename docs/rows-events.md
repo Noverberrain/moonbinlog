@@ -38,7 +38,7 @@ post-header 为六字节 table_id、两字节 ROWS flags、两字节额外头长
 
 本接口输出只是 Binlog 中的行变化，不代表事务提交。需要按事务汇总时可使用 [TransactionDecoder](transactions.md)；本层本身不缓冲事务或执行数据库写入。旧 ROWS、PARTIAL_UPDATE_ROWS、压缩事务和 dummy table-id 结束事件不在支持范围；不应将未知事件硬套到本接口。
 
-extra_data 只是外层有界的原始字节，不宣称已经验证其中所有标签。JSON/partial JSON 以及标量层尚不支持的非 NULL 列仍明确失败。缺失或 NULL 的不支持列可由行镜像正常表示。
+extra_data 只是外层有界的原始字节，不宣称已经验证其中所有标签。普通完整 JSON 已支持；opaque / partial JSON 以及标量层尚不支持的非 NULL 列仍明确失败，见 [JSON 字段](json-values.md)。缺失或 NULL 的不支持列可由行镜像正常表示。
 
 ## 验证与依据
 

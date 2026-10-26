@@ -32,6 +32,7 @@ try {
     }
     foreach ($ciScript in @(
         'scripts/verify_mysql_fixtures.py',
+        'scripts/verify_json_fixtures.py',
         'scripts/generate_schema_example.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript, '--check')
@@ -40,7 +41,8 @@ try {
         'scripts/test_cli.py',
         'scripts/test_rows_cli.py',
         'scripts/test_transactions_cli.py',
-        'scripts/test_filters_cli.py'
+        'scripts/test_filters_cli.py',
+        'scripts/test_json_cli.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript)
     }

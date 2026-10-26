@@ -10,6 +10,7 @@ pub(all) enum RowCell {
   Floating(DecodedFloating)
   StringBytes(Bytes)
   BlobBytes(Bytes)
+  JsonDocument(DecodedJson)
   Decimal(DecodedDecimal)
   Bit(DecodedBit)
   EnumSet(EnumSetValue)
@@ -191,6 +192,15 @@ fn decode_row_cell(
     16 => {
       let decoded = column.decode_bit(data, file_offset~, column_index~)
       (Bit(decoded), decoded.bytes_read)
+    }
+    245 => {
+      let decoded = column.decode_json(
+        data,
+        file_offset~,
+        column_index~,
+        max_value_bytes=max_blob_bytes,
+      )
+      (JsonDocument(decoded), decoded.bytes_read)
     }
     246 => {
       let decoded = column.decode_decimal(data, file_offset~, column_index~)

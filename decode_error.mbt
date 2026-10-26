@@ -157,6 +157,34 @@ pub(all) suberror DecodeError {
     column_index~ : Int32,
     wire_type~ : Byte
   )
+  UnsupportedJsonColumn(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    wire_type~ : Byte
+  )
+  InvalidJsonMetadata(file_offset~ : UInt64, column_index~ : Int32)
+  InvalidJsonLimits(
+    max_value_bytes~ : Int32,
+    max_depth~ : Int32,
+    max_nodes~ : Int32
+  )
+  JsonLimitExceeded(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    reason~ : String
+  )
+  InvalidJsonValue(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    value_offset~ : Int32,
+    reason~ : String
+  )
+  UnsupportedJsonType(
+    file_offset~ : UInt64,
+    column_index~ : Int32,
+    value_offset~ : Int32,
+    binary_type~ : Byte
+  )
   UnsupportedRowsEvent(file_offset~ : UInt64, event_type~ : Byte)
   InvalidRowsEvent(
     file_offset~ : UInt64,

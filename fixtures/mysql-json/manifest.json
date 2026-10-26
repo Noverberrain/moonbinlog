@@ -1,0 +1,35 @@
+{
+  "server_version": "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqld.exe  Ver 8.0.43 for Win64 on x86_64 (MySQL Community Server - GPL)",
+  "mysqlbinlog_version": "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqlbinlog.exe  Ver 8.0.43 for Win64 on x86_64 (MySQL Community Server - GPL)",
+  "schema_sha256": "1e052ed4460a21afab7465f1cc36345c6f3c0176cfb76ebb0795a260a05e13d3",
+  "workload_sha256": "755c6a0be0f55d35d3dbb369e686cb32f5d63984ef4ff0245ac2282eeb1ac171",
+  "gtid_mode": "OFF",
+  "binlog_format": "ROW",
+  "binlog_row_metadata": "FULL",
+  "profiles": {
+    "crc32-full": {
+      "checksum": "CRC32",
+      "row_image": "FULL",
+      "bytes": 1164,
+      "sha256": "3144f2b1f81a385447626139ec0b5e180a8ec194b17c14b2b4cf83cfe1a8d31f",
+      "oracle_sha256": "8cbd1d83e7cc636f8e9a2206c46bf4601a3184221f0471e0cac5f8b75809dd43",
+      "final_rows": "2\t1"
+    },
+    "crc32-minimal": {
+      "checksum": "CRC32",
+      "row_image": "MINIMAL",
+      "bytes": 984,
+      "sha256": "b74b03e2e73ef359b336de3aa37424f1e780af165d6eca47863dae8c5180cc48",
+      "oracle_sha256": "b673a61ae1fe6de6a1006f638171fda3fc0311200b38e1d6cf09468d459dd026",
+      "final_rows": "2\t1"
+    },
+    "off-full": {
+      "checksum": "NONE",
+      "row_image": "FULL",
+      "bytes": 1120,
+      "sha256": "d4473b8f9ca23ee72018b8e9f2ad8e550c21e1ba458ce8dbccc397c8da5e7fc9",
+      "oracle_sha256": "78338081607399cc7124cdde86a5f6aa19d0cc8046ac38a87d2c0bbd628e6c5e",
+      "final_rows": "2\t1"
+    }
+  }
+}

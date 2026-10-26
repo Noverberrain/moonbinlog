@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "tables": [
+    {
+      "database": "moonbinlog_fixture",
+      "table": "sample",
+      "columns": [
+        {"name": "id", "wire_type": 3, "metadata": "", "nullable": false, "unsigned": false},
+        {"name": "text_value", "wire_type": 245, "metadata": "04", "nullable": true}
+      ]
+    }
+  ]
+}

@@ -52,6 +52,7 @@ test "validate a file signature and decode a common header" {
 - `TableColumn::decode_integer` 解码五种整数类型，显式指定 signed/unsigned，保留完整 Int64/UInt64 精度并返回消费字节数。
 - `TableColumn::decode_string` 解码 VARCHAR/STRING 的长度前缀，返回原始字节及消费长度；不推断字符集，不转换或补齐 CHAR/BINARY 填充。
 - `TableColumn::decode_blob` 支持 BLOB/TEXT 的 1～4 字节长度前缀，返回原始字节及消费长度；默认内容上限为 16 MiB，可显式配置。
+- `TableColumn::decode_json` 解码完整 binary JSON 的普通标量及小/大容器，保留整数精度、浮点位模式，拒绝 opaque/partial diff，详见 [JSON 字段](docs/json-values.md)。CLI 导出为 json_text 字符串。
 - `TableColumn::decode_decimal` 支持 NEWDECIMAL 的 65 位精度与最多 30 位小数，返回保留 scale 的精确十进制字符串及消费长度。
 - `TableColumn::decode_temporal` 支持 DATE、YEAR、DATETIME2、TIME2、TIMESTAMP2，保留日期分量、带符号时长或原始时间戳秒数及微秒，不进行时区转换。
 - `TableColumn::decode_floating` 解码 FLOAT/DOUBLE，返回相应精度的有限值、原始位模式及消费长度；保留负零和次正规数，明确拒绝 NaN/无穷大。
@@ -61,7 +62,7 @@ test "validate a file signature and decode a common header" {
 - `TableMapContext::decode_rows` 校验 v2 行事件、查找表映射并解码多行/更新配对，成功遇到 STMT_END_F 或任意解析失败均清空缓存，返回表定义快照。
 - `TransactionBoundary::parse` 校验 QUERY/XID 边界；`TransactionDecoder` 缓存显式 BEGIN 后的行事件，在 XID/COMMIT 返回事务，ROLLBACK 或错误时丢弃，EOF 必须调用 finish 检查未结束事务。
 - CLI 已支持文件读取、事件列表、外部 schema 行变化及显式事务汇总/行导出。--rows 仍不确认提交；--transactions 只对调用者已知为事务型表的受支持显式区间报告提交/回滚，--include-rows 可附带提交行值。其他字段类型、GTID/XA/DDL/隐式事务或非事务表语义尚未实现。
-- 合成样本由协议构造和独立 zlib 校验生成；另有三组真实 MySQL 8.0.43 日志，已与官方 mysqlbinlog 逐字段对照，详见[集成验证](docs/mysql-integration.md)。Java 客户端差分尚未完成。
+- 合成样本由协议构造和独立 zlib 校验生成；另有六组真实 MySQL 8.0.43 日志（含三组 [JSON 捕获](fixtures/mysql-json/README.md)），已与官方 mysqlbinlog 逐字段对照，详见[集成验证](docs/mysql-integration.md)。Java 客户端差分尚未完成。
 
 格式描述的 body 布局、OFF 特例与校验标志位规则见 [格式与校验说明](docs/format-checksum.md)。
 表映射范围、元数据宽度及上下文生命周期见 [表映射说明](docs/table-map.md)。
@@ -100,11 +101,14 @@ python scripts/generate_enum_set_fixtures.py --check
 python scripts/generate_row_image_fixtures.py --check
 python scripts/generate_rows_event_fixtures.py --check
 python scripts/generate_transaction_fixtures.py --check
+python scripts/generate_json_fixtures.py --check
+python scripts/verify_json_fixtures.py --check
 python scripts/verify_mysql_fixtures.py --check
 python scripts/test_cli.py
 python scripts/test_rows_cli.py
 python scripts/test_transactions_cli.py
 python scripts/test_filters_cli.py
+python scripts/test_json_cli.py
 python scripts/generate_schema_example.py --check
 ```
 
@@ -128,4 +132,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：MySQL JSON 字段解码。等待用户继续指令。
+本批已完成普通完整 JSON 字段解码，详细范围见 [JSON 文档](docs/json-values.md)。暂停，等待用户继续指令。

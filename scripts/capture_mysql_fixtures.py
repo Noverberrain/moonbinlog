@@ -25,7 +25,8 @@ def run(command, **kwargs):
     return result.stdout
 
 
-def capture(mysql_bin):
+def capture(mysql_bin, destination=DEST):
+    dest = destination.resolve()
     suffix = ".exe" if os.name == "nt" else ""
     tools = {name: str(mysql_bin / (name + suffix))
              for name in ("mysqld", "mysql", "mysqlbinlog", "mysqladmin")}
@@ -76,10 +77,10 @@ def capture(mysql_bin):
                             "--default-character-set=utf8mb4"],
                            input=statement.encode("utf-8")).decode("utf-8")
 
-            setup = (DEST / "schema.sql").read_text(encoding="utf-8")
-            workload = (DEST / "workload.sql").read_text(encoding="utf-8")
+            setup = (dest / "schema.sql").read_text(encoding="utf-8")
+            workload = (dest / "workload.sql").read_text(encoding="utf-8")
             sql("SET SESSION sql_log_bin=0;" + setup)
-            DEST.mkdir(parents=True, exist_ok=True)
+            dest.mkdir(parents=True, exist_ok=True)
             manifest = {"server_version": version,
                         "mysqlbinlog_version": run([tools["mysqlbinlog"], "--version"]).decode().strip(),
                         "schema_sha256": hashlib.sha256(setup.encode()).hexdigest(),
@@ -103,15 +104,15 @@ def capture(mysql_bin):
                             "--base64-output=DECODE-ROWS", "--verbose", "--verbose",
                             str(data / filename)])
                 # mysqlbinlog output is evidence, not executable input to this harness.
-                (DEST / f"{name}.binlog").write_bytes(raw)
-                (DEST / f"{name}.mysqlbinlog.txt").write_bytes(dump)
+                (dest / f"{name}.binlog").write_bytes(raw)
+                (dest / f"{name}.mysqlbinlog.txt").write_bytes(dump)
                 manifest["profiles"][name] = {
                     "checksum": checksum, "row_image": image, "bytes": len(raw),
                     "sha256": hashlib.sha256(raw).hexdigest(),
                     "oracle_sha256": hashlib.sha256(dump).hexdigest(),
                     "final_rows": final_rows.strip(),
                 }
-            (DEST / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            (dest / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
             run([tools["mysqladmin"], *client, "shutdown"])
             server.wait(timeout=30)
             stopped = True
@@ -130,4 +131,6 @@ def capture(mysql_bin):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mysql-bin", type=Path, required=True)
-    capture(parser.parse_args().mysql_bin.resolve())
+    parser.add_argument("--output-dir", type=Path, default=DEST)
+    args = parser.parse_args()
+    capture(args.mysql_bin.resolve(), args.output_dir)

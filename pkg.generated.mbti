@@ -58,6 +58,12 @@ pub(all) suberror DecodeError {
   UnexpectedRowNull(file_offset~ : UInt64, column_index~ : Int)
   MissingIntegerSignedness(file_offset~ : UInt64, column_index~ : Int)
   UnsupportedRowColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  UnsupportedJsonColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
+  InvalidJsonMetadata(file_offset~ : UInt64, column_index~ : Int)
+  InvalidJsonLimits(max_value_bytes~ : Int, max_depth~ : Int, max_nodes~ : Int)
+  JsonLimitExceeded(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
+  InvalidJsonValue(file_offset~ : UInt64, column_index~ : Int, value_offset~ : Int, reason~ : String)
+  UnsupportedJsonType(file_offset~ : UInt64, column_index~ : Int, value_offset~ : Int, binary_type~ : Byte)
   UnsupportedRowsEvent(file_offset~ : UInt64, event_type~ : Byte)
   InvalidRowsEvent(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
   MissingTableMap(file_offset~ : UInt64, table_id~ : UInt64)
@@ -89,6 +95,20 @@ pub fn SchemaError::not_equal(Self, Self) -> Bool
 pub fn SchemaError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+pub(all) enum BinaryJsonValue {
+  Null
+  Boolean(Bool)
+  Integer(IntegerValue)
+  DoubleNumber(value~ : Double, bits~ : UInt64)
+  Text(String)
+  Array(ReadOnlyArray[BinaryJsonValue])
+  Object(ReadOnlyArray[(String, BinaryJsonValue)])
+} derive(Eq, @debug.Debug)
+pub fn BinaryJsonValue::equal(Self, Self) -> Bool
+pub fn BinaryJsonValue::not_equal(Self, Self) -> Bool
+pub fn BinaryJsonValue::to_json_text(Self) -> String
+pub fn BinaryJsonValue::to_repr(Self) -> @debug.Repr
+
 pub struct BinlogFileEvent {
   header : EventHeader
   raw : BytesView
@@ -189,6 +209,14 @@ pub fn DecodedInteger::equal(Self, Self) -> Bool
 pub fn DecodedInteger::not_equal(Self, Self) -> Bool
 pub fn DecodedInteger::to_repr(Self) -> @debug.Repr
 
+pub struct DecodedJson {
+  value : BinaryJsonValue
+  bytes_read : Int
+} derive(Eq, @debug.Debug)
+pub fn DecodedJson::equal(Self, Self) -> Bool
+pub fn DecodedJson::not_equal(Self, Self) -> Bool
+pub fn DecodedJson::to_repr(Self) -> @debug.Repr
+
 pub struct DecodedString {
   value : Bytes
   bytes_read : Int
@@ -266,6 +294,7 @@ pub(all) enum RowCell {
   Floating(DecodedFloating)
   StringBytes(Bytes)
   BlobBytes(Bytes)
+  JsonDocument(DecodedJson)
   Decimal(DecodedDecimal)
   Bit(DecodedBit)
   EnumSet(EnumSetValue)
@@ -335,6 +364,7 @@ pub fn TableColumn::decode_decimal(Self, BytesView, file_offset~ : UInt64, colum
 pub fn TableColumn::decode_enum_set(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedEnumSet raise DecodeError
 pub fn TableColumn::decode_floating(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedFloating raise DecodeError
 pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int) -> DecodedInteger raise DecodeError
+pub fn TableColumn::decode_json(Self, BytesView, file_offset~ : UInt64, column_index~ : Int, max_value_bytes? : Int, max_depth? : Int, max_nodes? : Int) -> DecodedJson raise DecodeError
 pub fn TableColumn::decode_string(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedString raise DecodeError
 pub fn TableColumn::decode_temporal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedTemporal raise DecodeError
 pub fn TableColumn::equal(Self, Self) -> Bool

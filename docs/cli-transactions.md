@@ -109,6 +109,8 @@ EOF 总是调用 finish。完整 ROWS 后缺 XID/COMMIT 也属于 IncompleteTran
 
 committed 仅表达本工具在上述已知事务型表前提下验证了受支持的显式区间，不承诺处理任意 MySQL Binlog、隐式或自动提交、XA、DDL、非事务表、GTID 语义、多文件续接、SQL 回放或 exactly-once。有类型提交行结果也可通过[事务库接口](transactions.md)获取，独立 `--rows` 的值仍标记 unconfirmed。
 
+普通完整 JSON 列也沿用该导出协议，value 为 json_text 字符串；SQL NULL、JSON null 和缺失列分别保留。opaque / partial JSON 明确失败，不导出该笔待定事务，示例见 [JSON 字段](json-values.md)。
+
 ## 验证
 
 ```text

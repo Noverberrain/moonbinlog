@@ -259,12 +259,13 @@ test "NULL on a NOT NULL column reports its table index and bitmap byte location
 }
 
 ///|
-test "present non-NULL unsupported JSON fails without guessing a field length" {
+test "present non-NULL JSON requires its length prefix before decoding" {
   match row_image_error(b"\x00", b"\x00\x00\x01") {
-    UnsupportedRowColumn(file_offset~, column_index~, wire_type~) => {
+    TruncatedColumnValue(file_offset~, column_index~, expected~, actual~) => {
       assert_eq(file_offset, 0x100000101UL)
       assert_eq(column_index, 16)
-      assert_eq(wire_type, (245 : Byte))
+      assert_eq(expected, 4)
+      assert_eq(actual, 0)
     }
     other => fail("unexpected error: \{Repr(other)}")
   }

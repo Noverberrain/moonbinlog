@@ -17,7 +17,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 - **保留数据含义**：区分缺失列、NULL 和实际值；整数保留完整精度，DECIMAL 使用精确字符串。
 - **显式管理状态**：表映射按语句清理，待定行变化在事务提交后才作为提交结果返回。
 - **可定位的错误**：通过 `DecodeError` 报告截断、非法元数据、校验失败和资源上限等问题。
-- **可复现的验证**：独立构造协议样本，并固定三组真实 MySQL 日志与官方工具输出，记录 SHA-256，逐字段比较行镜像。
+- **可复现的验证**：独立构造协议样本，并固定六组真实 MySQL 日志与官方工具输出，记录 SHA-256，逐字段比较行镜像。
 
 离线分析、CDC 和审计是后续应用方向；目前没有数据库订阅、数据投递或 SQL 回放功能。
 
@@ -36,11 +36,12 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 精确小数 | NEWDECIMAL | 最高 65 位精度、30 位小数，保留 scale |
 | 日期与时间 | DATE / YEAR / TIMESTAMP2 / DATETIME2 / TIME2 | 支持 0～6 位小数，不进行时区转换 |
 | 其他标量 | FLOAT / DOUBLE、BIT、ENUM / SET | 浮点拒绝非有限值；枚举返回索引，集合返回位掩码 |
+| JSON | 完整 binary JSON 对象、数组与普通标量 | 精确整数，严格 UTF-8；opaque / partial diff 尚不支持 |
 | 行镜像 | 列存在位图、紧凑 NULL 位图、有类型字段 | 区分 `Absent`、`Null` 和实际值 |
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：279 项 MoonBit 测试，以及事件/行变化/事务/筛选四组 CLI 共 247 个场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
+**验证状态：292 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON 五组 CLI 共 360 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
 
 ## 解析流程
 
@@ -80,7 +81,7 @@ moon build --target native
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和四组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和五组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 
@@ -109,6 +110,14 @@ moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-sc
 `--rows` 与 `--schema PATH` 必须一起使用，自动输出 JSON Lines。每条 INSERT / UPDATE / DELETE 包含库表名、列标签及 before / after，保留缺失列、NULL、精确整数与小数；原始字符串和 BLOB 使用 hex。增加 `--summary` 只输出行变化统计，但仍执行解码。
 
 所有行记录及摘要均标记 `transaction_status: "unconfirmed"`，本模式不组装提交事务。配置必须匹配日志对应的历史 schema，列名及整数符号属性由提供者负责。输出字段与限制见[行变化 CLI](docs/cli-rows.md)和 [schema 配置](docs/schema.md)。
+
+### 读取 JSON 字段
+
+```sh
+moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-json-schema.json fixtures/mysql-json/crc32-minimal.binlog
+```
+
+普通完整 JSON 已接入行与事务导出。列值使用 `type: "json", encoding: "json_text"`，value 为保留整数原文的 JSON 文本字符串，SQL NULL 与 JSON null 分开表示；消费方再次解析时需要保留大整数精度。支持范围和配额见 [JSON 字段说明](docs/json-values.md)。
 
 ### 查看显式事务汇总
 
@@ -174,10 +183,10 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 
 - 当前面向 MySQL **8.0.x、Binlog v4、未加密、常规 ROWS v2** 子集，不承诺兼容 MariaDB 或其他 MySQL 版本。
 - 尚未实现 GTID、XA、DDL / 隐式事务、自动提交推断、SAVEPOINT、压缩事务及旧版 / partial 行事件。
-- JSON、GEOMETRY 等字段类型和字符集转换尚未实现；外部 schema 目前提供列名与整数符号属性，历史演进及自动推导尚未实现。
+- JSON 的 opaque 扩展、partial diff、GEOMETRY 和字符集转换尚未实现；外部 schema 目前提供列名与整数符号属性，历史演进及自动推导尚未实现。
 - 事务汇总以调用者已知使用事务型表为前提，无法从当前表映射推断存储引擎及非事务表回滚语义。
 - 默认单事件上限 16 MiB；事务上限为 4096 个事件、10000 个行变化、64 MiB 编码字节。详细配额及配置范围见各层文档。
-- 真实文件验证目前仅覆盖 Windows / MySQL 8.0.43 的三组固定样本；性能基准和生产环境验证尚未完成。
+- 真实文件验证目前仅覆盖 Windows / MySQL 8.0.43 的六组固定样本；性能基准和生产环境验证尚未完成。
 
 ## 文档导航
 
@@ -185,6 +194,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | --- | --- |
 | API 总览与可执行示例 | [README.mbt.md](README.mbt.md) · [生成的公共接口](pkg.generated.mbti) |
 | 事件格式与校验 | [格式描述 / CRC32](docs/format-checksum.md) |
+| JSON 字段 | [binary JSON、精度、配额与 CLI 表示](docs/json-values.md) |
 | 文件级遍历 | [内存文件遍历、偏移与错误处理](docs/file-traversal.md) |
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
 | 命令行行变化 | [schema 接入、行 JSON 与提交状态](docs/cli-rows.md) |
@@ -215,6 +225,8 @@ Get-ChildItem scripts/generate_*_fixtures.py | ForEach-Object {
 }
 python scripts/verify_mysql_fixtures.py --check
 if ($LASTEXITCODE -ne 0) { throw 'MySQL fixture check failed' }
+python scripts/verify_json_fixtures.py --check
+if ($LASTEXITCODE -ne 0) { throw 'JSON fixture check failed' }
 python scripts/generate_schema_example.py --check
 if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 ```
@@ -231,6 +243,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] 显式事务边界、提交 / 回滚与配额检查
 - [x] 离线 Binlog 文件字节遍历（内存视图接口）
 - [x] 三组真实 MySQL 8.0.43 文件集成及官方 mysqlbinlog 对照
+- [x] 完整 binary JSON 普通标量、容器及行/事务接入
 - [ ] 更多字段 / 事件类型
 - [x] 最小离线 CLI：文件读取、事件列表与统计
 - [x] CLI 的 JSON Lines 输出与机器处理示例
@@ -246,7 +259,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 
 欢迎通过 Issue 提供使用场景、最小复现或协议兼容性问题。提交问题时请附上工具链版本、MySQL 版本、校验模式、事件类型、错误偏移和预期行为；提交日志样本前请移除业务敏感数据。
 
-修改后请运行 `./scripts/ci.ps1`，或独立执行检查、native 测试、构建、格式、接口及样本检查；CLI 验证为 `scripts/test_cli.py`、`scripts/test_rows_cli.py`、`scripts/test_transactions_cli.py` 和 `scripts/test_filters_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
+修改后请运行 `./scripts/ci.ps1`，或独立执行检查、native 测试、构建、格式、接口及样本检查；CLI 验证为 `scripts/test_cli.py`、`scripts/test_rows_cli.py`、`scripts/test_transactions_cli.py`、`scripts/test_filters_cli.py` 和 `scripts/test_json_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
 
 ## 开源许可证
 

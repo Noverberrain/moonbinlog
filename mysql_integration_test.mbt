@@ -35,6 +35,7 @@ fn mysql_cell_text(cell : @moonbinlog.RowCell) -> String {
     Integer(Signed(value)) => value.to_string()
     Integer(Unsigned(value)) => value.to_string()
     StringBytes(value) | BlobBytes(value) => "hex:" + @hex.encode(value)
+    JsonDocument(value) => "json:" + value.value.to_json_text()
     Decimal(value) => value.value
     Floating({ value: Single(value), .. }) => value.to_string()
     Floating({ value: DoublePrecision(value), .. }) => value.to_string()

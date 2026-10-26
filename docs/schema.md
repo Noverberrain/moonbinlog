@@ -40,6 +40,8 @@
 
 完整的 20 列真实样本配置见 [mysql-8.0-schema.json](../examples/mysql-8.0-schema.json)。它从仓库固定的 MySQL 8.0.43 TABLE_MAP 获取物理描述，从专用测试 DDL 获取列名和整数 signedness，不查询业务数据库。
 
+JSON 列使用 wire_type=245、metadata="04"、nullable 按实际表定义配置，省略 unsigned。两列示例见 [mysql-8.0-json-schema.json](../examples/mysql-8.0-json-schema.json)，已由三组真实日志回归验证。元数据表示长度前缀宽度，不能写成 JSON 文本编码；解码限制见 [JSON 字段](json-values.md)。
+
 ## 库接口与使用顺序
 
 1. 将 JSON 文本交给 `SchemaConfig::parse(text)`。输入为 `StringView`，本层不进行文件 I/O 或 UTF-8 转换。

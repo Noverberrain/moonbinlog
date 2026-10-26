@@ -52,6 +52,7 @@ moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-sc
 | --- | --- |
 | integer | signed/unsigned 均为十进制字符串；布尔 unsigned 表明解码符号属性 |
 | string_bytes / blob_bytes | 小写十六进制字符串；encoding 固定为 hex，不推断字符集 |
+| json | 紧凑 JSON 文本字符串，encoding 固定为 json_text，整数保留十进制原文 |
 | decimal | 精确十进制字符串，保留 scale；数字 precision / scale |
 | float32 / float64 | 有限 JSON 数字；bits 为原始 IEEE-754 位模式的无符号十进制字符串 |
 | bit | 无符号十进制字符串；数字 bit_length |
@@ -63,6 +64,8 @@ moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-sc
 | timestamp | 对象 {seconds, microsecond}，均为数字；seconds 为原始 UInt32 Unix 秒 |
 
 所有日期时间类型额外包含数字 `fractional_precision`，不做时区转换，也不将零日期强制转成应用语言的日期对象。浮点消费方若需要区分负零，应读取 bits；不要只依赖 JSON 数字解析结果。整数、BIT、SET 和 bits 使用字符串，避免经过 double 时丢失精度；Java 可按需使用 BigInteger，DECIMAL 可用 BigDecimal 并保留 scale。
+
+JSON 的 value 是字符串，须再次用保留大整数精度的解析器读取；JSON null 为 state=value/value="null"，SQL NULL 为 state=null。完整支持范围见 [JSON 字段](json-values.md)。
 
 ## 统计与错误
 
@@ -82,7 +85,7 @@ FDE（15）建立或替换格式上下文并丢弃旧映射。每个 TABLE_MAP�
 
 ROWS（30/31/32）按当前 table_id 查找映射并完整解码；STMT_END_F 清空映射，解码/绑定错误也清空。以下非行事件仅作为允许的包络跳过其 body 语义，同时清空映射：QUERY（2）、STOP（3）、ROTATE（4）、XID（16）、HEARTBEAT（27）、GTID（33）、ANONYMOUS_GTID（34）、PREVIOUS_GTIDS（35）。此处并不校验 SQL、GTID 集或事务边界的业务语义，也不支持自动切换到其他日志文件。
 
-其他类型立即报 UnsupportedEvent，不尝试恢复后继续；包含旧版行事件、PARTIAL_UPDATE_ROWS（39）和未知类型。字段支持范围与现有行解码器一致，JSON、GEOMETRY、压缩事务等尚不支持。
+其他类型立即报 UnsupportedEvent，不尝试恢复后继续；包含旧版行事件、PARTIAL_UPDATE_ROWS（39）和未知类型。字段支持范围与现有行解码器一致，JSON 的 opaque 扩展/partial diff、GEOMETRY、压缩事务等尚不支持。
 
 完整事件边界 EOF、成功退出码或 row_summary 只能说明本模式扫描完成，均不能证明事务已提交。即使文件在完整 ROWS 后、XID 前结束，仍可扫描成功，行与摘要继续标记 unconfirmed；需要提交语义可使用[事务 CLI 的 --include-rows](cli-transactions.md#导出已提交行变化)或[显式事务库接口](transactions.md)。
 

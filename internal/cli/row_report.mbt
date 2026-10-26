@@ -44,6 +44,11 @@ pub fn row_cell_json(
       fields["encoding"] = "hex"
       fields["value"] = Json::string(@hex.encode(value))
     }
+    JsonDocument(value) => {
+      fields["type"] = "json"
+      fields["encoding"] = "json_text"
+      fields["value"] = Json::string(value.value.to_json_text())
+    }
     Decimal(value) => {
       fields["type"] = "decimal"
       fields["value"] = Json::string(value.value)
