@@ -2,6 +2,10 @@
 
 `SchemaConfig` 为调用者提供列名和整数 signed/unsigned 信息，并在使用前与 TABLE_MAP 的物理列描述逐位置匹配。库接口接收 JSON 文本；CLI 的 `--rows --schema PATH` 输出行变化，`--transactions --schema PATH` 解码并汇总显式事务，详见[行变化 CLI](cli-rows.md)与[事务 CLI](cli-transactions.md)。原有事件模式输出协议保持不变。
 
+## 从日志起草
+
+可先运行 `moonbinlog --schema-template FILE` 提取物理列描述，列名填 column_N、整数 unsigned 填 null，须对照历史 DDL 确认后再交给配置解析器。它不推导列名、signedness 或历史演进，同名表物理结构冲突会失败，详见 [草稿生成](cli-schema-template.md)。
+
 ## 配置格式
 
 一个包含两列的表配置示例：

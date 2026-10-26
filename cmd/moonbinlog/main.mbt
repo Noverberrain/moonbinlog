@@ -27,6 +27,21 @@ async fn read_input(path : String, max_bytes : Int32) -> Bytes {
 
 ///|
 async fn inspect(config : @cli.Config) -> Unit {
+  if config.schema_template {
+    let data = read_input(config.path, config.max_file_bytes)
+    let reader = @binlog.BinlogFileReader::new(
+      data,
+      max_event_size=config.max_event_bytes,
+    )
+    let template = @cli.SchemaTemplate::new(
+      max_event_size=config.max_event_bytes,
+    )
+    while reader.next() is Some(event) {
+      template.feed(event)
+    }
+    @stdio.stdout.write(template.render() + "\n")
+    return
+  }
   let schema = match config.schema_path {
     Some(path) => {
       let bytes = read_input(path, 4_194_304)

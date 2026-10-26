@@ -42,6 +42,14 @@ pub(all) suberror RowScanError {
 } derive(@debug.Debug)
 pub fn RowScanError::to_repr(Self) -> @debug.Repr
 
+pub(all) suberror TemplateError {
+  InvalidTemplate(String)
+  ConflictingTable(database~ : String, table~ : String, first_offset~ : UInt64, file_offset~ : UInt64)
+  TemplateLimit(String)
+  TemplateAborted
+} derive(@debug.Debug)
+pub fn TemplateError::to_repr(Self) -> @debug.Repr
+
 // Types and methods
 pub(all) enum Command {
   Help
@@ -58,6 +66,7 @@ pub struct Config {
   rows : Bool
   transactions : Bool
   include_rows : Bool
+  schema_template : Bool
   filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt
@@ -72,6 +81,13 @@ pub struct RowScanner {
 }
 pub fn RowScanner::feed(Self, @moonbinlog.BinlogFileEvent) -> (@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema)? raise
 pub fn RowScanner::new(@moonbinlog.SchemaConfig, max_event_size? : UInt) -> Self
+
+pub struct SchemaTemplate {
+  // private fields
+}
+pub fn SchemaTemplate::feed(Self, @moonbinlog.BinlogFileEvent) -> Unit raise
+pub fn SchemaTemplate::new(max_tables? : Int, max_output_units? : Int, max_event_size? : UInt) -> Self raise TemplateError
+pub fn SchemaTemplate::render(Self) -> String raise TemplateError
 
 pub struct Stats {
   // private fields

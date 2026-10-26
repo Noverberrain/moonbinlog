@@ -30,7 +30,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 离线 CLI | 事件统计、外部 schema 行变化、显式事务汇总与已提交行导出 | 行模式标记 unconfirmed，事务模式可按整笔提交导出行值 |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
-| 外部 schema | JSON 配置、列名与整数符号属性、表映射绑定 | 核对逐列物理描述，不推导历史 DDL |
+| 外部 schema | JSON 配置、表映射绑定及从日志生成草稿 | 物理描述自动提取，列名和整数符号需确认 |
 | 整数 | TINYINT / SMALLINT / MEDIUMINT / INT / BIGINT | signed / unsigned 由调用者明确提供 |
 | 字符串与二进制 | VARCHAR / STRING、常规 BLOB / TEXT | 保留原始字节，不推断字符集 |
 | 精确小数 | NEWDECIMAL | 最高 65 位精度、30 位小数，保留 scale |
@@ -41,7 +41,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：292 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON 五组 CLI 共 360 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
+**验证状态：301 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿六组 CLI 共 442 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
 
 ## 解析流程
 
@@ -81,7 +81,7 @@ moon build --target native
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和五组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和六组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 
@@ -100,6 +100,14 @@ moon run --target native cmd/moonbinlog -- --json --summary fixtures/mysql-8.0/c
 ```
 
 默认显示 TSV 事件表及类型统计，`--json` 切换为逐行 JSON 对象，`--summary` 仅输出统计。JSON 的 UInt64 字段用十进制字符串保留精度。文件默认限制 64 MiB，单事件默认限制 16 MiB。退出码 0 表示遍历成功，1 表示读取或解析失败，2 表示参数错误；完整参数和构建产物路径见 [CLI 使用说明](docs/cli.md)。
+
+### 先生成 schema 草稿
+
+```sh
+moon run --target native cmd/moonbinlog -- --schema-template fixtures/mysql-json/crc32-full.binlog
+```
+
+自动提取库表和逐列物理描述；列名为 column_N 占位标签，整数 unsigned 为 null，须按历史 DDL 确认后再使用。重复表映射会合并，同名表结构冲突会报错，成功 EOF 后才输出整份 JSON。保存和确认步骤见 [schema 草稿](docs/cli-schema-template.md)。
 
 ### 查看带列名的行变化
 
@@ -197,6 +205,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | JSON 字段 | [binary JSON、精度、配额与 CLI 表示](docs/json-values.md) |
 | 文件级遍历 | [内存文件遍历、偏移与错误处理](docs/file-traversal.md) |
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
+| Schema 草稿 | [从 TABLE_MAP 生成并确认配置](docs/cli-schema-template.md) |
 | 命令行行变化 | [schema 接入、行 JSON 与提交状态](docs/cli-rows.md) |
 | 命令行事务 | [显式提交/回滚汇总、统计与配额](docs/cli-transactions.md) |
 | 输出筛选 | [库表精确匹配、整笔事务与计数范围](docs/cli-filters.md) |
@@ -248,6 +257,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] 最小离线 CLI：文件读取、事件列表与统计
 - [x] CLI 的 JSON Lines 输出与机器处理示例
 - [x] 外部 schema 配置与表映射绑定（库接口）
+- [x] 从 Binlog 生成 schema 草稿，检查同名表物理结构冲突
 - [x] CLI 接入 schema 并显示未确认提交的行变化
 - [x] CLI 显式事务提交/回滚汇总
 - [x] 事务模式按整笔提交导出有类型行变化
@@ -259,7 +269,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 
 欢迎通过 Issue 提供使用场景、最小复现或协议兼容性问题。提交问题时请附上工具链版本、MySQL 版本、校验模式、事件类型、错误偏移和预期行为；提交日志样本前请移除业务敏感数据。
 
-修改后请运行 `./scripts/ci.ps1`，或独立执行检查、native 测试、构建、格式、接口及样本检查；CLI 验证为 `scripts/test_cli.py`、`scripts/test_rows_cli.py`、`scripts/test_transactions_cli.py`、`scripts/test_filters_cli.py` 和 `scripts/test_json_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
+修改后请运行 `./scripts/ci.ps1`，或独立执行检查、native 测试、构建、格式、接口及样本检查；CLI 验证为 `scripts/test_cli.py`、`scripts/test_rows_cli.py`、`scripts/test_transactions_cli.py`、`scripts/test_filters_cli.py`、`scripts/test_json_cli.py` 和 `scripts/test_schema_template_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
 
 ## 开源许可证
 

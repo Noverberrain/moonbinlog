@@ -1,6 +1,6 @@
 # 离线 Binlog CLI
 
-CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog。默认检查文件标识、事件完整性、格式与校验和，输出 TSV 或 JSON Lines 事件与统计；`--rows --schema PATH` 输出[有类型的行变化](cli-rows.md)，`--transactions --schema PATH` 输出[显式事务汇总](cli-transactions.md)。只有事务模式解析受支持的 BEGIN/COMMIT/ROLLBACK 与 XID 边界；三种模式都不解释通用 SQL 或 GTID 语义。
+CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog。默认检查文件标识、事件完整性、格式与校验和，输出 TSV 或 JSON Lines 事件与统计；`--rows --schema PATH` 输出[有类型的行变化](cli-rows.md)，`--transactions --schema PATH` 输出[显式事务汇总](cli-transactions.md)。只有事务模式解析受支持的 BEGIN/COMMIT/ROLLBACK 与 XID 边界；四种模式都不解释通用 SQL 或 GTID 语义；`--schema-template FILE` 生成[待确认的 schema 草稿](cli-schema-template.md)。
 
 ## 运行与构建
 
@@ -32,7 +32,8 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+moonbinlog [--json] [--summary] [--schema-template | --schema-template | 生成待确认的 schema 草稿；仅在正常 EOF 后输出一个 JSON 对象 | 关闭 |
+| --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
 ```
 
 | 参数 | 含义 | 默认值 |
@@ -40,6 +41,7 @@ moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--sc
 | FILE | 一个现有普通文件的路径 | 必填 |
 | --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
+| --schema-template | 生成待确认的 schema 草稿；仅在正常 EOF 后输出一个 JSON 对象 | 关闭 |
 | --rows | 解码行变化，自动输出 JSON Lines；必须指定 --schema | 关闭 |
 | --transactions | 汇总显式事务，自动输出 JSON Lines；必须指定 --schema，与 --rows 互斥 | 关闭 |
 | --include-rows | 在提交对象中导出完整 row_changes；必须与 --transactions 一起使用 | 关闭 |
@@ -143,3 +145,5 @@ python scripts/test_filters_cli.py
 20 项内部包测试覆盖参数、边界值、TSV、JSON 字段类型、统计和精确匹配；根包另有 7 项行测试、7 项事务测试、4 项提交行导出测试和 4 项筛选状态测试。58 个事件、28 个行模式、72 个事务及 89 个筛选子进程场景合计 247 个；覆盖真实文件、300 个官方列位置、路径/编码、精度、大小配额、schema、错误前缀及完整事务选择。脚本默认使用上面的 debug 构建路径，也可传 `--executable PATH` 指向其他构建产物。
 
 JSON 字段新增独立 `python scripts/test_json_cli.py` 回归（可用 `--exe PATH` 指定构建产物），覆盖 113 个场景和三组 JSON 实际捕获的 42 个官方列位置；加上以上四组共 360 个 CLI 场景。协议见 [JSON 字段](json-values.md)。
+
+`--schema-template FILE` 可生成待确认的 schema 草稿，与行/事务/summary/schema/筛选选项互斥，仅在完整校验到 EOF 后输出一个 JSON。列名和整数符号需手动确认，详见 [生成 schema 草稿](cli-schema-template.md)。该模式新增 82 个子进程场景，六组 CLI 合计 442 个，已加入统一 CI。

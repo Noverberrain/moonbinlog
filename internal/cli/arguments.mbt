@@ -9,6 +9,7 @@ pub struct Config {
   rows : Bool
   transactions : Bool
   include_rows : Bool
+  schema_template : Bool
   filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt32
@@ -47,7 +48,7 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
@@ -56,6 +57,8 @@ pub fn usage() -> String {
     #|  --transactions        Summarize explicit transactional RBR commits/rollbacks.
     #|  --include-rows        Include committed row values; requires --transactions.
     #|  --schema PATH         Schema v1 UTF-8 JSON file; required by either mode.
+    #|  --schema-template     Emit a schema draft from TABLE_MAP after clean EOF.
+    #|                        Review column_N names and replace integer unsigned:null.
     #|  --database NAME       Exact database name; requires --rows/--transactions.
     #|  --table NAME          Exact table name; combine with --database if needed.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
@@ -67,6 +70,7 @@ pub fn usage() -> String {
     #|--rows and --transactions are mutually exclusive and require --schema.
     #|--rows does not confirm commits. --transactions requires transactional tables.
     #|Filters select row events or whole transactions; all input is still decoded.
+    #|--schema-template accepts --json and byte limits; no rows/schema/summary/filters.
   text
 }
 
@@ -97,6 +101,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut rows = false
   let mut transactions = false
   let mut include_rows = false
+  let mut schema_template = false
   let mut schema_path = None
   let mut database = None
   let mut table = None
@@ -122,6 +127,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
         raise InvalidArguments("duplicate --transactions")
       }
       transactions = true
+    } else if !positional && arg == "--schema-template" {
+      guard !schema_template else {
+        raise InvalidArguments("duplicate --schema-template")
+      }
+      schema_template = true
     } else if !positional && arg == "--include-rows" {
       guard !include_rows else {
         raise InvalidArguments("duplicate --include-rows")
@@ -208,6 +218,17 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     )
   }
   let filter = TableFilter::{ database, table, }
+  guard !schema_template ||
+    !(rows ||
+    transactions ||
+    include_rows ||
+    summary_only ||
+    schema_path is Some(_) ||
+    filter.is_active()) else {
+    raise InvalidArguments(
+      "--schema-template cannot combine with rows/transactions/schema/summary/filters",
+    )
+  }
   guard !filter.is_active() || rows || transactions else {
     raise InvalidArguments(
       "--database/--table requires --rows or --transactions",
@@ -216,10 +237,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   Inspect({
     path,
     summary_only,
-    json_output: json_output || rows || transactions,
+    json_output: json_output || rows || transactions || schema_template,
     rows,
     transactions,
     include_rows,
+    schema_template,
     filter,
     schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),
