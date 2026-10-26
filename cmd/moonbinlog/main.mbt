@@ -35,6 +35,7 @@ async fn inspect(config : @cli.Config) -> Unit {
     )
     let template = @cli.SchemaTemplate::new(
       max_event_size=config.max_event_bytes,
+      use_table_metadata=config.use_table_metadata,
     )
     while reader.next() is Some(event) {
       template.feed(event)

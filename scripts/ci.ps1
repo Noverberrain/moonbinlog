@@ -43,7 +43,8 @@ try {
         'scripts/test_transactions_cli.py',
         'scripts/test_filters_cli.py',
         'scripts/test_json_cli.py',
-        'scripts/test_schema_template_cli.py'
+        'scripts/test_schema_template_cli.py',
+        'scripts/test_template_metadata_cli.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript)
     }

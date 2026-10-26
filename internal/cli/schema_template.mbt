@@ -12,6 +12,11 @@ pub(all) suberror TemplateError {
   )
   TemplateLimit(String)
   TemplateAborted
+  InvalidTemplateMetadata(
+    file_offset~ : UInt64,
+    field_type~ : Byte,
+    reason~ : String
+  )
 } derive(Debug)
 
 ///|
@@ -24,6 +29,9 @@ pub struct SchemaTemplate {
   priv tables : Array[@moonbinlog.TableMap]
   priv indices : Map[(String, String), Int32]
   priv documents : Array[Json]
+  priv hints : Array[TemplateHints]
+  priv document_units : Array[Int32]
+  priv use_table_metadata : Bool
   priv max_tables : Int32
   priv max_output_units : Int32
   priv max_event_size : UInt32
@@ -42,6 +50,7 @@ pub fn SchemaTemplate::new(
   max_tables~ : Int32 = 1024,
   max_output_units~ : Int32 = 1048576,
   max_event_size~ : UInt32 = 16777216,
+  use_table_metadata~ : Bool = false,
 ) -> SchemaTemplate raise TemplateError {
   guard max_tables > 0 && max_output_units >= 32 && max_event_size >= 19 else {
     raise InvalidTemplate("invalid template limits")
@@ -50,6 +59,9 @@ pub fn SchemaTemplate::new(
     tables: [],
     indices: {},
     documents: [],
+    hints: [],
+    document_units: [],
+    use_table_metadata,
     max_tables,
     max_output_units,
     max_event_size,
@@ -64,6 +76,8 @@ fn SchemaTemplate::abort(self : SchemaTemplate) -> Unit {
   self.tables.clear()
   self.indices.clear()
   self.documents.clear()
+  self.hints.clear()
+  self.document_units.clear()
 }
 
 ///|
@@ -83,7 +97,13 @@ pub fn SchemaTemplate::feed(
     max_event_size=self.max_event_size,
   )
   let key = (table.database, table.table)
-  if self.indices.get(key) is Some(index) {
+  let mut hints = if self.use_table_metadata {
+    template_hints(table)
+  } else {
+    { names: None, signs: None, }
+  }
+  let index = self.indices.get(key)
+  if index is Some(index) {
     let first = self.tables[index]
     guard first.columns == table.columns else {
       raise ConflictingTable(
@@ -93,21 +113,43 @@ pub fn SchemaTemplate::feed(
         file_offset=table.header.file_offset,
       )
     }
-    return
+    if !self.use_table_metadata {
+      return
+    }
+    let previous = self.hints[index]
+    hints = {
+      names: merge_template_hint(previous.names, hints.names, first, table),
+      signs: merge_template_hint(previous.signs, hints.signs, first, table),
+    }
+    if hints == previous {
+      return
+    }
   }
-  guard self.tables.length() < self.max_tables else {
+  guard index is Some(_) || self.tables.length() < self.max_tables else {
     raise TemplateLimit("too many distinct tables")
   }
   let columns = []
   for i, column in table.columns {
     let fields : Map[String, Json] = {
-      "name": Json::string("column_\{i + 1}"),
+      "name": Json::string(
+        if hints.names is Some(names) {
+          names[i]
+        } else {
+          "column_\{i + 1}"
+        },
+      ),
       "wire_type": @json.to_json(column.wire_type.to_int()),
       "metadata": Json::string(@hex.encode(column.metadata)),
       "nullable": @json.to_json(column.nullable),
     }
     match column.wire_type {
-      1 | 2 | 3 | 8 | 9 => fields["unsigned"] = Json::null()
+      1 | 2 | 3 | 8 | 9 =>
+        fields["unsigned"] = if hints.signs is Some(signs) &&
+          signs[i] is Some(flag) {
+          @json.to_json(flag)
+        } else {
+          Json::null()
+        }
       _ => ()
     }
     columns.push(Json::object(fields))
@@ -119,18 +161,33 @@ pub fn SchemaTemplate::feed(
   }
   let units = document.stringify().length()
   // Compact wrapper + one separator per table is a conservative upper bound.
-  guard units < self.max_output_units - self.output_units else {
+  let previous_units = if index is Some(index) {
+    self.document_units[index]
+  } else {
+    0
+  }
+  let base = self.output_units - previous_units
+  let extra = if index is Some(_) { 0 } else { 1 }
+  guard units <= self.max_output_units - base - extra else {
     raise TemplateLimit("template exceeds UTF-16 output budget")
   }
-  self.output_units += units + 1
-  self.indices[key] = self.tables.length()
-  self.tables.push(table)
-  self.documents.push(document)
+  self.output_units = base + units + extra
+  if index is Some(index) {
+    self.hints[index] = hints
+    self.documents[index] = document
+    self.document_units[index] = units
+  } else {
+    self.indices[key] = self.tables.length()
+    self.tables.push(table)
+    self.hints.push(hints)
+    self.documents.push(document)
+    self.document_units.push(units)
+  }
 }
 
 ///|
-/// Integer unsigned:null deliberately fails SchemaConfig::parse until reviewed.
-/// Column labels are placeholders even when optional TABLE_MAP metadata exists.
+/// Missing integer signedness stays null and fails SchemaConfig::parse.
+/// With use_table_metadata, available column labels/signedness are merged.
 pub fn SchemaTemplate::render(
   self : SchemaTemplate,
 ) -> String raise TemplateError {

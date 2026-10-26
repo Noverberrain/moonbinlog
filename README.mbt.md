@@ -15,7 +15,7 @@
 
 行/事务模式可使用 --database NAME、--table NAME 精确筛选输出；事务以整笔选择，所有输入仍完整解码，规则见[库表筛选](docs/cli-filters.md)。
 
-`--schema-template FILE` 从 TABLE_MAP 提取 schema 草稿：物理列描述自动填充，column_N 标签与整数 unsigned:null 需要对照 DDL 确认。同名表结构冲突时失败，正常 EOF 后整份输出，详见 [生成草稿](docs/cli-schema-template.md)。
+`--schema-template FILE` 从 TABLE_MAP 提取 schema 草稿：物理列描述自动填充，column_N 标签与整数 unsigned:null 需要对照 DDL 确认。同名表结构冲突时失败，正常 EOF 后整份输出，详见 [生成草稿](docs/cli-schema-template.md)。可选 `--use-table-metadata` 根据可用元数据补齐名称/整数符号，严格检查缺损及冲突，见 [元数据提取](docs/template-metadata.md)。
 
 ## 使用示例
 
@@ -112,6 +112,7 @@ python scripts/test_transactions_cli.py
 python scripts/test_filters_cli.py
 python scripts/test_json_cli.py
 python scripts/test_schema_template_cli.py
+python scripts/test_template_metadata_cli.py
 python scripts/generate_schema_example.py --check
 ```
 
@@ -135,4 +136,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成从日志生成 schema 草稿，详细范围见 [草稿文档](docs/cli-schema-template.md)。暂停，等待用户继续指令。
+本批已完成 schema 草稿的可选元数据提取，详细范围见 [元数据文档](docs/template-metadata.md)。暂停，等待用户继续指令。

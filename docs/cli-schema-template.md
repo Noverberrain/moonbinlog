@@ -18,6 +18,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema template generation failed' }
 
 确认进程成功后再写文件，避免把失败时的空 stdout 保存成配置。命令本身只读输入，不直接创建配置文件。
 
+如日志包含可选列名/符号元数据，可增加 `--use-table-metadata` 自动补齐已有信息；默认行为不变。启用后的缺失回退、合并、严格校验与冲突规则见 [元数据提取](template-metadata.md)。
+
 ## 需要确认的内容
 
 例如两列 INT/JSON 表会输出以下内容（这里为方便阅读进行了排版）：

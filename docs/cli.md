@@ -32,7 +32,8 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--schema-template | --schema-template | 生成待确认的 schema 草稿；仅在正常 EOF 后输出一个 JSON 对象 | 关闭 |
+moonbinlog [--json] [--summary] [--schema-template | --use-table-metadata | 提取可用列名和整数符号，仅用于 --schema-template；缺失时保留占位值 | 关闭 |
+| --schema-template | 生成待确认的 schema 草稿；仅在正常 EOF 后输出一个 JSON 对象 | 关闭 |
 | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
 ```
 
@@ -41,6 +42,7 @@ moonbinlog [--json] [--summary] [--schema-template | --schema-template | 生成�
 | FILE | 一个现有普通文件的路径 | 必填 |
 | --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
+| --use-table-metadata | 提取可用列名和整数符号，仅用于 --schema-template；缺失时保留占位值 | 关闭 |
 | --schema-template | 生成待确认的 schema 草稿；仅在正常 EOF 后输出一个 JSON 对象 | 关闭 |
 | --rows | 解码行变化，自动输出 JSON Lines；必须指定 --schema | 关闭 |
 | --transactions | 汇总显式事务，自动输出 JSON Lines；必须指定 --schema，与 --rows 互斥 | 关闭 |

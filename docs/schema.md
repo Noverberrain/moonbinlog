@@ -6,6 +6,8 @@
 
 可先运行 `moonbinlog --schema-template FILE` 提取物理列描述，列名填 column_N、整数 unsigned 填 null，须对照历史 DDL 确认后再交给配置解析器。它不推导列名、signedness 或历史演进，同名表物理结构冲突会失败，详见 [草稿生成](cli-schema-template.md)。
 
+草稿还可使用 `--use-table-metadata` 从日志的 COLUMN_NAME/SIGNEDNESS 提取已有信息，缺失时仍需人工确认；重复适用 TLV、损坏内容或跨映射矛盾会失败，见 [元数据提取](template-metadata.md)。这不改变普通 SchemaConfig 接口的外部配置要求。
+
 ## 配置格式
 
 一个包含两列的表配置示例：

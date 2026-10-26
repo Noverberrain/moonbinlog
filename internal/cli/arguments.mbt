@@ -10,6 +10,7 @@ pub struct Config {
   transactions : Bool
   include_rows : Bool
   schema_template : Bool
+  use_table_metadata : Bool
   filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt32
@@ -59,6 +60,7 @@ pub fn usage() -> String {
     #|  --schema PATH         Schema v1 UTF-8 JSON file; required by either mode.
     #|  --schema-template     Emit a schema draft from TABLE_MAP after clean EOF.
     #|                        Review column_N names and replace integer unsigned:null.
+    #|  --use-table-metadata  Fill available names/signedness; requires --schema-template.
     #|  --database NAME       Exact database name; requires --rows/--transactions.
     #|  --table NAME          Exact table name; combine with --database if needed.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
@@ -70,7 +72,7 @@ pub fn usage() -> String {
     #|--rows and --transactions are mutually exclusive and require --schema.
     #|--rows does not confirm commits. --transactions requires transactional tables.
     #|Filters select row events or whole transactions; all input is still decoded.
-    #|--schema-template accepts --json and byte limits; no rows/schema/summary/filters.
+    #|--schema-template accepts --json, --use-table-metadata and byte limits; no rows/schema/summary/filters.
   text
 }
 
@@ -102,6 +104,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut transactions = false
   let mut include_rows = false
   let mut schema_template = false
+  let mut use_table_metadata = false
   let mut schema_path = None
   let mut database = None
   let mut table = None
@@ -127,6 +130,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
         raise InvalidArguments("duplicate --transactions")
       }
       transactions = true
+    } else if !positional && arg == "--use-table-metadata" {
+      guard !use_table_metadata else {
+        raise InvalidArguments("duplicate --use-table-metadata")
+      }
+      use_table_metadata = true
     } else if !positional && arg == "--schema-template" {
       guard !schema_template else {
         raise InvalidArguments("duplicate --schema-template")
@@ -218,6 +226,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     )
   }
   let filter = TableFilter::{ database, table, }
+  guard !use_table_metadata || schema_template else {
+    raise InvalidArguments("--use-table-metadata requires --schema-template")
+  }
   guard !schema_template ||
     !(rows ||
     transactions ||
@@ -242,6 +253,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     transactions,
     include_rows,
     schema_template,
+    use_table_metadata,
     filter,
     schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),

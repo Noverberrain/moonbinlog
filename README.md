@@ -41,7 +41,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：301 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿六组 CLI 共 442 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
+**验证状态：307 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据七组 CLI 共 534 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
 
 ## 解析流程
 
@@ -81,7 +81,7 @@ moon build --target native
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和六组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和七组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 
@@ -107,7 +107,7 @@ moon run --target native cmd/moonbinlog -- --json --summary fixtures/mysql-8.0/c
 moon run --target native cmd/moonbinlog -- --schema-template fixtures/mysql-json/crc32-full.binlog
 ```
 
-自动提取库表和逐列物理描述；列名为 column_N 占位标签，整数 unsigned 为 null，须按历史 DDL 确认后再使用。重复表映射会合并，同名表结构冲突会报错，成功 EOF 后才输出整份 JSON。保存和确认步骤见 [schema 草稿](docs/cli-schema-template.md)。
+自动提取库表和逐列物理描述；列名为 column_N 占位标签，整数 unsigned 为 null，须按历史 DDL 确认后再使用。重复表映射会合并，同名表结构冲突会报错，成功 EOF 后才输出整份 JSON。保存和确认步骤见 [schema 草稿](docs/cli-schema-template.md)。增加 `--use-table-metadata` 可读取日志中已有的列名和整数符号属性，缺失时保留占位值，损坏或冲突时失败，见 [元数据提取](docs/template-metadata.md)。
 
 ### 查看带列名的行变化
 
@@ -269,7 +269,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 
 欢迎通过 Issue 提供使用场景、最小复现或协议兼容性问题。提交问题时请附上工具链版本、MySQL 版本、校验模式、事件类型、错误偏移和预期行为；提交日志样本前请移除业务敏感数据。
 
-修改后请运行 `./scripts/ci.ps1`，或独立执行检查、native 测试、构建、格式、接口及样本检查；CLI 验证为 `scripts/test_cli.py`、`scripts/test_rows_cli.py`、`scripts/test_transactions_cli.py`、`scripts/test_filters_cli.py`、`scripts/test_json_cli.py` 和 `scripts/test_schema_template_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
+修改后请运行 `./scripts/ci.ps1`，或独立执行检查、native 测试、构建、格式、接口及样本检查；CLI 验证为 `scripts/test_cli.py`、`scripts/test_rows_cli.py`、`scripts/test_transactions_cli.py`、`scripts/test_filters_cli.py`、`scripts/test_json_cli.py`、`scripts/test_schema_template_cli.py` 和 `scripts/test_template_metadata_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
 
 ## 开源许可证
 
