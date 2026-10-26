@@ -12,6 +12,8 @@ moon run --target native cmd/moonbinlog -- --transactions --schema examples/mysq
 
 此模式与 `--rows` 互斥，必须指定 `--schema PATH`，自动启用 JSON Lines；可显式添加 `--json`。默认输出计数，增加 `--include-rows` 才在提交对象中附带行值。`--summary` 省略单笔记录和行值，但仍完整绑定、解码和验证，即使同时指定 --include-rows。
 
+--database NAME / --table NAME 按整笔事务选择：任一成功解码的 ROWS 匹配即保留完整区间，包含其他表的计数与导出行；回滚同样按区间中已解码 ROWS 判断。空事务或仅 TABLE_MAP 在启用筛选后不命中；所有输入仍检查，详见[库表筛选](cli-filters.md)。
+
 schema 的 UTF-8/BOM、4 MiB 文件上限和库配额与行模式一致，详见 [schema 配置](schema.md)。每个 TABLE_MAP 都检查配置，整数 signedness 交给行解码器；配置不证明历史列名/符号属性正确，也不推导 DDL。
 
 ## 单笔事务记录

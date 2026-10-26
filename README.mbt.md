@@ -13,6 +13,8 @@
 
 `--transactions --schema PATH` 输出显式 BEGIN 到 XID/COMMIT/ROLLBACK 的事务计数与各表汇总，EOF 拒绝未结束事务；与 --rows 互斥。增加 `--include-rows` 在完整提交对象中导出 row_changes，回滚不导出行值，详见[事务 CLI](docs/cli-transactions.md)。
 
+行/事务模式可使用 --database NAME、--table NAME 精确筛选输出；事务以整笔选择，所有输入仍完整解码，规则见[库表筛选](docs/cli-filters.md)。
+
 ## 使用示例
 
 ```mbt check
@@ -102,6 +104,7 @@ python scripts/verify_mysql_fixtures.py --check
 python scripts/test_cli.py
 python scripts/test_rows_cli.py
 python scripts/test_transactions_cli.py
+python scripts/test_filters_cli.py
 python scripts/generate_schema_example.py --check
 ```
 
@@ -125,4 +128,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-下一批候选：CLI 按库表筛选输出。等待用户继续指令。
+下一批候选：MySQL JSON 字段解码。等待用户继续指令。

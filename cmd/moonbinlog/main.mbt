@@ -37,7 +37,7 @@ async fn inspect(config : @cli.Config) -> Unit {
   let (scanner, transactions) = match schema {
     Some(schema) =>
       if config.transactions {
-        (None, Some(@cli.TransactionScanner::new(schema)))
+        (None, Some(@cli.TransactionScanner::new(schema, filter=config.filter)))
       } else {
         (
           Some(
@@ -55,8 +55,11 @@ async fn inspect(config : @cli.Config) -> Unit {
   )
   let stats = @cli.Stats::new()
   let transaction_stats = @cli.TransactionStats::new()
+  let selected_transactions = @cli.TransactionStats::new()
   let mut row_events = 0
   let mut changes = 0
+  let mut selected_row_events = 0
+  let mut selected_changes = 0
   if !config.summary_only && !config.json_output {
     @stdio.stdout.write(@cli.event_columns() + "\n")
   }
@@ -65,7 +68,10 @@ async fn inspect(config : @cli.Config) -> Unit {
     if transactions is Some(transactions) {
       if transactions.feed(event) is Some(outcome) {
         transaction_stats.record(outcome)
-        if !config.summary_only {
+        if transactions.outcome_selected() {
+          selected_transactions.record(outcome)
+        }
+        if !config.summary_only && transactions.outcome_selected() {
           let line = if config.include_rows {
             guard schema is Some(schema) else {
               raise InvalidFile("transaction row export requires schema")
@@ -81,9 +87,13 @@ async fn inspect(config : @cli.Config) -> Unit {
       if scanner.feed(event) is Some((rows, bound)) {
         row_events += 1
         changes += rows.changes.length()
-        if !config.summary_only {
-          for i in 0..<rows.changes.length() {
-            @stdio.stdout.write(@cli.row_change_line(rows, bound, i) + "\n")
+        if config.filter.matches(rows.table.database, rows.table.table) {
+          selected_row_events += 1
+          selected_changes += rows.changes.length()
+          if !config.summary_only {
+            for i in 0..<rows.changes.length() {
+              @stdio.stdout.write(@cli.row_change_line(rows, bound, i) + "\n")
+            }
           }
         }
       }
@@ -98,13 +108,31 @@ async fn inspect(config : @cli.Config) -> Unit {
   }
   if transactions is Some(transactions) {
     transactions.finish()
-    @stdio.stdout.write(
-      transaction_stats.json_line(stats, data.length()) + "\n",
-    )
+    let summary = if config.filter.is_active() {
+      transaction_stats.filtered_json_line(
+        stats,
+        data.length(),
+        config.filter,
+        selected_transactions,
+      )
+    } else {
+      transaction_stats.json_line(stats, data.length())
+    }
+    @stdio.stdout.write(summary + "\n")
   } else if scanner is Some(_) {
-    @stdio.stdout.write(
-      stats.row_json_line(data.length(), row_events, changes) + "\n",
-    )
+    let summary = if config.filter.is_active() {
+      stats.filtered_row_json_line(
+        data.length(),
+        row_events,
+        changes,
+        config.filter,
+        selected_row_events,
+        selected_changes,
+      )
+    } else {
+      stats.row_json_line(data.length(), row_events, changes)
+    }
+    @stdio.stdout.write(summary + "\n")
   } else if config.json_output {
     @stdio.stdout.write(stats.json_line(data.length()) + "\n")
   } else {

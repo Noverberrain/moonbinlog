@@ -131,6 +131,15 @@ pub fn TransactionStats::json_line(
   stats : Stats,
   file_bytes : Int32,
 ) -> String {
+  Json::object(self.summary_fields(stats, file_bytes)).stringify()
+}
+
+///|
+fn TransactionStats::summary_fields(
+  self : TransactionStats,
+  stats : Stats,
+  file_bytes : Int32,
+) -> Map[String, Json] {
   let fields = stats.summary_fields(file_bytes)
   fields["kind"] = "transaction_summary"
   fields["committed_transactions"] = @json.to_json(self.committed)
@@ -138,5 +147,27 @@ pub fn TransactionStats::json_line(
   fields["committed_row_events"] = @json.to_json(self.row_events)
   fields["committed_changes"] = @json.to_json(self.changes)
   fields["discarded_changes"] = @json.to_json(self.discarded_changes)
+  fields
+}
+
+///|
+pub fn TransactionStats::filtered_json_line(
+  self : TransactionStats,
+  stats : Stats,
+  file_bytes : Int32,
+  filter : TableFilter,
+  selected : TransactionStats,
+) -> String {
+  let fields = self.summary_fields(stats, file_bytes)
+  fields["filter"] = filter.json("whole_transactions")
+  fields["selected_committed_transactions"] = @json.to_json(selected.committed)
+  fields["selected_rolled_back_transactions"] = @json.to_json(
+    selected.rolled_back,
+  )
+  fields["selected_committed_row_events"] = @json.to_json(selected.row_events)
+  fields["selected_committed_changes"] = @json.to_json(selected.changes)
+  fields["selected_discarded_changes"] = @json.to_json(
+    selected.discarded_changes,
+  )
   Json::object(fields).stringify()
 }

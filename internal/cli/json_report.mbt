@@ -60,10 +60,37 @@ pub fn Stats::row_json_line(
   row_events : Int32,
   changes : Int32,
 ) -> String {
+  Json::object(self.row_fields(file_bytes, row_events, changes)).stringify()
+}
+
+///|
+fn Stats::row_fields(
+  self : Stats,
+  file_bytes : Int32,
+  row_events : Int32,
+  changes : Int32,
+) -> Map[String, Json] {
   let fields = self.summary_fields(file_bytes)
   fields["kind"] = "row_summary"
   fields["transaction_status"] = "unconfirmed"
   fields["row_events"] = @json.to_json(row_events)
   fields["changes"] = @json.to_json(changes)
+  fields
+}
+
+///|
+pub fn Stats::filtered_row_json_line(
+  self : Stats,
+  file_bytes : Int32,
+  row_events : Int32,
+  changes : Int32,
+  filter : TableFilter,
+  selected_row_events : Int32,
+  selected_changes : Int32,
+) -> String {
+  let fields = self.row_fields(file_bytes, row_events, changes)
+  fields["filter"] = filter.json("row_events")
+  fields["selected_row_events"] = @json.to_json(selected_row_events)
+  fields["selected_changes"] = @json.to_json(selected_changes)
   Json::object(fields).stringify()
 }

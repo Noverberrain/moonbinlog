@@ -40,7 +40,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：272 项 MoonBit 测试、58 个事件 CLI、28 个行变化 CLI 和 72 个事务 CLI 场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
+**验证状态：279 项 MoonBit 测试，以及事件/行变化/事务/筛选四组 CLI 共 247 个场景通过，运行验证使用 native 后端。** 已对三组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL，共 15 个镜像、300 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)。
 
 ## 解析流程
 
@@ -80,7 +80,7 @@ moon build --target native
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和三组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和四组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 
@@ -88,7 +88,7 @@ Windows 本地已准备好工具链后，也可运行同一入口：
 ./scripts/ci.ps1
 ```
 
-本批已用独立安装的固定版本工具链跑通全部检查；GitHub 托管 runner 的首次结果需在推送工作流后确认。版本更新与排查方法见 [CI 说明](docs/ci.md)。
+CI 的[首次基线运行（19102ce）](https://github.com/Noverberrain/moonbinlog/actions/runs/40107571568)已通过；后续提交结果以各自 Actions 运行记录为准。版本更新与排查方法见 [CI 说明](docs/ci.md)。
 
 ### 查看本地 Binlog 文件
 
@@ -120,6 +120,14 @@ moon run --target native cmd/moonbinlog -- --transactions --include-rows --schem
 每笔 BEGIN → XID / COMMIT 完成后输出起止偏移、XID、行变化数与各表计数，ROLLBACK 输出丢弃数量；增加 `--include-rows` 在提交对象内附带 `row_changes`，其中行记录均标记 committed，保留列名及有类型的 before/after。默认仍只导出计数，`--summary` 只输出全文件统计。
 
 事务未结束、遇到未知事件或超过配额会失败，不输出该笔待定事务。此模式要求调用者已知涉及的表支持事务，不推断 GTID、DDL 或隐式提交；详见[事务 CLI](docs/cli-transactions.md)。
+
+### 按库表筛选输出
+
+```sh
+moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-schema.json --database moonbinlog_fixture --table sample fixtures/mysql-8.0/crc32-full.binlog
+```
+
+`--database NAME` 和 `--table NAME` 可单独或组合使用，按精确名称匹配。行模式输出匹配的行事件；事务模式按整笔选择，只要其中有匹配的行事件就保留完整事务，包含其中其他表的行值。所有输入仍完整解码，摘要保留全文件计数并增加 selected_* 计数，详见[筛选规则](docs/cli-filters.md)。
 
 ### 最小解析示例
 
@@ -181,6 +189,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
 | 命令行行变化 | [schema 接入、行 JSON 与提交状态](docs/cli-rows.md) |
 | 命令行事务 | [显式提交/回滚汇总、统计与配额](docs/cli-transactions.md) |
+| 输出筛选 | [库表精确匹配、整笔事务与计数范围](docs/cli-filters.md) |
 | 真实文件验证 | [MySQL 8.0.43 与官方 mysqlbinlog 对照](docs/mysql-integration.md) |
 | 表结构上下文 | [TABLE_MAP 与缓存生命周期](docs/table-map.md) |
 | 外部配置 | [schema v1 格式、绑定及可信范围](docs/schema.md) · [真实样本配置](examples/mysql-8.0-schema.json) |
@@ -229,7 +238,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] CLI 接入 schema 并显示未确认提交的行变化
 - [x] CLI 显式事务提交/回滚汇总
 - [x] 事务模式按整笔提交导出有类型行变化
-- [ ] CLI 按库表筛选输出
+- [x] CLI 按库表筛选行事件或完整事务
 
 路线会根据真实样本验证结果调整，勾选项只代表当前限定范围内的实现。
 
@@ -237,7 +246,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 
 欢迎通过 Issue 提供使用场景、最小复现或协议兼容性问题。提交问题时请附上工具链版本、MySQL 版本、校验模式、事件类型、错误偏移和预期行为；提交日志样本前请移除业务敏感数据。
 
-修改后请运行检查、native 测试、构建、`moon fmt --check`、`moon info` 及相关样本一致性检查；CLI 的端到端验证运行 `python scripts/test_cli.py`、`python scripts/test_rows_cli.py` 和 `python scripts/test_transactions_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
+修改后请运行 `./scripts/ci.ps1`，或独立执行检查、native 测试、构建、格式、接口及样本检查；CLI 验证为 `scripts/test_cli.py`、`scripts/test_rows_cli.py`、`scripts/test_transactions_cli.py` 和 `scripts/test_filters_cli.py`。项目目前按功能逐批推进，公共 API 仍可能调整。
 
 ## 开源许可证
 

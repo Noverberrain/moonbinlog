@@ -9,6 +9,7 @@ pub struct Config {
   rows : Bool
   transactions : Bool
   include_rows : Bool
+  filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt32
   max_file_bytes : Int32
@@ -46,7 +47,7 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
@@ -55,6 +56,8 @@ pub fn usage() -> String {
     #|  --transactions        Summarize explicit transactional RBR commits/rollbacks.
     #|  --include-rows        Include committed row values; requires --transactions.
     #|  --schema PATH         Schema v1 UTF-8 JSON file; required by either mode.
+    #|  --database NAME       Exact database name; requires --rows/--transactions.
+    #|  --table NAME          Exact table name; combine with --database if needed.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
     #|  --max-file-bytes N    In-memory file limit (default 67108864, max 2147483647).
     #|  --                    Treat the remaining argument as a filename.
@@ -63,6 +66,7 @@ pub fn usage() -> String {
     #|Exit codes: 0 success/help, 1 file/decoding/output failure, 2 invalid arguments.
     #|--rows and --transactions are mutually exclusive and require --schema.
     #|--rows does not confirm commits. --transactions requires transactional tables.
+    #|Filters select row events or whole transactions; all input is still decoded.
   text
 }
 
@@ -94,6 +98,8 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut transactions = false
   let mut include_rows = false
   let mut schema_path = None
+  let mut database = None
+  let mut table = None
   let mut event_limit = None
   let mut file_limit = None
   let mut positional = false
@@ -121,6 +127,28 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
         raise InvalidArguments("duplicate --include-rows")
       }
       include_rows = true
+    } else if !positional && (arg == "--database" || arg == "--table") {
+      guard cursor + 1 < argv.length() else {
+        raise InvalidArguments("\{arg} requires a name")
+      }
+      cursor += 1
+      let name = argv[cursor]
+      guard name.length() > 0 &&
+        name.length() <= 256 &&
+        !name.contains("\u0000") else {
+        raise InvalidArguments(
+          "\{arg} requires 1..256 UTF-16 units without NUL",
+        )
+      }
+      if arg == "--database" {
+        guard database is None else {
+          raise InvalidArguments("duplicate --database")
+        }
+        database = Some(name)
+      } else {
+        guard table is None else { raise InvalidArguments("duplicate --table") }
+        table = Some(name)
+      }
     } else if !positional && arg == "--schema" {
       guard schema_path is None else {
         raise InvalidArguments("duplicate --schema")
@@ -179,6 +207,12 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
       "--rows or --transactions requires --schema, and vice versa",
     )
   }
+  let filter = TableFilter::{ database, table, }
+  guard !filter.is_active() || rows || transactions else {
+    raise InvalidArguments(
+      "--database/--table requires --rows or --transactions",
+    )
+  }
   Inspect({
     path,
     summary_only,
@@ -186,6 +220,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     rows,
     transactions,
     include_rows,
+    filter,
     schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),
     max_file_bytes: file_limit.unwrap_or(67_108_864),

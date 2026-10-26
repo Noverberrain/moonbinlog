@@ -39,7 +39,8 @@ try {
     foreach ($ciScript in @(
         'scripts/test_cli.py',
         'scripts/test_rows_cli.py',
-        'scripts/test_transactions_cli.py'
+        'scripts/test_transactions_cli.py',
+        'scripts/test_filters_cli.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript)
     }

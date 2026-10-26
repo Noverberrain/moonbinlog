@@ -13,6 +13,8 @@ moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-sc
 
 `--rows` 和 `--schema PATH` 缺一不可。自动启用 JSON Lines，无需再传 `--json`；显式添加 `--json` 也可。每行一个完整对象，没有 TSV 表头或顶层 JSON 数组。`--summary` 省略逐行变化，但仍绑定 schema、解码全部行事件，遇到同样的错误。
 
+--database NAME / --table NAME 可选择匹配的行事件；未匹配事件仍完整解码，原有 row_events/changes 继续表示全文件总量，摘要另加 selected_*，详见[筛选计数与限制](cli-filters.md)。
+
 配置文件必须为 UTF-8，接受一个开头 BOM，拒绝无效 UTF-8。分配读取前限制为 4 MiB，转成字符串后继续检查 schema 库默认配额；`--max-file-bytes` 只影响 Binlog 文件。配置格式、示例及匹配可信范围见 [schema v1](schema.md)，通用大小参数、退出码见 [CLI 使用说明](cli.md)。
 
 ## 行记录

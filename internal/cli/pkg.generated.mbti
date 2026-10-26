@@ -58,6 +58,7 @@ pub struct Config {
   rows : Bool
   transactions : Bool
   include_rows : Bool
+  filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt
   max_file_bytes : Int
@@ -75,22 +76,36 @@ pub fn RowScanner::new(@moonbinlog.SchemaConfig, max_event_size? : UInt) -> Self
 pub struct Stats {
   // private fields
 }
+pub fn Stats::filtered_row_json_line(Self, Int, Int, Int, TableFilter, Int, Int) -> String
 pub fn Stats::json_line(Self, Int) -> String
 pub fn Stats::lines(Self, Int) -> Array[String]
 pub fn Stats::new() -> Self
 pub fn Stats::record(Self, @moonbinlog.EventHeader) -> Unit
 pub fn Stats::row_json_line(Self, Int, Int, Int) -> String
 
+pub(all) struct TableFilter {
+  database : String?
+  table : String?
+} derive(Eq, @debug.Debug)
+pub fn TableFilter::all() -> Self
+pub fn TableFilter::equal(Self, Self) -> Bool
+pub fn TableFilter::is_active(Self) -> Bool
+pub fn TableFilter::matches(Self, String, String) -> Bool
+pub fn TableFilter::not_equal(Self, Self) -> Bool
+pub fn TableFilter::to_repr(Self) -> @debug.Repr
+
 pub struct TransactionScanner {
   // private fields
 }
 pub fn TransactionScanner::feed(Self, @moonbinlog.BinlogFileEvent) -> @moonbinlog.TransactionOutcome? raise
 pub fn TransactionScanner::finish(Self) -> Unit raise
-pub fn TransactionScanner::new(@moonbinlog.SchemaConfig, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self
+pub fn TransactionScanner::new(@moonbinlog.SchemaConfig, filter? : TableFilter, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self
+pub fn TransactionScanner::outcome_selected(Self) -> Bool
 
 pub struct TransactionStats {
   // private fields
 }
+pub fn TransactionStats::filtered_json_line(Self, Stats, Int, TableFilter, Self) -> String
 pub fn TransactionStats::json_line(Self, Stats, Int) -> String
 pub fn TransactionStats::new() -> Self
 pub fn TransactionStats::record(Self, @moonbinlog.TransactionOutcome) -> Unit

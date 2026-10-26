@@ -14,6 +14,7 @@ moon run --target native cmd/moonbinlog -- --json --summary fixtures/mysql-8.0/o
 moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-schema.json fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --transactions --schema examples/mysql-8.0-schema.json fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --transactions --include-rows --schema examples/mysql-8.0-schema.json fixtures/mysql-8.0/crc32-full.binlog
+moon run --target native cmd/moonbinlog -- --rows --schema examples/mysql-8.0-schema.json --table sample fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --help
 ```
 
@@ -31,7 +32,7 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--schema PATH] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
 ```
 
 | 参数 | 含义 | 默认值 |
@@ -43,12 +44,16 @@ moonbinlog [--json] [--summary] [--rows | --transactions [--include-rows]] [--sc
 | --transactions | 汇总显式事务，自动输出 JSON Lines；必须指定 --schema，与 --rows 互斥 | 关闭 |
 | --include-rows | 在提交对象中导出完整 row_changes；必须与 --transactions 一起使用 | 关闭 |
 | --schema PATH | UTF-8 schema v1 JSON 文件；必须选择 --rows 或 --transactions | 无 |
+| --database NAME | 精确匹配库名；必须选择行/事务模式 | 不限制 |
+| --table NAME | 精确匹配表名；可与 --database 组合 | 不限制 |
 | --max-event-bytes N | 每个事件的编码字节上限，包含头和 CRC | 16777216（16 MiB） |
 | --max-file-bytes N | 读取到内存的文件大小上限 | 67108864（64 MiB） |
 | -- | 其后参数按文件名处理，可用于以 `-` 开头的路径 | 无 |
 | -h / --help | 显示帮助，必须单独使用 | 无 |
 
 每个选项只能出现一次。数值只接受 ASCII 无符号十进制字节数，不接受单位、符号、十六进制或小数。事件上限范围为 19～4294967295，文件上限范围为 1～2147483647。选项可放在文件名前后，不支持 `--option=value` 形式；包含空格的路径需按 shell 规则加引号。
+
+筛选名字要求 1～256 个 UTF-16 单位、不含 NUL，区分大小写，点号和星号均按普通名字字符处理。行模式选择行事件，事务模式选择包含匹配行事件的完整提交/回滚区间；过滤不跳过任何输入解码，schema 仍须覆盖所有经过的表。启用时只在摘要附加 filter 与 selected_* 字段；没有筛选参数的输出形状不变，详见[库表筛选](cli-filters.md)。
 
 例如读取更大的闭合日志文件：
 
@@ -132,6 +137,7 @@ moon build --target native
 python scripts/test_cli.py
 python scripts/test_rows_cli.py
 python scripts/test_transactions_cli.py
+python scripts/test_filters_cli.py
 ```
 
-17 项内部包测试覆盖参数、边界值、TSV、JSON 字段类型和统计；根包另有 7 项行测试、7 项事务测试及 4 项提交行导出测试。58 个事件子进程场景覆盖真实文件、中文/空格路径、以选项形式命名的文件、错误退出码、CRC/截断、资源上限、未知类型及 JSON/TSV 两种输出；28 个行模式场景包含 300 个官方列位置对照及 schema/行结构错误；72 个事务场景覆盖显式提交/回滚、缓存/配额、EOF、错误前缀及导出行的 300 个官方列位置。JSON 单元测试验证 UInt64 最大偏移保留为字符串，端到端测试验证高位 UInt32 头字段仍为精确 JSON 整数。脚本默认使用上面的 debug 构建路径，也可传 `--executable PATH` 指向其他构建产物。
+20 项内部包测试覆盖参数、边界值、TSV、JSON 字段类型、统计和精确匹配；根包另有 7 项行测试、7 项事务测试、4 项提交行导出测试和 4 项筛选状态测试。58 个事件、28 个行模式、72 个事务及 89 个筛选子进程场景合计 247 个；覆盖真实文件、300 个官方列位置、路径/编码、精度、大小配额、schema、错误前缀及完整事务选择。脚本默认使用上面的 debug 构建路径，也可传 `--executable PATH` 指向其他构建产物。
