@@ -17,6 +17,8 @@ pub fn event_name(Byte) -> String
 
 pub fn parse_args(ArrayView[String]) -> Command raise ArgumentError
 
+pub fn rotate_json_line(@moonbinlog.RotateEvent, @moonbinlog.ChecksumAlgorithm) -> String
+
 pub fn row_cell_json(@moonbinlog.RowCell, Int, String) -> Json
 
 pub fn row_change_line(@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema, Int) -> String raise RowScanError
@@ -69,6 +71,7 @@ pub struct Config {
   include_rows : Bool
   schema_template : Bool
   use_table_metadata : Bool
+  decode_rotate : Bool
   filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt

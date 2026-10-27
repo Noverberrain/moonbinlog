@@ -11,6 +11,7 @@ pub struct Config {
   include_rows : Bool
   schema_template : Bool
   use_table_metadata : Bool
+  decode_rotate : Bool
   filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt32
@@ -49,10 +50,11 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
+    #|  --decode-rotate       Add decoded rotation targets; event mode, JSON Lines.
     #|  --summary             Show counts only; still validate the entire file.
     #|  --rows                Decode unconfirmed row changes as JSON Lines.
     #|  --transactions        Summarize explicit transactional RBR commits/rollbacks.
@@ -105,6 +107,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut include_rows = false
   let mut schema_template = false
   let mut use_table_metadata = false
+  let mut decode_rotate = false
   let mut schema_path = None
   let mut database = None
   let mut table = None
@@ -122,6 +125,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     } else if !positional && arg == "--json" {
       guard !json_output else { raise InvalidArguments("duplicate --json") }
       json_output = true
+    } else if !positional && arg == "--decode-rotate" {
+      guard !decode_rotate else {
+        raise InvalidArguments("duplicate --decode-rotate")
+      }
+      decode_rotate = true
     } else if !positional && arg == "--rows" {
       guard !rows else { raise InvalidArguments("duplicate --rows") }
       rows = true
@@ -226,6 +234,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     )
   }
   let filter = TableFilter::{ database, table, }
+  guard !decode_rotate || !(rows || transactions || schema_template) else {
+    raise InvalidArguments("--decode-rotate requires event mode")
+  }
   guard !use_table_metadata || schema_template else {
     raise InvalidArguments("--use-table-metadata requires --schema-template")
   }
@@ -248,12 +259,17 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   Inspect({
     path,
     summary_only,
-    json_output: json_output || rows || transactions || schema_template,
+    json_output: json_output ||
+    rows ||
+    transactions ||
+    schema_template ||
+    decode_rotate,
     rows,
     transactions,
     include_rows,
     schema_template,
     use_table_metadata,
+    decode_rotate,
     filter,
     schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),

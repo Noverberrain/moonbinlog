@@ -32,14 +32,13 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--schema-template | --use-table-metadata | 提取可用列名和整数符号，仅用于 --schema-template；缺失时保留占位值 | 关闭 |
-| --schema-template | 生成待确认的 schema 草稿；仅在正常 EOF 后输出一个 JSON 对象 | 关闭 |
-| --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+moonbinlog [--json] [--summary] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
 ```
 
 | 参数 | 含义 | 默认值 |
 | --- | --- | --- |
 | FILE | 一个现有普通文件的路径 | 必填 |
+| --decode-rotate | 事件模式输出轮转详情，自动使用 JSON Lines；--summary 仍验证轮转 | 关闭 |
 | --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
 | --use-table-metadata | 提取可用列名和整数符号，仅用于 --schema-template；缺失时保留占位值 | 关闭 |
@@ -149,3 +148,5 @@ python scripts/test_filters_cli.py
 JSON 字段新增独立 `python scripts/test_json_cli.py` 回归（可用 `--exe PATH` 指定构建产物），覆盖 113 个场景和三组 JSON 实际捕获的 42 个官方列位置；加上以上四组共 360 个 CLI 场景。协议见 [JSON 字段](json-values.md)。
 
 `--schema-template FILE` 可生成待确认的 schema 草稿，与行/事务/summary/schema/筛选选项互斥，仅在完整校验到 EOF 后输出一个 JSON。列名和整数符号需手动确认，详见 [生成 schema 草稿](cli-schema-template.md)。该模式新增 82 个子进程场景，六组 CLI 合计 442 个，已加入统一 CI。
+
+`--decode-rotate FILE` 自动使用 JSON Lines，轮转事件增加精确位置、原始 hex 和可用 UTF-8 文件名，规则见 [轮转 CLI](cli-rotate.md)。该选项只用于事件模式，与 schema/行/事务模式及库表筛选互斥；--summary 仍解析轮转结构。新增 148 个端到端场景，八组 CLI 合计 682 个。

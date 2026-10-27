@@ -80,6 +80,19 @@ async fn inspect(config : @cli.Config) -> Unit {
     @stdio.stdout.write(@cli.event_columns() + "\n")
   }
   while reader.next() is Some(event) {
+    // Decode even in --summary mode: suppressing output must not skip validation.
+    let rotation = if config.decode_rotate && event.header.event_type == 4 {
+      Some(
+        @binlog.RotateEvent::parse(
+          event.format,
+          event.raw,
+          file_offset=event.header.file_offset,
+          max_event_size=config.max_event_bytes,
+        ),
+      )
+    } else {
+      None
+    }
     stats.record(event.header)
     if transactions is Some(transactions) {
       if transactions.feed(event) is Some(outcome) {
@@ -114,7 +127,9 @@ async fn inspect(config : @cli.Config) -> Unit {
         }
       }
     } else if !config.summary_only {
-      let line = if config.json_output {
+      let line = if rotation is Some(rotation) {
+        @cli.rotate_json_line(rotation, event.format.checksum_algorithm)
+      } else if config.json_output {
         @cli.event_json_line(event.header, event.format.checksum_algorithm)
       } else {
         @cli.event_line(event.header, event.format.checksum_algorithm)

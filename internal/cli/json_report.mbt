@@ -8,7 +8,15 @@ pub fn event_json_line(
   header : @moonbinlog.EventHeader,
   algorithm : @moonbinlog.ChecksumAlgorithm,
 ) -> String {
-  Json::object({
+  Json::object(event_json_fields(header, algorithm)).stringify()
+}
+
+///|
+fn event_json_fields(
+  header : @moonbinlog.EventHeader,
+  algorithm : @moonbinlog.ChecksumAlgorithm,
+) -> Map[String, Json] {
+  {
     "schema_version": @json.to_json(1),
     "kind": Json::string("event"),
     "offset": Json::string(header.file_offset.to_string()),
@@ -20,7 +28,7 @@ pub fn event_json_line(
     "server_id": @json.to_json(header.server_id),
     "flags": @json.to_json(header.flags.to_uint()),
     "checksum": Json::string(event_checksum(header, algorithm)),
-  }).stringify()
+  }
 }
 
 ///|

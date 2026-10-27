@@ -17,6 +17,8 @@
 
 `--schema-template FILE` 从 TABLE_MAP 提取 schema 草稿：物理列描述自动填充，column_N 标签与整数 unsigned:null 需要对照 DDL 确认。同名表结构冲突时失败，正常 EOF 后整份输出，详见 [生成草稿](docs/cli-schema-template.md)。可选 `--use-table-metadata` 根据可用元数据补齐名称/整数符号，严格检查缺损及冲突，见 [元数据提取](docs/template-metadata.md)。
 
+`--decode-rotate FILE` 在事件 JSON 中增加轮转目标位置、hex 和可用 UTF-8 文本；--summary 仍验证全部轮转，详见 [轮转 CLI](docs/cli-rotate.md)。
+
 ## 使用示例
 
 ```mbt check
@@ -115,6 +117,7 @@ python scripts/test_filters_cli.py
 python scripts/test_json_cli.py
 python scripts/test_schema_template_cli.py
 python scripts/test_template_metadata_cli.py
+python scripts/test_rotate_cli.py
 python scripts/generate_schema_example.py --check
 ```
 
@@ -138,4 +141,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成 ROTATE_EVENT 库接口，详细范围见 [轮转文档](docs/rotate-events.md)。暂停，等待用户继续指令。
+本批已完成 CLI 轮转详情，详细范围见 [轮转 CLI](docs/cli-rotate.md)。暂停，等待用户继续指令。

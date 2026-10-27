@@ -49,3 +49,5 @@ UInt64 值完整保留，包括 0、4、超过 UInt32 范围及最大值。解�
 `scripts/generate_rotate_fixtures.py --check` 验证合成样本与六份官方对照，已由统一 CI 的生成器检查自动纳入。样本来源和摘要见 [轮转样本](../fixtures/rotate/README.md)。原有 CLI 输出和行/事务分发规则保持一致，本批 API 不改变这些模式对轮转 body 的既有处理范围。
 
 协议依据固定到 MySQL commit `9fc8d60003b4eee32767c1e30942f222c3508c31` 的 [Rotate_event 定义](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/control_events.h)、[参考读取逻辑](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/src/control_events.cpp)和 [Rotate_log_event 写入逻辑](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/sql/log_event.cc)。实现与样本独立编写，没有复制上游代码。
+
+CLI 可使用 --decode-rotate 显示这些字段，只有显式开启时才增加详情并验证轮转 body；默认输出及行/事务模式保持原样，见 [轮转 CLI](cli-rotate.md)。
