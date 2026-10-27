@@ -1,0 +1,69 @@
+{
+  "synthetic": {
+    "rotate_zero": "5add526490c451cd847dc13a81f5adc9230c493e2b9d10fc2e8873efa973e6b2",
+    "rotate_start": "7066914b889ba4488fb2f82bc84122ac3f06ca3b575f5770f8a7f80583dee01b",
+    "rotate_wide": "5e91e9b9861bfd9212fb23e5c358a35409b7f8f9d49b469794529760ac422ab5",
+    "rotate_max": "1164b184b250c686d11662743a83cde70fa9c4f0de5de6cf8c875565e5226b41",
+    "rotate_off": "550cca0f645f57cf208eb8ae77145a55d069c674386a4e2066e6c5fe4f070d46",
+    "rotate_raw_name": "5f5a1d903da84e0be0b39c302bf9e8e9328cd6412e874fde8666cce7f6534b97",
+    "rotate_one_byte_name": "5bcbe5b980d5570da49e17c7e50c1b4a21fd59ecb8cf4d8ad3a2e69cc8fa3380",
+    "rotate_zero_timestamp": "8cae3d4f7ebc9b10848b512bd31bff486a2d68766464d8e8a3ea82f59d6309cb",
+    "rotate_short_0": "6507cef3d322e91b74d3513c4002d9a43fa6abaabd0ca77466aeae161fd2fb15",
+    "rotate_short_1": "5e96e5fc1a923ebd5222f543e2f8b64c9edf14c09151078fad26d0f7bb2ca6a9",
+    "rotate_short_2": "9798bd55616b8e7fe8426aaaa535de76af6d22c8a43f4e4d455476032f1f335b",
+    "rotate_short_3": "b7804778d2ad0b49c81cbf7a68362846244d2e1816e1e073afd641395046330b",
+    "rotate_short_4": "2bf43e235f309b03fec6d9a26beb224de7e58c404fd110ae0efd87de98a14c39",
+    "rotate_short_5": "1cb42ea0b204eafebe292cda4a918aed560b3d72035eb5f9a0700de8ce4ee169",
+    "rotate_short_6": "caba9dae18cc8fc0948475961bdca04f6aee67203930f06a4334c68bc23de1a7",
+    "rotate_short_7": "12979c0f7ea2bea3a91109b68246e472b2054983daa59d3cdaf0447f0a03e97d",
+    "rotate_short_8": "647a9400edbfbb1fbf5900de08be797a93c33835626c5f763d30c68a762a1032",
+    "rotate_bad_crc": "70f9b432d4a83bb4d54948c5e3e7f27c77d37cc604ef41f2847bb9f4ebee2b77",
+    "fde_rotate_0": "018231d62846cb5ddb6e019d584cbe37223f7268999e58853235b1ea22dcdfaf",
+    "fde_rotate_7": "eac6bef7db3673dd164acd9600f6da9843f0886735121f3f808c749f03425e20",
+    "fde_rotate_9": "6e68c079ff6ef1c177996f810077e67c48e14b22a0fdb2b716a109c585094e03"
+  },
+  "real_oracles": [
+    {
+      "capture": "mysql-8.0/crc32-full",
+      "sha256": "0ed662a89ab45597212c3661f9630bb84b8dd4face942a9c5739c90bf1326269",
+      "oracle_sha256": "9898033ac358bb9e05759e87e22e3c370a22a6c8c0a1e3cfa6e1633d4dcfb22e",
+      "position": 4,
+      "next_binlog_hex": "636170747572652e303030303034"
+    },
+    {
+      "capture": "mysql-8.0/crc32-minimal",
+      "sha256": "19e29c2ccb4c857679b8e67771feb12d882291eb076d15cddec82c2f204de544",
+      "oracle_sha256": "042570ca2070309d269cfae522dd9e3af2f612ebe8d9e0fd47f06e89ae545805",
+      "position": 4,
+      "next_binlog_hex": "636170747572652e303030303037"
+    },
+    {
+      "capture": "mysql-8.0/off-full",
+      "sha256": "d8ec449e0de9c1c794953847c5bdb03882567a60154d1aa27fb4c3dae4f511ff",
+      "oracle_sha256": "b2b0df59b8037a9e583a9e6c551a0274e8d3a0889ae2c71af7a14676b2699d22",
+      "position": 4,
+      "next_binlog_hex": "636170747572652e303030303130"
+    },
+    {
+      "capture": "mysql-json/crc32-full",
+      "sha256": "3144f2b1f81a385447626139ec0b5e180a8ec194b17c14b2b4cf83cfe1a8d31f",
+      "oracle_sha256": "8cbd1d83e7cc636f8e9a2206c46bf4601a3184221f0471e0cac5f8b75809dd43",
+      "position": 4,
+      "next_binlog_hex": "636170747572652e303030303034"
+    },
+    {
+      "capture": "mysql-json/crc32-minimal",
+      "sha256": "b74b03e2e73ef359b336de3aa37424f1e780af165d6eca47863dae8c5180cc48",
+      "oracle_sha256": "b673a61ae1fe6de6a1006f638171fda3fc0311200b38e1d6cf09468d459dd026",
+      "position": 4,
+      "next_binlog_hex": "636170747572652e303030303037"
+    },
+    {
+      "capture": "mysql-json/off-full",
+      "sha256": "d4473b8f9ca23ee72018b8e9f2ad8e550c21e1ba458ce8dbccc397c8da5e7fc9",
+      "oracle_sha256": "78338081607399cc7124cdde86a5f6aa19d0cc8046ac38a87d2c0bbd628e6c5e",
+      "position": 4,
+      "next_binlog_hex": "636170747572652e303030303130"
+    }
+  ]
+}

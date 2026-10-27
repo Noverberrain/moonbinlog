@@ -29,6 +29,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 离线文件遍历 | 顺序切分、FDE 上下文切换、事件完整性校验 | 输入完整内存视图，未知事件保留原始数据 |
 | 离线 CLI | 事件统计、外部 schema 行变化、显式事务汇总与已提交行导出 | 行模式标记 unconfirmed，事务模式可按整笔提交导出行值 |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
+| 日志轮转 | ROTATE_EVENT 目标文件标识和 UInt64 起始位置 | 库接口；保留文件名字节，尚不自动跟随 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
 | 外部 schema | JSON 配置、表映射绑定及从日志生成草稿 | 物理描述自动提取，列名和整数符号需确认 |
 | 整数 | TINYINT / SMALLINT / MEDIUMINT / INT / BIGINT | signed / unsigned 由调用者明确提供 |
@@ -41,7 +42,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：307 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据七组 CLI 共 534 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
+**验证状态：315 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据七组 CLI 共 534 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
 
 ## 解析流程
 
@@ -202,6 +203,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | --- | --- |
 | API 总览与可执行示例 | [README.mbt.md](README.mbt.md) · [生成的公共接口](pkg.generated.mbti) |
 | 事件格式与校验 | [格式描述 / CRC32](docs/format-checksum.md) |
+| 日志轮转 | [ROTATE_EVENT 位置、文件标识及边界](docs/rotate-events.md) |
 | JSON 字段 | [binary JSON、精度、配额与 CLI 表示](docs/json-values.md) |
 | 文件级遍历 | [内存文件遍历、偏移与错误处理](docs/file-traversal.md) |
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
@@ -247,6 +249,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 ## 开发路线
 
 - [x] 文件标识、事件头、格式描述与 CRC32
+- [x] ROTATE_EVENT 轮转信息解析（库接口）
 - [x] 表映射、常用字段值与行镜像
 - [x] ROWS v2 多行解析与 UPDATE 配对
 - [x] 显式事务边界、提交 / 回滚与配额检查

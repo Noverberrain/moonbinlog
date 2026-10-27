@@ -23,6 +23,7 @@ pub(all) suberror DecodeError {
   UnsupportedChecksumAlgorithm(file_offset~ : UInt64, algorithm~ : Byte)
   ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt32, actual~ : UInt32)
   FormatContextResetRequired(file_offset~ : UInt64)
+  InvalidRotateEvent(file_offset~ : UInt64, reason~ : String)
   InvalidTableMap(file_offset~ : UInt64, body_offset~ : Int32, reason~ : String)
   UnsupportedColumnType(
     file_offset~ : UInt64,

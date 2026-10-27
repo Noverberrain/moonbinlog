@@ -24,6 +24,7 @@ pub(all) suberror DecodeError {
   UnsupportedChecksumAlgorithm(file_offset~ : UInt64, algorithm~ : Byte)
   ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt, actual~ : UInt)
   FormatContextResetRequired(file_offset~ : UInt64)
+  InvalidRotateEvent(file_offset~ : UInt64, reason~ : String)
   InvalidTableMap(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
   UnsupportedColumnType(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
   InvalidColumnLimit(max_columns~ : Int)
@@ -286,6 +287,16 @@ pub(all) enum IntegerValue {
 pub fn IntegerValue::equal(Self, Self) -> Bool
 pub fn IntegerValue::not_equal(Self, Self) -> Bool
 pub fn IntegerValue::to_repr(Self) -> @debug.Repr
+
+pub struct RotateEvent {
+  header : EventHeader
+  position : UInt64
+  next_binlog : Bytes
+} derive(Eq, @debug.Debug)
+pub fn RotateEvent::equal(Self, Self) -> Bool
+pub fn RotateEvent::not_equal(Self, Self) -> Bool
+pub fn RotateEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
+pub fn RotateEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RowCell {
   Absent

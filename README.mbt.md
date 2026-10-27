@@ -48,6 +48,7 @@ test "validate a file signature and decode a common header" {
 - CRC32 策略验证普通事件并移除四字节 CRC；OFF 策略保留普通事件的全部 body。
 - 格式描述自身始终校验 CRC32，校验时仅忽略它的 in-use 标志位。
 - 遇到新格式描述必须重新解析建立上下文；未知算法、版本和格式明确报错。
+- `RotateEvent::parse` 解析类型 4 的目标文件名原始字节和完整 UInt64 位置，验证 post-header、完整性及 CRC32/OFF，不打开下一份文件，见 [轮转说明](docs/rotate-events.md)。
 - `TableMap::parse` 解析表 ID、库表名、列类型、逐列原始元数据及 nullable 标志，可选元数据按 TLV 保留。
 - `SchemaConfig::parse` 校验外部 JSON 配置；`bind` 按库表名、列数及逐列物理描述匹配 TABLE_MAP，返回列标签和整数符号向量，详见 [schema 说明](docs/schema.md)。
 - `TableMapContext` 提供有容量及原始事件字节预算的映射缓存；同 ID 覆盖，失败清空。decode_rows 会在语句结束时清理，手动消费仍须显式 clear，新文件/格式须 reset。
@@ -103,6 +104,7 @@ python scripts/generate_enum_set_fixtures.py --check
 python scripts/generate_row_image_fixtures.py --check
 python scripts/generate_rows_event_fixtures.py --check
 python scripts/generate_transaction_fixtures.py --check
+python scripts/generate_rotate_fixtures.py --check
 python scripts/generate_json_fixtures.py --check
 python scripts/verify_json_fixtures.py --check
 python scripts/verify_mysql_fixtures.py --check
@@ -136,4 +138,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成 schema 草稿的可选元数据提取，详细范围见 [元数据文档](docs/template-metadata.md)。暂停，等待用户继续指令。
+本批已完成 ROTATE_EVENT 库接口，详细范围见 [轮转文档](docs/rotate-events.md)。暂停，等待用户继续指令。
