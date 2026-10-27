@@ -4,6 +4,7 @@
 ///|
 suberror InputError {
   InvalidFile(String)
+  ChainFileFailure(file_index~ : Int32, path~ : String, reason~ : String)
 } derive(Debug)
 
 ///|
@@ -27,6 +28,10 @@ async fn read_input(path : String, max_bytes : Int32) -> Bytes {
 
 ///|
 async fn inspect(config : @cli.Config) -> Unit {
+  if config.chain {
+    inspect_chain(config)
+    return
+  }
   if config.schema_template {
     let data = read_input(config.path, config.max_file_bytes)
     let reader = @binlog.BinlogFileReader::new(

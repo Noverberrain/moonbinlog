@@ -8,6 +8,14 @@ pub fn rotate_json_line(
   rotation : @moonbinlog.RotateEvent,
   algorithm : @moonbinlog.ChecksumAlgorithm,
 ) -> String {
+  Json::object(rotate_json_fields(rotation, algorithm)).stringify()
+}
+
+///|
+fn rotate_json_fields(
+  rotation : @moonbinlog.RotateEvent,
+  algorithm : @moonbinlog.ChecksumAlgorithm,
+) -> Map[String, Json] {
   let fields = event_json_fields(rotation.header, algorithm)
   let text = try @utf8.decode(rotation.next_binlog, ignore_bom=false) catch {
     _ => None
@@ -22,5 +30,5 @@ pub fn rotate_json_line(
       None => Json::null()
     },
   }
-  Json::object(fields).stringify()
+  fields
 }

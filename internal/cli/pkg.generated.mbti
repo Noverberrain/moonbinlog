@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn chain_event_line(@moonbinlog.BinlogFileEvent, @moonbinlog.RotateEvent?, Int, String) -> String
+
 pub fn event_columns() -> String
 
 pub fn event_json_line(@moonbinlog.EventHeader, @moonbinlog.ChecksumAlgorithm) -> String
@@ -36,6 +38,12 @@ pub(all) suberror ArgumentError {
 pub fn ArgumentError::equal(Self, Self) -> Bool
 pub fn ArgumentError::not_equal(Self, Self) -> Bool
 pub fn ArgumentError::to_repr(Self) -> @debug.Repr
+
+pub(all) suberror ChainError {
+  InvalidChainState(String)
+  InvalidChainLink(file_index~ : Int, reason~ : String)
+} derive(@debug.Debug)
+pub fn ChainError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror RowScanError {
   MissingFormat(file_offset~ : UInt64)
@@ -72,6 +80,9 @@ pub struct Config {
   schema_template : Bool
   use_table_metadata : Bool
   decode_rotate : Bool
+  chain : Bool
+  paths : ReadOnlyArray[String]
+  max_total_bytes : Int
   filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt
@@ -80,6 +91,15 @@ pub struct Config {
 pub fn Config::equal(Self, Self) -> Bool
 pub fn Config::not_equal(Self, Self) -> Bool
 pub fn Config::to_repr(Self) -> @debug.Repr
+
+pub struct RotationChain {
+  // private fields
+}
+pub fn RotationChain::begin_file(Self, Bytes) -> Unit raise ChainError
+pub fn RotationChain::end_file(Self, Int, has_next~ : Bool) -> Unit raise ChainError
+pub fn RotationChain::feed(Self, @moonbinlog.BinlogFileEvent) -> @moonbinlog.RotateEvent? raise
+pub fn RotationChain::finish(Self) -> Unit raise ChainError
+pub fn RotationChain::new(max_event_size? : UInt) -> Self raise ChainError
 
 pub struct RowScanner {
   // private fields
@@ -97,6 +117,8 @@ pub fn SchemaTemplate::render(Self) -> String raise TemplateError
 pub struct Stats {
   // private fields
 }
+pub fn Stats::chain_file_json(Self, Int, String, Int) -> Json
+pub fn Stats::chain_json_line(Self, Int, Array[Json]) -> String
 pub fn Stats::filtered_row_json_line(Self, Int, Int, Int, TableFilter, Int, Int) -> String
 pub fn Stats::json_line(Self, Int) -> String
 pub fn Stats::lines(Self, Int) -> Array[String]

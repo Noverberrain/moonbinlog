@@ -9,6 +9,8 @@ moon run --target native cmd/moonbinlog -- --decode-rotate --summary fixtures/my
 
 可组合 --summary、--max-event-bytes、--max-file-bytes 及 -- 文件名分隔符；不能组合 --rows、--transactions、--include-rows、--schema、--schema-template、--use-table-metadata 或库表筛选。重复选项和非法组合退出 2，不读取文件。
 
+还可与 --chain 组合，按显式给出的文件顺序浏览并显示轮转详情；此时事件增加 source、最终汇总为 chain_summary，规则见 [多文件 CLI](cli-chain.md)。
+
 ## JSON 字段
 
 例如，真实 MySQL 样本的轮转事件在既有 event 字段之外增加：

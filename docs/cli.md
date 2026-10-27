@@ -32,12 +32,14 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
 ```
 
 | 参数 | 含义 | 默认值 |
 | --- | --- | --- |
-| FILE | 一个现有普通文件的路径 | 必填 |
+| FILE | 一个现有普通文件；--chain 时按顺序提供 2～128 份 | 必填 |
+| --chain | 显式多文件事件浏览，自动 JSON Lines，核对轮转连接 | 关闭 |
+| --max-total-bytes N | 多文件输入总预算，只能与 --chain 使用 | 268435456 |
 | --decode-rotate | 事件模式输出轮转详情，自动使用 JSON Lines；--summary 仍验证轮转 | 关闭 |
 | --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
@@ -150,3 +152,5 @@ JSON 字段新增独立 `python scripts/test_json_cli.py` 回归（可用 `--exe
 `--schema-template FILE` 可生成待确认的 schema 草稿，与行/事务/summary/schema/筛选选项互斥，仅在完整校验到 EOF 后输出一个 JSON。列名和整数符号需手动确认，详见 [生成 schema 草稿](cli-schema-template.md)。该模式新增 82 个子进程场景，六组 CLI 合计 442 个，已加入统一 CI。
 
 `--decode-rotate FILE` 自动使用 JSON Lines，轮转事件增加精确位置、原始 hex 和可用 UTF-8 文件名，规则见 [轮转 CLI](cli-rotate.md)。该选项只用于事件模式，与 schema/行/事务模式及库表筛选互斥；--summary 仍解析轮转结构。新增 148 个端到端场景，八组 CLI 合计 682 个。
+
+`--chain FILE1 FILE2 ...` 增加显式多文件事件浏览和来源标记，最终输出 chain_summary；文件名/目标位置、顺序、配额及失败前缀规则见 [多文件 CLI](cli-chain.md)。其他模式仍只接受单文件。新增 78 个子进程场景，九组 CLI 合计 760 个。

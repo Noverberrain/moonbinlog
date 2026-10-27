@@ -58,3 +58,5 @@ FDE 自身始终验证 CRC，它的 `body` 仍包含末尾的 checksum-algorithm
 这是对完整内存视图的惰性遍历，并非分块流式 I/O；总文件大小受 BytesView 和可用内存限制。库本层没有文件系统 API、目录轮转、远程订阅或自动语义分发；另有[离线 CLI](cli.md) 封装本地文件读取与统计。后续已补充[三组真实 MySQL 8.0.43 文件验证](mysql-integration.md)。底层支持版本及协议依据沿用[格式与校验说明](format-checksum.md)，本层未扩大协议兼容范围。
 
 收到类型 4 的完整文件事件后，可将 event.format、event.raw 与 event.header.file_offset 交给 RotateEvent::parse，提取目标日志标识及 UInt64 位置，见 [轮转解析](rotate-events.md)。遍历器自身仍只处理当前输入，不自动读取目标文件，也不把轮转视为事务提交。
+
+CLI 另提供 --chain，显式按顺序读取多份文件并核对末尾轮转连接，见 [多文件事件浏览](cli-chain.md)。这不改变单文件遍历器/轮转解析器本身，也没有增加跨文件行或事务续接。

@@ -19,6 +19,8 @@
 
 `--decode-rotate FILE` 在事件 JSON 中增加轮转目标位置、hex 和可用 UTF-8 文本；--summary 仍验证全部轮转，详见 [轮转 CLI](docs/cli-rotate.md)。
 
+`--chain FILE1 FILE2 ...` 显式浏览多份有轮转连接的日志，事件附来源、成功后汇总；可组合 --summary/--decode-rotate，总预算由 --max-total-bytes 控制。行/事务模式仍为单文件，见 [多文件 CLI](docs/cli-chain.md)。
+
 ## 使用示例
 
 ```mbt check
@@ -118,6 +120,7 @@ python scripts/test_json_cli.py
 python scripts/test_schema_template_cli.py
 python scripts/test_template_metadata_cli.py
 python scripts/test_rotate_cli.py
+python scripts/test_chain_cli.py
 python scripts/generate_schema_example.py --check
 ```
 
@@ -141,4 +144,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成 CLI 轮转详情，详细范围见 [轮转 CLI](docs/cli-rotate.md)。暂停，等待用户继续指令。
+本批已完成显式多文件事件浏览，详细范围见 [多文件 CLI](docs/cli-chain.md)。暂停，等待用户继续指令。

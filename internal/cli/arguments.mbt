@@ -12,6 +12,9 @@ pub struct Config {
   schema_template : Bool
   use_table_metadata : Bool
   decode_rotate : Bool
+  chain : Bool
+  paths : ReadOnlyArray[String]
+  max_total_bytes : Int32
   filter : TableFilter
   schema_path : String?
   max_event_bytes : UInt32
@@ -50,11 +53,13 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE
+    #|Usage: moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
     #|  --decode-rotate       Add decoded rotation targets; event mode, JSON Lines.
+    #|  --chain               Inspect 2..128 explicitly ordered files as JSON Lines.
+    #|  --max-total-bytes N   Chain input budget (default 268435456, max 2147483647).
     #|  --summary             Show counts only; still validate the entire file.
     #|  --rows                Decode unconfirmed row changes as JSON Lines.
     #|  --transactions        Summarize explicit transactional RBR commits/rollbacks.
@@ -67,7 +72,7 @@ pub fn usage() -> String {
     #|  --table NAME          Exact table name; combine with --database if needed.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
     #|  --max-file-bytes N    In-memory file limit (default 67108864, max 2147483647).
-    #|  --                    Treat the remaining argument as a filename.
+    #|  --                    Treat the remaining arguments as filenames.
     #|  -h, --help            Show this help (use as the only argument).
     #|
     #|Exit codes: 0 success/help, 1 file/decoding/output failure, 2 invalid arguments.
@@ -75,6 +80,7 @@ pub fn usage() -> String {
     #|--rows does not confirm commits. --transactions requires transactional tables.
     #|Filters select row events or whole transactions; all input is still decoded.
     #|--schema-template accepts --json, --use-table-metadata and byte limits; no rows/schema/summary/filters.
+    #|Without --chain exactly one FILE is required. Chains only inspect events.
   text
 }
 
@@ -99,7 +105,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   if argv is ["--help"] || argv is ["-h"] {
     return Help
   }
-  let mut path = None
+  let paths : Array[String] = []
   let mut summary_only = false
   let mut json_output = false
   let mut rows = false
@@ -108,6 +114,8 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut schema_template = false
   let mut use_table_metadata = false
   let mut decode_rotate = false
+  let mut chain = false
+  let mut total_limit = None
   let mut schema_path = None
   let mut database = None
   let mut table = None
@@ -125,6 +133,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     } else if !positional && arg == "--json" {
       guard !json_output else { raise InvalidArguments("duplicate --json") }
       json_output = true
+    } else if !positional && arg == "--chain" {
+      guard !chain else { raise InvalidArguments("duplicate --chain") }
+      chain = true
     } else if !positional && arg == "--decode-rotate" {
       guard !decode_rotate else {
         raise InvalidArguments("duplicate --decode-rotate")
@@ -185,7 +196,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
       cursor += 1
       schema_path = Some(argv[cursor])
     } else if !positional &&
-      (arg == "--max-event-bytes" || arg == "--max-file-bytes") {
+      (
+        arg == "--max-event-bytes" ||
+        arg == "--max-file-bytes" ||
+        arg == "--max-total-bytes"
+      ) {
       guard cursor + 1 < argv.length() else {
         raise InvalidArguments("missing value for \{arg}")
       }
@@ -199,6 +214,14 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
           raise InvalidArguments("\{arg} must be at least 19")
         }
         event_limit = Some(value)
+      } else if arg == "--max-total-bytes" {
+        guard total_limit is None else {
+          raise InvalidArguments("duplicate \{arg}")
+        }
+        guard value > 0 && value <= 2147483647 else {
+          raise InvalidArguments("\{arg} must be between 1 and 2147483647")
+        }
+        total_limit = Some(value.reinterpret_as_int())
       } else {
         guard file_limit is None else {
           raise InvalidArguments("duplicate \{arg}")
@@ -212,15 +235,26 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
       guard positional || !arg.has_prefix("-") else {
         raise InvalidArguments("unknown or misplaced option: \{arg}")
       }
-      guard path is None && !arg.is_empty() else {
-        raise InvalidArguments("exactly one nonempty filename is required")
+      guard !arg.is_empty() && paths.length() < 128 else {
+        raise InvalidArguments("1..128 nonempty filenames are required")
       }
-      path = Some(arg)
+      paths.push(arg)
     }
     cursor += 1
   }
-  guard path is Some(path) else {
+  guard paths.length() > 0 else {
     raise InvalidArguments("a filename is required")
+  }
+  guard (if chain { paths.length() >= 2 } else { paths.length() == 1 }) else {
+    raise InvalidArguments(
+      "--chain requires 2..128 files; other modes require one",
+    )
+  }
+  guard total_limit is None || chain else {
+    raise InvalidArguments("--max-total-bytes requires --chain")
+  }
+  guard !chain || !(rows || transactions || schema_template) else {
+    raise InvalidArguments("--chain only supports event inspection")
   }
   guard !(rows && transactions) else {
     raise InvalidArguments("--rows and --transactions are mutually exclusive")
@@ -257,13 +291,17 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     )
   }
   Inspect({
-    path,
+    path: paths[0],
+    paths: ReadOnlyArray::from_array(paths),
+    chain,
+    max_total_bytes: total_limit.unwrap_or(268_435_456),
     summary_only,
     json_output: json_output ||
     rows ||
     transactions ||
     schema_template ||
-    decode_rotate,
+    decode_rotate ||
+    chain,
     rows,
     transactions,
     include_rows,

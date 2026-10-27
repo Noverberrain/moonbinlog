@@ -51,3 +51,5 @@ UInt64 值完整保留，包括 0、4、超过 UInt32 范围及最大值。解�
 协议依据固定到 MySQL commit `9fc8d60003b4eee32767c1e30942f222c3508c31` 的 [Rotate_event 定义](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/control_events.h)、[参考读取逻辑](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/src/control_events.cpp)和 [Rotate_log_event 写入逻辑](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/sql/log_event.cc)。实现与样本独立编写，没有复制上游代码。
 
 CLI 可使用 --decode-rotate 显示这些字段，只有显式开启时才增加详情并验证轮转 body；默认输出及行/事务模式保持原样，见 [轮转 CLI](cli-rotate.md)。
+
+CLI 另提供 --chain，显式按顺序读取多份文件并核对末尾轮转连接，见 [多文件事件浏览](cli-chain.md)。这不改变单文件遍历器/轮转解析器本身，也没有增加跨文件行或事务续接。
