@@ -24,6 +24,13 @@ pub(all) suberror DecodeError {
   ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt32, actual~ : UInt32)
   FormatContextResetRequired(file_offset~ : UInt64)
   InvalidRotateEvent(file_offset~ : UInt64, reason~ : String)
+  InvalidPreviousGtidsEvent(
+    file_offset~ : UInt64,
+    body_offset~ : Int32,
+    reason~ : String
+  )
+  InvalidGtidSetLimits(max_sids~ : Int32, max_intervals~ : Int32)
+  GtidSetLimitExceeded(file_offset~ : UInt64, reason~ : String)
   InvalidTableMap(file_offset~ : UInt64, body_offset~ : Int32, reason~ : String)
   UnsupportedColumnType(
     file_offset~ : UInt64,
