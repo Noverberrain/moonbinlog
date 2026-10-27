@@ -5,7 +5,7 @@ moon run --target native cmd/moonbinlog -- --chain --decode-rotate mysql-bin.000
 moon run --target native cmd/moonbinlog -- --chain --summary --max-total-bytes 268435456 mysql-bin.000001 mysql-bin.000002
 ```
 
-按时间顺序提供 2～128 份本地文件。`--chain` 自动输出 JSON Lines，可与 --json、--summary、--decode-rotate、字节配额及 -- 文件名分隔符组合。未启用时仍要求一个 FILE，现有单文件协议保持原样。
+按时间顺序提供 2～128 份本地文件。`--chain` 自动输出 JSON Lines，可与 --json、--summary、--decode-rotate、--decode-previous-gtids、字节配额及 -- 文件名分隔符组合。未启用时仍要求一个 FILE，现有单文件协议保持原样。
 
 本模式只浏览事件，与 --rows、--transactions、--include-rows、--schema、--schema-template、--use-table-metadata 和库表筛选互斥。跨文件行/事务导出尚未实现，不从轮转推断提交。
 
@@ -63,3 +63,5 @@ index 从 0 开始，path 保留调用方给出的路径文本；offset 始终�
 CLI 回归使用六组真实 MySQL 捕获的临时副本，按测试所需的轮转目标名命名，与各自单文件输出比较；这些副本用于测试格式切换和连接检查，不是新采集的真实连续日志链。原六组捕获和官方输出均未修改。独立构造的短链覆盖结构与边界，常规 CI 不启动数据库。
 
 `python scripts/test_chain_cli.py` 已纳入统一 CI，根包 API 和依赖版本没有变化。basename 使用已有 moonbitlang/x 的平台路径接口；本批实际运行范围仍为 Windows/native。
+
+开启 --decode-previous-gtids 时，类型 35 附带当前文件声明的历史 SID/GTID 区间，summary 同样验证；不会合并集合或证明历史连续性，见 [历史 GTID CLI](cli-previous-gtids.md)。

@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn chain_event_line(@moonbinlog.BinlogFileEvent, @moonbinlog.RotateEvent?, Int, String) -> String
+pub fn chain_event_line(@moonbinlog.BinlogFileEvent, @moonbinlog.RotateEvent?, Int, String, previous_gtids? : @moonbinlog.PreviousGtidsEvent?) -> String
 
 pub fn event_columns() -> String
 
@@ -18,6 +18,8 @@ pub fn event_line(@moonbinlog.EventHeader, @moonbinlog.ChecksumAlgorithm) -> Str
 pub fn event_name(Byte) -> String
 
 pub fn parse_args(ArrayView[String]) -> Command raise ArgumentError
+
+pub fn previous_gtids_json_line(@moonbinlog.PreviousGtidsEvent, @moonbinlog.ChecksumAlgorithm) -> String
 
 pub fn rotate_json_line(@moonbinlog.RotateEvent, @moonbinlog.ChecksumAlgorithm) -> String
 
@@ -80,6 +82,7 @@ pub struct Config {
   schema_template : Bool
   use_table_metadata : Bool
   decode_rotate : Bool
+  decode_previous_gtids : Bool
   chain : Bool
   paths : ReadOnlyArray[String]
   max_total_bytes : Int

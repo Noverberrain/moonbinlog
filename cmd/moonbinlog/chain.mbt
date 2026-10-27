@@ -27,6 +27,19 @@ async fn inspect_chain(config : @cli.Config) -> Unit {
       let stats = @cli.Stats::new()
       while reader.next() is Some(event) {
         let rotation = chain.feed(event)
+        let previous_gtids = if config.decode_previous_gtids &&
+          event.header.event_type == 35 {
+          Some(
+            @binlog.PreviousGtidsEvent::parse(
+              event.format,
+              event.raw,
+              file_offset=event.header.file_offset,
+              max_event_size=config.max_event_bytes,
+            ),
+          )
+        } else {
+          None
+        }
         stats.record(event.header)
         total.record(event.header)
         if !config.summary_only {
@@ -40,6 +53,7 @@ async fn inspect_chain(config : @cli.Config) -> Unit {
               },
               index,
               path,
+              previous_gtids~,
             ) +
             "\n",
           )

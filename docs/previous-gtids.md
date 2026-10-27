@@ -47,4 +47,4 @@ python scripts/generate_previous_gtids_fixtures.py --check --mysqlbinlog 'C:/Pro
 
 协议依据为 MySQL commit `9fc8d60003b4eee32767c1e30942f222c3508c31` 的 [Previous_gtids_event 定义](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/control_events.h)及 [Gtid_set::encode / add_gtid_encoding](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/sql/rpl_gtid_set.cc)。代码和样本根据布局独立编写，没有复制上游实现。
 
-本批只增加库解析入口。CLI 和 TransactionDecoder 的历史包络处理保持原样，不会因为该接口存在就校验其中的集合，也没有 GTID_EVENT 事务绑定、GTID 过滤、实时复制或 MySQL 8.4 tagged GTID 支持。文件链的轮转连接核对仍不能证明 GTID 历史连续。
+库接口之外，CLI 可显式开启 --decode-previous-gtids 显示并校验历史集合，详见 [CLI 详情](cli-previous-gtids.md)。默认事件浏览及 TransactionDecoder 的历史包络处理保持原样；尚无 GTID_EVENT 事务绑定、GTID 过滤、实时复制或 MySQL 8.4 tagged GTID 支持。文件链的轮转连接核对仍不能证明 GTID 历史连续。

@@ -32,7 +32,7 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
+moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
 ```
 
 | 参数 | 含义 | 默认值 |
@@ -41,6 +41,7 @@ moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-rotate
 | --chain | 显式多文件事件浏览，自动 JSON Lines，核对轮转连接 | 关闭 |
 | --max-total-bytes N | 多文件输入总预算，只能与 --chain 使用 | 268435456 |
 | --decode-rotate | 事件模式输出轮转详情，自动使用 JSON Lines；--summary 仍验证轮转 | 关闭 |
+| --decode-previous-gtids | 事件模式输出历史 SID/GTID 区间，自动 JSON Lines；可组合轮转/多文件，summary 仍验证 | 关闭 |
 | --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
 | --use-table-metadata | 提取可用列名和整数符号，仅用于 --schema-template；缺失时保留占位值 | 关闭 |
@@ -154,3 +155,5 @@ JSON 字段新增独立 `python scripts/test_json_cli.py` 回归（可用 `--exe
 `--decode-rotate FILE` 自动使用 JSON Lines，轮转事件增加精确位置、原始 hex 和可用 UTF-8 文件名，规则见 [轮转 CLI](cli-rotate.md)。该选项只用于事件模式，与 schema/行/事务模式及库表筛选互斥；--summary 仍解析轮转结构。新增 148 个端到端场景，八组 CLI 合计 682 个。
 
 `--chain FILE1 FILE2 ...` 增加显式多文件事件浏览和来源标记，最终输出 chain_summary；文件名/目标位置、顺序、配额及失败前缀规则见 [多文件 CLI](cli-chain.md)。其他模式仍只接受单文件。新增 78 个子进程场景，九组 CLI 合计 760 个。
+
+历史 GTID 详情可用 `--decode-previous-gtids FILE`，可组合 --decode-rotate、--chain、--summary，字段和配额见 [历史 GTID CLI](cli-previous-gtids.md)。默认模式仍将类型 35 body 作为不透明数据，行/事务语义范围保持原样。
