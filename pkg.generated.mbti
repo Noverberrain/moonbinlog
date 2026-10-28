@@ -25,6 +25,8 @@ pub(all) suberror DecodeError {
   ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt, actual~ : UInt)
   FormatContextResetRequired(file_offset~ : UInt64)
   InvalidRotateEvent(file_offset~ : UInt64, reason~ : String)
+  UnsupportedGtidEvent(file_offset~ : UInt64, event_type~ : Byte)
+  InvalidGtidEvent(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
   InvalidPreviousGtidsEvent(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
   InvalidGtidSetLimits(max_sids~ : Int, max_intervals~ : Int)
   GtidSetLimitExceeded(file_offset~ : UInt64, reason~ : String)
@@ -283,6 +285,33 @@ pub fn FormatDescription::parse(BytesView, file_offset~ : UInt64, max_event_size
 pub fn FormatDescription::payload(Self, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> BytesView raise DecodeError
 pub fn FormatDescription::to_repr(Self) -> @debug.Repr
 
+pub struct GtidCommitTimestamps {
+  immediate : UInt64
+  original : UInt64
+} derive(Eq, @debug.Debug)
+pub fn GtidCommitTimestamps::equal(Self, Self) -> Bool
+pub fn GtidCommitTimestamps::not_equal(Self, Self) -> Bool
+pub fn GtidCommitTimestamps::to_repr(Self) -> @debug.Repr
+
+pub struct GtidEvent {
+  header : EventHeader
+  flags : Byte
+  sid : Bytes
+  gno : UInt64
+  last_committed : UInt64
+  sequence_number : UInt64
+  commit_timestamps : GtidCommitTimestamps?
+  transaction_length : UInt64?
+  server_versions : GtidServerVersions?
+  commit_group_ticket : UInt64?
+} derive(Eq, @debug.Debug)
+pub fn GtidEvent::equal(Self, Self) -> Bool
+pub fn GtidEvent::is_anonymous(Self) -> Bool
+pub fn GtidEvent::may_have_sbr_statements(Self) -> Bool
+pub fn GtidEvent::not_equal(Self, Self) -> Bool
+pub fn GtidEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
+pub fn GtidEvent::to_repr(Self) -> @debug.Repr
+
 pub struct GtidInterval {
   start : UInt64
   end_exclusive : UInt64
@@ -290,6 +319,14 @@ pub struct GtidInterval {
 pub fn GtidInterval::equal(Self, Self) -> Bool
 pub fn GtidInterval::not_equal(Self, Self) -> Bool
 pub fn GtidInterval::to_repr(Self) -> @debug.Repr
+
+pub struct GtidServerVersions {
+  immediate : UInt
+  original : UInt
+} derive(Eq, @debug.Debug)
+pub fn GtidServerVersions::equal(Self, Self) -> Bool
+pub fn GtidServerVersions::not_equal(Self, Self) -> Bool
+pub fn GtidServerVersions::to_repr(Self) -> @debug.Repr
 
 pub struct GtidSidIntervals {
   sid : Bytes

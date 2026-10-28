@@ -1,6 +1,6 @@
 # 历史 GTID 集合解析
 
-`PreviousGtidsEvent::parse(format, data, file_offset~)` 解析 MySQL 8.0 的 PREVIOUS_GTIDS_EVENT（类型 35），返回事件头和 SID / GTID 区间列表。它表示日志声明的历史集合；事务自身的 GTID_EVENT、去重、断点恢复和日志历史连续性核对留待后续实现。
+`PreviousGtidsEvent::parse(format, data, file_offset~)` 解析 MySQL 8.0 的 PREVIOUS_GTIDS_EVENT（类型 35），返回事件头和 SID / GTID 区间列表。它表示日志声明的历史集合；事务自身的事件可另用 [GtidEvent](gtid-events.md) 解析；事务绑定、去重、断点恢复和日志历史连续性核对留待后续实现。
 
 ## 接口与数据
 

@@ -31,6 +31,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 日志轮转 | ROTATE_EVENT 目标文件标识和 UInt64 起始位置 | 库接口及可选 CLI 详情；保留文件名字节，尚不自动跟随 |
 | 历史 GTID 集合 | PREVIOUS_GTIDS_EVENT 的 SID 与精确整数区间 | 库接口及可选 CLI 详情；带配额，尚不绑定事务 GTID |
+| 事务 GTID 事件 | GTID_EVENT / ANONYMOUS_GTID_EVENT 标识、时钟与扩展 | 库解析接口；尚不绑定或确认事务 |
 | 表映射 | TABLE_MAP、逐列元数据、可选 TLV | 有容量限制的缓存，不自动推导完整 schema |
 | 外部 schema | JSON 配置、表映射绑定及从日志生成草稿 | 物理描述自动提取，列名和整数符号需确认 |
 | 整数 | TINYINT / SMALLINT / MEDIUMINT / INT / BIGINT | signed / unsigned 由调用者明确提供 |
@@ -43,7 +44,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 
-**验证状态：342 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史 GTID 十组 CLI 共 1012 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
+**验证状态：351 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史 GTID 十组 CLI 共 1012 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
 
 ## 解析流程
 
@@ -240,7 +241,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 其他字段 | [浮点](docs/floating-values.md) · [BIT](docs/bit-values.md) · [ENUM / SET](docs/enum-set-values.md) |
 | 行变化 | [行镜像](docs/row-images.md) · [ROWS v2 事件](docs/rows-events.md) |
 | 提交与回滚 | [事务边界、状态和资源限制](docs/transactions.md) |
-| 历史 GTID | [集合解析](docs/previous-gtids.md) · [CLI 详情与半开区间](docs/cli-previous-gtids.md) |
+| GTID 信息 | [历史集合](docs/previous-gtids.md) · [历史集合 CLI](docs/cli-previous-gtids.md) · [事务 GTID 事件](docs/gtid-events.md) |
 | 开发记录 | [逐功能实现与验证记录](docs/progress.md) |
 | 自动化检查 | [CI 触发、固定版本与本地复现](docs/ci.md) |
 
@@ -272,6 +273,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] 文件标识、事件头、格式描述与 CRC32
 - [x] ROTATE_EVENT 轮转信息解析（库接口）
 - [x] PREVIOUS_GTIDS_EVENT 历史集合解析及 CLI 详情
+- [x] GTID_EVENT / ANONYMOUS_GTID_EVENT 字段解析（库接口）
 - [x] 显式多文件事件浏览与轮转连接核对（CLI）
 - [x] 表映射、常用字段值与行镜像
 - [x] ROWS v2 多行解析与 UPDATE 配对

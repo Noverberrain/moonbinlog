@@ -53,6 +53,7 @@ test "validate a file signature and decode a common header" {
 - 格式描述自身始终校验 CRC32，校验时仅忽略它的 in-use 标志位。
 - 遇到新格式描述必须重新解析建立上下文；未知算法、版本和格式明确报错。
 - `RotateEvent::parse` 解析类型 4 的目标文件名原始字节和完整 UInt64 位置，验证 post-header、完整性及 CRC32/OFF，不打开下一份文件，见 [轮转说明](docs/rotate-events.md)。
+- `GtidEvent::parse` 解析类型 33/34 的标识、逻辑时钟及可选提交时间/事务长度/版本/ticket，严格校验完整字段阶段，不绑定或确认事务，见 [GTID 事件](docs/gtid-events.md)。
 - `PreviousGtidsEvent::parse` 解析类型 35 的历史 SID / GTID 区间，支持累计配额、CRC32/OFF 和精确整数；尚不绑定事务 GTID，见 [历史 GTID 集合](docs/previous-gtids.md)。
 - `TableMap::parse` 解析表 ID、库表名、列类型、逐列原始元数据及 nullable 标志，可选元数据按 TLV 保留。
 - `SchemaConfig::parse` 校验外部 JSON 配置；`bind` 按库表名、列数及逐列物理描述匹配 TABLE_MAP，返回列标签和整数符号向量，详见 [schema 说明](docs/schema.md)。
@@ -124,6 +125,7 @@ python scripts/test_rotate_cli.py
 python scripts/test_chain_cli.py
 python scripts/test_previous_gtids_cli.py
 python scripts/generate_previous_gtids_fixtures.py --check
+python scripts/generate_gtid_fixtures.py --check
 python scripts/generate_schema_example.py --check
 ```
 
@@ -147,4 +149,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成 CLI 历史 GTID 详情，详细范围见 [历史 GTID CLI](docs/cli-previous-gtids.md)。暂停，等待用户继续指令。
+本批已完成 GTID_EVENT / ANONYMOUS_GTID_EVENT 库解析，详细范围见 [GTID 事件](docs/gtid-events.md)。暂停，等待用户继续指令。
