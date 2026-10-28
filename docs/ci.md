@@ -25,7 +25,7 @@ checkout、setup-python 和 msvc-dev-cmd 均固定到已核对的完整提交 SH
 [scripts/ci.ps1](../scripts/ci.ps1) 逐条执行，任一外部命令非零退出即失败：
 
 1. 输出工具链/Python 版本，检查 MoonBit 格式及 native 严格类型检查。
-2. 运行全部 native 测试并构建 CLI；当前为 356 项 MoonBit 测试。
+2. 运行全部 native 测试并构建 CLI；当前为 366 项 MoonBit 测试。
 3. moon info 重新生成接口，检查所有 .mbti 相对 HEAD 的差异，并拒绝未跟踪的新接口文件。
 4. 检查十七组合成样本、六组真实 MySQL 日志（含三组 JSON 捕获）及 schema 示例的一致性。
 5. 运行事件、行变化、事务、筛选、JSON、schema 草稿、元数据、轮转、多文件、历史集合和事务 GTID CLI 脚本，当前共 1632 个场景，并核对官方行镜像。

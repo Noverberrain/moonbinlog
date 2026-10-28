@@ -1,6 +1,6 @@
 # GTID 与匿名 GTID 事件
 
-`GtidEvent::parse(format, data, file_offset~)` 解析 MySQL 8.0 的 GTID_EVENT（类型 33）和 ANONYMOUS_GTID_EVENT（类型 34），返回标识字段、逻辑时钟及可选扩展。它为后续事务绑定提供信息；GTID 事件自身不表示事务已提交。
+`GtidEvent::parse(format, data, file_offset~)` 解析 MySQL 8.0 的 GTID_EVENT（类型 33）和 ANONYMOUS_GTID_EVENT（类型 34），返回标识字段、逻辑时钟及可选扩展。它可供 [GTID 事务绑定](gtid-transactions.md) 使用；GTID 事件自身不表示事务已提交。
 
 在 `BinlogFileReader` 的循环中，类型为 33/34 时传入 `event.format`、`event.raw` 和 `file_offset=event.header.file_offset`。接口签名可通过 `moon ide doc '@moonbinlog.GtidEvent'` 或根目录 `pkg.generated.mbti` 核对。
 
@@ -61,4 +61,4 @@ python scripts/generate_gtid_fixtures.py --check --mysqlbinlog 'C:/Program Files
 
 协议依据固定为 MySQL commit `9fc8d60003b4eee32767c1e30942f222c3508c31` 的 [Gtid_event 定义](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/control_events.h)、[事件读取逻辑](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/src/control_events.cpp)及 [Gtid_log_event 写入逻辑](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/sql/log_event.cc)。实现和样本根据布局独立编写，没有复制上游代码。
 
-库接口之外，CLI 可显式使用 --decode-gtid 展示并校验类型 33/34，见 [GTID CLI](cli-gtid.md)。默认事件浏览和事务包络分发保持原有范围；尚无事务 GTID 绑定、GTID 去重/过滤、断点恢复、历史连续性证明、实时复制或 MySQL 8.4 tagged GTID 支持。
+库接口之外，CLI 可显式使用 --decode-gtid 展示并校验类型 33/34，见 [GTID CLI](cli-gtid.md)。默认事件浏览和 CLI 事务包络分发保持原有范围；库层另提供 [显式事务绑定](gtid-transactions.md)，尚无 GTID 去重/过滤、断点恢复、历史连续性证明、实时复制或 MySQL 8.4 tagged GTID 支持。

@@ -1,6 +1,6 @@
 # 历史 GTID 集合解析
 
-`PreviousGtidsEvent::parse(format, data, file_offset~)` 解析 MySQL 8.0 的 PREVIOUS_GTIDS_EVENT（类型 35），返回事件头和 SID / GTID 区间列表。它表示日志声明的历史集合；事务自身的事件可另用 [GtidEvent](gtid-events.md) 解析；事务绑定、去重、断点恢复和日志历史连续性核对留待后续实现。
+`PreviousGtidsEvent::parse(format, data, file_offset~)` 解析 MySQL 8.0 的 PREVIOUS_GTIDS_EVENT（类型 35），返回事件头和 SID / GTID 区间列表。它表示日志声明的历史集合；事务自身的事件可另用 [GtidEvent](gtid-events.md) 解析；显式事务关联另有 [绑定接口](gtid-transactions.md)，集合去重、断点恢复和日志历史连续性核对留待后续实现。
 
 ## 接口与数据
 
@@ -47,4 +47,4 @@ python scripts/generate_previous_gtids_fixtures.py --check --mysqlbinlog 'C:/Pro
 
 协议依据为 MySQL commit `9fc8d60003b4eee32767c1e30942f222c3508c31` 的 [Previous_gtids_event 定义](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/libbinlogevents/include/control_events.h)及 [Gtid_set::encode / add_gtid_encoding](https://github.com/mysql/mysql-server/blob/9fc8d60003b4eee32767c1e30942f222c3508c31/sql/rpl_gtid_set.cc)。代码和样本根据布局独立编写，没有复制上游实现。
 
-库接口之外，CLI 可显式开启 --decode-previous-gtids 显示并校验历史集合，详见 [CLI 详情](cli-previous-gtids.md)。默认事件浏览及 TransactionDecoder 的历史包络处理保持原样；尚无 GTID_EVENT 事务绑定、GTID 过滤、实时复制或 MySQL 8.4 tagged GTID 支持。文件链的轮转连接核对仍不能证明 GTID 历史连续。
+库接口之外，CLI 可显式开启 --decode-previous-gtids 显示并校验历史集合，详见 [CLI 详情](cli-previous-gtids.md)。默认事件浏览及 TransactionDecoder 的历史包络处理保持原样；库层另有 [GTID 事务绑定](gtid-transactions.md)，尚无 GTID 过滤、实时复制或 MySQL 8.4 tagged GTID 支持。文件链的轮转连接核对仍不能证明 GTID 历史连续。

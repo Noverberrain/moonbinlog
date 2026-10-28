@@ -219,6 +219,9 @@ pub(all) suberror DecodeError {
   )
   TransactionLimitExceeded(file_offset~ : UInt64, reason~ : String)
   IncompleteTransaction(start_offset~ : UInt64)
+  InvalidGtidTransactionState(file_offset~ : UInt64, reason~ : String)
+  IncompleteGtidTransaction(start_offset~ : UInt64)
+  GtidTransactionFailed
   MissingFormatDescription(file_offset~ : UInt64)
   FileReaderFailed(file_offset~ : UInt64)
 } derive(Debug, Eq)

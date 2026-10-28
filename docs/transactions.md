@@ -4,6 +4,8 @@
 
 离线命令可使用 `--transactions --schema PATH` 组合本接口与文件遍历器，输出完成事务的计数和各表汇总；文件级包络允许范围与输出协议见[事务 CLI](cli-transactions.md)。本页描述库解码器本身，feed 的支持范围保持不变。
 
+需要关联紧邻的 GTID / 匿名前缀时，可使用独立的 [GtidTransactionDecoder](gtid-transactions.md)。它复用本接口，不改变这里的输入范围、结果类型或错误恢复规则。
+
 ## 边界解析
 
 `TransactionBoundary::parse` 复用格式描述的 CRC32/OFF 策略：

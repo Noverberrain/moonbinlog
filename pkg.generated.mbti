@@ -82,6 +82,9 @@ pub(all) suberror DecodeError {
   InvalidTransactionLimits(max_events~ : Int, max_changes~ : Int, max_bytes~ : UInt64)
   TransactionLimitExceeded(file_offset~ : UInt64, reason~ : String)
   IncompleteTransaction(start_offset~ : UInt64)
+  InvalidGtidTransactionState(file_offset~ : UInt64, reason~ : String)
+  IncompleteGtidTransaction(start_offset~ : UInt64)
+  GtidTransactionFailed
   MissingFormatDescription(file_offset~ : UInt64)
   FileReaderFailed(file_offset~ : UInt64)
 } derive(Eq, @debug.Debug)
@@ -335,6 +338,34 @@ pub struct GtidSidIntervals {
 pub fn GtidSidIntervals::equal(Self, Self) -> Bool
 pub fn GtidSidIntervals::not_equal(Self, Self) -> Bool
 pub fn GtidSidIntervals::to_repr(Self) -> @debug.Repr
+
+pub struct GtidTransactionDecoder {
+  // private fields
+}
+pub fn GtidTransactionDecoder::feed(Self, BytesView, file_offset~ : UInt64, integer_unsigned? : ReadOnlyArray[Bool?]) -> GtidTransactionStep raise DecodeError
+pub fn GtidTransactionDecoder::finish(Self) -> Unit raise DecodeError
+pub fn GtidTransactionDecoder::is_active(Self) -> Bool
+pub fn GtidTransactionDecoder::new(FormatDescription, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self raise DecodeError
+
+pub struct GtidTransactionOutcome {
+  gtid : GtidEvent
+  transaction : TransactionOutcome
+  start_offset : UInt64
+  end_offset : UInt64
+  event_count : Int
+  wire_bytes : UInt64
+} derive(Eq, @debug.Debug)
+pub fn GtidTransactionOutcome::equal(Self, Self) -> Bool
+pub fn GtidTransactionOutcome::not_equal(Self, Self) -> Bool
+pub fn GtidTransactionOutcome::to_repr(Self) -> @debug.Repr
+
+pub struct GtidTransactionStep {
+  header : EventHeader
+  outcome : GtidTransactionOutcome?
+} derive(Eq, @debug.Debug)
+pub fn GtidTransactionStep::equal(Self, Self) -> Bool
+pub fn GtidTransactionStep::not_equal(Self, Self) -> Bool
+pub fn GtidTransactionStep::to_repr(Self) -> @debug.Repr
 
 pub(all) enum IntegerValue {
   Signed(Int64)
