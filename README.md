@@ -43,9 +43,9 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 行镜像 | 列存在位图、紧凑 NULL 位图、有类型字段 | 区分 `Absent`、`Null` 和实际值 |
 | 行事件 | WRITE / UPDATE / DELETE_ROWS v2 | 支持多行及 UPDATE 的 before / after 配对 |
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
-| GTID 事务绑定 | GTID / 匿名前缀与紧邻显式事务的提交/回滚关联 | 独立库接口，含前缀配额和失败终止；尚未接入 CLI 事务导出 |
+| GTID 事务绑定 | GTID / 匿名前缀与紧邻显式事务的提交/回滚关联 | 独立库接口及 CLI --with-gtid，含前缀配额和失败终止 |
 
-**验证状态：366 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史集合/事务 GTID 十一组 CLI 共 1632 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
+**验证状态：373 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史集合/事务 GTID/绑定导出十二组 CLI 共 2200 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
 
 ## 解析流程
 
@@ -85,7 +85,7 @@ moon build --target native
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十一组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十二组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 
@@ -156,7 +156,7 @@ moon run --target native cmd/moonbinlog -- --transactions --include-rows --schem
 
 每笔 BEGIN → XID / COMMIT 完成后输出起止偏移、XID、行变化数与各表计数，ROLLBACK 输出丢弃数量；增加 `--include-rows` 在提交对象内附带 `row_changes`，其中行记录均标记 committed，保留列名及有类型的 before/after。默认仍只导出计数，`--summary` 只输出全文件统计。
 
-事务未结束、遇到未知事件或超过配额会失败，不输出该笔待定事务。此模式要求调用者已知涉及的表支持事务，不推断 GTID、DDL 或隐式提交；详见[事务 CLI](docs/cli-transactions.md)。
+事务未结束、遇到未知事件或超过配额会失败，不输出该笔待定事务。此模式要求调用者已知涉及的表支持事务；--with-gtid 只关联已有前缀，不推断 DDL 或隐式提交；详见[事务 CLI](docs/cli-transactions.md)。
 
 ### 按库表筛选输出
 
@@ -210,11 +210,13 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 ## 使用边界
 
 - 当前面向 MySQL **8.0.x、Binlog v4、未加密、常规 ROWS v2** 子集，不承诺兼容 MariaDB 或其他 MySQL 版本。
-- 库接口已支持 GTID 前缀绑定显式事务；CLI 事务导出尚不绑定 GTID，XA、DDL / 隐式事务、自动提交推断、SAVEPOINT、压缩事务及旧版 / partial 行事件仍未实现。
+- 库接口及 CLI --with-gtid 已支持 GTID 前缀绑定显式事务；XA、DDL / 隐式事务、自动提交推断、SAVEPOINT、压缩事务及旧版 / partial 行事件仍未实现。
 - JSON 的 opaque 扩展、partial diff、GEOMETRY 和字符集转换尚未实现；外部 schema 目前提供列名与整数符号属性，历史演进及自动推导尚未实现。
 - 事务汇总以调用者已知使用事务型表为前提，无法从当前表映射推断存储引擎及非事务表回滚语义。
 - 默认单事件上限 16 MiB；事务上限为 4096 个事件、10000 个行变化、64 MiB 编码字节。详细配额及配置范围见各层文档。
 - 真实文件验证目前仅覆盖 Windows / MySQL 8.0.43 的六组固定样本；性能基准和生产环境验证尚未完成。
+
+事务导出可组合 `--transactions --with-gtid --schema PATH`，在提交/回滚结果中附带紧邻的 GTID/匿名信息，可继续组合行导出和库表筛选，见 [GTID 事务 CLI](docs/cli-gtid-transactions.md)。
 
 查看已分配或匿名 GTID 事件可使用 `--decode-gtid FILE`，输出精确身份、逻辑时钟和可选扩展，见 [GTID CLI](docs/cli-gtid.md)。
 
@@ -244,7 +246,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 其他字段 | [浮点](docs/floating-values.md) · [BIT](docs/bit-values.md) · [ENUM / SET](docs/enum-set-values.md) |
 | 行变化 | [行镜像](docs/row-images.md) · [ROWS v2 事件](docs/rows-events.md) |
 | 提交与回滚 | [事务边界、状态和资源限制](docs/transactions.md) |
-| GTID 信息 | [历史集合](docs/previous-gtids.md) · [历史集合 CLI](docs/cli-previous-gtids.md) · [事务 GTID 事件](docs/gtid-events.md) · [GTID CLI](docs/cli-gtid.md) · [事务绑定](docs/gtid-transactions.md) |
+| GTID 信息 | [历史集合](docs/previous-gtids.md) · [历史集合 CLI](docs/cli-previous-gtids.md) · [事务 GTID 事件](docs/gtid-events.md) · [GTID CLI](docs/cli-gtid.md) · [事务绑定](docs/gtid-transactions.md) · [绑定导出 CLI](docs/cli-gtid-transactions.md) |
 | 开发记录 | [逐功能实现与验证记录](docs/progress.md) |
 | 自动化检查 | [CI 触发、固定版本与本地复现](docs/ci.md) |
 
@@ -277,7 +279,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] ROTATE_EVENT 轮转信息解析（库接口）
 - [x] PREVIOUS_GTIDS_EVENT 历史集合解析及 CLI 详情
 - [x] GTID_EVENT / ANONYMOUS_GTID_EVENT 字段解析及 CLI 详情
-- [x] GTID 前缀与显式事务绑定（独立库接口）
+- [x] GTID 前缀与显式事务绑定（库接口及可选 CLI 导出）
 - [x] 显式多文件事件浏览与轮转连接核对（CLI）
 - [x] 表映射、常用字段值与行镜像
 - [x] ROWS v2 多行解析与 UPDATE 配对

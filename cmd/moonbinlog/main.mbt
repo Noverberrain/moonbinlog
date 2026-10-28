@@ -58,7 +58,16 @@ async fn inspect(config : @cli.Config) -> Unit {
   let (scanner, transactions) = match schema {
     Some(schema) =>
       if config.transactions {
-        (None, Some(@cli.TransactionScanner::new(schema, filter=config.filter)))
+        (
+          None,
+          Some(
+            @cli.TransactionScanner::new(
+              schema,
+              filter=config.filter,
+              with_gtid=config.with_gtid,
+            ),
+          ),
+        )
       } else {
         (
           Some(
@@ -132,7 +141,15 @@ async fn inspect(config : @cli.Config) -> Unit {
           selected_transactions.record(outcome)
         }
         if !config.summary_only && transactions.outcome_selected() {
-          let line = if config.include_rows {
+          let line = if config.with_gtid {
+            guard transactions.gtid_outcome() is Some(value) else {
+              raise InvalidFile("bound transaction metadata missing")
+            }
+            @cli.gtid_transaction_line(
+              value,
+              schema=if config.include_rows { schema } else { None },
+            )
+          } else if config.include_rows {
             guard schema is Some(schema) else {
               raise InvalidFile("transaction row export requires schema")
             }

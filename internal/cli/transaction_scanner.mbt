@@ -2,23 +2,51 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+priv enum TransactionCore {
+  Plain(@moonbinlog.TransactionDecoder)
+  Bound(@moonbinlog.GtidTransactionDecoder)
+}
+
+///|
+fn TransactionCore::is_active(self : TransactionCore) -> Bool {
+  match self {
+    Plain(decoder) => decoder.is_active()
+    Bound(decoder) => decoder.is_active()
+  }
+}
+
+///|
+fn TransactionCore::finish(
+  self : TransactionCore,
+) -> Unit raise @moonbinlog.DecodeError {
+  match self {
+    Plain(decoder) => decoder.finish()
+    Bound(decoder) => decoder.finish()
+  }
+}
+
+///|
 /// File dispatch for explicit transactional RBR spans. Envelopes may only be
 /// skipped while idle; no pending span survives a format change or failure.
 pub struct TransactionScanner {
   priv schema : @moonbinlog.SchemaConfig
   priv filter : TableFilter
+  priv with_gtid : Bool
+  priv mut failed : Bool
+  priv mut gtid : @moonbinlog.GtidTransactionOutcome?
   priv mut matched : Bool
   priv mut selected : Bool
   priv max_events : Int32
   priv max_changes : Int32
   priv max_bytes : UInt64
-  priv mut state : (@moonbinlog.TransactionDecoder, @moonbinlog.TableMapContext)?
+  priv mut state : (TransactionCore, @moonbinlog.TableMapContext)?
 }
 
 ///|
 pub fn TransactionScanner::new(
   schema : @moonbinlog.SchemaConfig,
   filter~ : TableFilter = TableFilter::all(),
+  with_gtid~ : Bool = false,
   max_events~ : Int32 = 4096,
   max_changes~ : Int32 = 10000,
   max_bytes~ : UInt64 = 67_108_864,
@@ -26,6 +54,9 @@ pub fn TransactionScanner::new(
   {
     schema,
     filter,
+    with_gtid,
+    failed: false,
+    gtid: None,
     matched: false,
     selected: false,
     max_events,
@@ -43,26 +74,51 @@ pub fn TransactionScanner::outcome_selected(self : TransactionScanner) -> Bool {
 }
 
 ///|
+/// Bound metadata for the last completed feed, reset by the next feed/error.
+pub fn TransactionScanner::gtid_outcome(
+  self : TransactionScanner,
+) -> @moonbinlog.GtidTransactionOutcome? {
+  self.gtid
+}
+
+///|
 pub fn TransactionScanner::feed(
   self : TransactionScanner,
   event : @moonbinlog.BinlogFileEvent,
 ) -> @moonbinlog.TransactionOutcome? raise {
+  guard !self.failed else { raise @moonbinlog.GtidTransactionFailed }
   errdefer {
     self.state = None
     self.matched = false
     self.selected = false
+    self.gtid = None
+    self.failed = self.with_gtid
   }
   self.selected = false
+  self.gtid = None
   let file_offset = event.header.file_offset
   if event.header.event_type == 15 {
     self.finish()
     self.matched = false
-    let decoder = @moonbinlog.TransactionDecoder::new(
-      event.format,
-      max_events=self.max_events,
-      max_changes=self.max_changes,
-      max_bytes=self.max_bytes,
-    )
+    let decoder = if self.with_gtid {
+      Bound(
+        @moonbinlog.GtidTransactionDecoder::new(
+          event.format,
+          max_events=self.max_events,
+          max_changes=self.max_changes,
+          max_bytes=self.max_bytes,
+        ),
+      )
+    } else {
+      Plain(
+        @moonbinlog.TransactionDecoder::new(
+          event.format,
+          max_events=self.max_events,
+          max_changes=self.max_changes,
+          max_bytes=self.max_bytes,
+        ),
+      )
+    }
     self.state = Some((decoder, @moonbinlog.TableMapContext::new(event.format)))
     return None
   }
@@ -78,8 +134,7 @@ pub fn TransactionScanner::feed(
       kind == 3 ||
       kind == 4 ||
       kind == 27 ||
-      kind == 33 ||
-      kind == 34 ||
+      (!self.with_gtid && (kind == 33 || kind == 34)) ||
       kind == 35
     ) {
     // Envelope bodies are not interpreted, nor used as transaction identities.
@@ -109,27 +164,38 @@ pub fn TransactionScanner::feed(
     signs = self.schema.bind(table).integer_unsigned
     event_matches = self.filter.matches(table.database, table.table)
   }
-  let step = decoder.feed(event.raw, file_offset~, integer_unsigned=signs)
+  let outcome = match decoder {
+    Plain(decoder) =>
+      decoder.feed(event.raw, file_offset~, integer_unsigned=signs).outcome
+    Bound(decoder) => {
+      let step = decoder.feed(event.raw, file_offset~, integer_unsigned=signs)
+      self.gtid = step.outcome
+      step.outcome.map(value => value.transaction)
+    }
+  }
   self.matched = self.matched || event_matches
-  if step.outcome is Some(_) {
+  if outcome is Some(_) {
     self.selected = !self.filter.is_active() || self.matched
     self.matched = false
   }
   // The decoding core owns statement cleanup. Mirror it only for the schema
   // lookup cache; never cache bindings across statement/transaction scopes.
-  if step.outcome is Some(_) ||
+  if outcome is Some(_) ||
     (kind >= 30 && kind <= 32 && (event.body[6].to_int() & 1) != 0) {
     tables.clear()
   }
-  step.outcome
+  outcome
 }
 
 ///|
 pub fn TransactionScanner::finish(self : TransactionScanner) -> Unit raise {
+  guard !self.failed else { raise @moonbinlog.GtidTransactionFailed }
   errdefer {
     self.state = None
     self.matched = false
     self.selected = false
+    self.gtid = None
+    self.failed = self.with_gtid
   }
   if self.state is Some((decoder, _)) {
     decoder.finish()

@@ -19,6 +19,8 @@ pub fn event_name(Byte) -> String
 
 pub fn gtid_json_line(@moonbinlog.GtidEvent, @moonbinlog.ChecksumAlgorithm) -> String
 
+pub fn gtid_transaction_line(@moonbinlog.GtidTransactionOutcome, schema? : @moonbinlog.SchemaConfig?) -> String raise
+
 pub fn parse_args(ArrayView[String]) -> Command raise ArgumentError
 
 pub fn previous_gtids_json_line(@moonbinlog.PreviousGtidsEvent, @moonbinlog.ChecksumAlgorithm) -> String
@@ -81,6 +83,7 @@ pub struct Config {
   rows : Bool
   transactions : Bool
   include_rows : Bool
+  with_gtid : Bool
   schema_template : Bool
   use_table_metadata : Bool
   decode_rotate : Bool
@@ -148,7 +151,8 @@ pub struct TransactionScanner {
 }
 pub fn TransactionScanner::feed(Self, @moonbinlog.BinlogFileEvent) -> @moonbinlog.TransactionOutcome? raise
 pub fn TransactionScanner::finish(Self) -> Unit raise
-pub fn TransactionScanner::new(@moonbinlog.SchemaConfig, filter? : TableFilter, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self
+pub fn TransactionScanner::gtid_outcome(Self) -> @moonbinlog.GtidTransactionOutcome?
+pub fn TransactionScanner::new(@moonbinlog.SchemaConfig, filter? : TableFilter, with_gtid? : Bool, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self
 pub fn TransactionScanner::outcome_selected(Self) -> Bool
 
 pub struct TransactionStats {

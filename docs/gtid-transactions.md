@@ -2,7 +2,7 @@
 
 `GtidTransactionDecoder` 把连续的 `GTID_EVENT / ANONYMOUS_GTID_EVENT → BEGIN → TABLE_MAP / ROWS v2 → XID / COMMIT / ROLLBACK` 作为一个区间处理。只有结束边界出现后，才返回 GTID 信息及原有提交/回滚结果。
 
-这是独立的库接口，复用现有 [TransactionDecoder](transactions.md)；没有改变旧 API、默认 CLI 或 `--transactions` 的输出。它要求调用方已知涉及的表支持事务，不从 TABLE_MAP 推断存储引擎。
+这是独立的库接口，复用现有 [TransactionDecoder](transactions.md)；没有改变旧 API、默认 CLI 或未开启 --with-gtid 的事务输出。CLI 可显式选择 [GTID 事务导出](cli-gtid-transactions.md)。它要求调用方已知涉及的表支持事务，不从 TABLE_MAP 推断存储引擎。
 
 ## 调用与输入范围
 
@@ -71,4 +71,4 @@ EOF 时必须调用 finish()。只有 GTID、尚未 BEGIN，同样属于未完�
 
 六组既有真实 MySQL 8.0.43 匿名前缀的元数据仍与官方 mysqlbinlog 预期核对，其绑定后的内层结果与原 TransactionDecoder 的行/提交结果完全一致。已分配 GTID 绑定使用合成数据，没有新增真实 GTID 模式捕获，也没有修改原始日志或官方输出。
 
-GTID 与事务布局依据见 [GTID 事件](gtid-events.md)和 [原事务接口](transactions.md)，生命周期背景见 [MySQL 8.0 GTID Life Cycle](https://dev.mysql.com/doc/refman/8.0/en/replication-gtids-lifecycle.html)。本接口仅支持上述显式事务子集，没有新增 CLI 事务 GTID 输出、自动提交/DDL/XA/隐式边界推断、跨文件事务续接、历史连续性验证、exactly-once 投递或实时复制。
+GTID 与事务布局依据见 [GTID 事件](gtid-events.md)和 [原事务接口](transactions.md)，生命周期背景见 [MySQL 8.0 GTID Life Cycle](https://dev.mysql.com/doc/refman/8.0/en/replication-gtids-lifecycle.html)。本接口仅支持上述显式事务子集，CLI 另有可选绑定导出，仍没有自动提交/DDL/XA/隐式边界推断、跨文件事务续接、历史连续性验证、exactly-once 投递或实时复制。

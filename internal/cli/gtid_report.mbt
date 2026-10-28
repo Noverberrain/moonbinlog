@@ -24,8 +24,14 @@ fn gtid_json_fields(
   algorithm : @moonbinlog.ChecksumAlgorithm,
 ) -> Map[String, Json] {
   let fields = event_json_fields(gtid.header, algorithm)
+  fields["gtid"] = gtid_payload(gtid)
+  fields
+}
+
+///|
+fn gtid_payload(gtid : @moonbinlog.GtidEvent) -> Json {
   let sid = sid_uuid(gtid.sid)
-  fields["gtid"] = {
+  {
     "anonymous": @json.to_json(gtid.is_anonymous()),
     "identity": if gtid.is_anonymous() {
       Json::null()
@@ -63,5 +69,4 @@ fn gtid_json_fields(
       None => Json::null()
     },
   }
-  fields
 }

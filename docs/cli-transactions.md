@@ -89,7 +89,7 @@ ROLLBACK 不附带 row_changes，也不提供被丢弃的行值。未结束、�
 
 FDE（15）只允许出现在没有待定事务时，重新创建事务与 schema 映射上下文。活动事务遇到新 FDE 会报未结束事务，不把原状态静默丢弃后继续。
 
-仅在空闲状态，STOP（3）、ROTATE（4）、HEARTBEAT（27）、GTID（33）、ANONYMOUS_GTID（34）、PREVIOUS_GTIDS（35）可作为文件级包络跳过并清空映射。它们的 body 只接受文件层完整性/CRC 检查，不解释语义，也不作为事务身份；活动事务中遇到它们会失败，不能跨包络续接事务。其他未知事件和旧/partial/compressed 行事件立即失败。
+仅在空闲状态，STOP（3）、ROTATE（4）、HEARTBEAT（27）、GTID（33）、ANONYMOUS_GTID（34）、PREVIOUS_GTIDS（35）在默认未开启 --with-gtid 时可作为文件级包络跳过并清空映射。它们的 body 只接受文件层完整性/CRC 检查，不解释语义，也不作为事务身份；活动事务中遇到它们会失败，不能跨包络续接事务。其他未知事件和旧/partial/compressed 行事件立即失败。
 
 语句结束清理两份同作用域映射缓存：事务核心负责行解码，CLI 缓存只提供经过 schema 绑定的 signedness，不重复解码行。每条新语句仍须 TABLE_MAP；提交/回滚清理缓存，任意扫描错误使当前 scanner 失效，不尝试恢复后提交旧数据。
 
@@ -121,3 +121,5 @@ python scripts/test_transactions_cli.py
 ```
 
 事务及行导出合计新增 13 项 MoonBit 测试，子进程场景从 50 个扩展为 72 个。三组真实 MySQL 8.0.43 捕获核对官方 mysqlbinlog 的 BEGIN/XID 位置、XID 及导出行的 300 个列位置；合成场景覆盖空事务、COMMIT/ROLLBACK、高位 XID、多笔事务、多表同 ID 重用、多行序号、BOM/Unicode/转义标签、schema 错误、活动事务包络、有效 CRC 的语义错误、事件/变化配额及完整/截断 EOF。原有事件及行模式回归独立保留，脚本核对固定输入未改变，不启动数据库。
+
+可选 `--with-gtid` 使用严格的 GTID 前缀绑定器，支持现有行导出/筛选/摘要，在完成事务中附加 gtid 和包含前缀的 gtid_span。默认模式及本页原有 BEGIN-based 字段保持一致，完整规则见 [GTID 事务导出](cli-gtid-transactions.md)。

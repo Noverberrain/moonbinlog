@@ -47,7 +47,7 @@ SID 使用可逆的小写 UUID 分组文本，不要求某个 UUID 版本或 var
 
 最终 summary / chain_summary 的字段和计数范围保持一致。链模式的 event 继续附带 source，offset 相对此文件；失败沿用包含文件序号、路径的 ChainFileFailure。各文件的已分配/匿名事件分别展示，不按 GTID 合并，也不验证它们与前一文件历史集合的连续关系。
 
-没有增加行/事务模式的 GTID 绑定、提交确认、GTID 去重/筛选、断点恢复或实时复制。GTID 事件不是提交证明，transaction_length 不用于跳过输入或核对实际事务字节；逻辑时钟、ticket 的关系也未校验。输入文件及 JSON 输出对象仍驻留内存，没有独立输出字节预算。
+本事件浏览选项不绑定事务。事务导出可另用 [--with-gtid](cli-gtid-transactions.md)，仍没有 GTID 去重/筛选、断点恢复或实时复制。GTID 事件不是提交证明，transaction_length 不用于跳过输入或核对实际事务字节；逻辑时钟、ticket 的关系也未校验。输入文件及 JSON 输出对象仍驻留内存，没有独立输出字节预算。
 
 ## 验证
 

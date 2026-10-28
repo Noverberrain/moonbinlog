@@ -71,6 +71,14 @@ pub fn transaction_rows_line(
   outcome : @moonbinlog.TransactionOutcome,
   schema : @moonbinlog.SchemaConfig,
 ) -> String raise {
+  Json::object(transaction_rows_fields(outcome, schema)).stringify()
+}
+
+///|
+fn transaction_rows_fields(
+  outcome : @moonbinlog.TransactionOutcome,
+  schema : @moonbinlog.SchemaConfig,
+) -> Map[String, Json] raise {
   let fields = transaction_fields(outcome)
   if outcome is Committed(transaction) {
     let changes = []
@@ -83,6 +91,27 @@ pub fn transaction_rows_line(
       }
     }
     fields["row_changes"] = Json::array(changes)
+  }
+  fields
+}
+
+///|
+/// Preserve existing BEGIN-based fields; gtid_span counts the prefix too.
+/// With schema supplied, attach only committed row snapshots, never rollback rows.
+pub fn gtid_transaction_line(
+  value : @moonbinlog.GtidTransactionOutcome,
+  schema~ : @moonbinlog.SchemaConfig? = None,
+) -> String raise {
+  let fields = match schema {
+    Some(schema) => transaction_rows_fields(value.transaction, schema)
+    None => transaction_fields(value.transaction)
+  }
+  fields["gtid"] = gtid_payload(value.gtid)
+  fields["gtid_span"] = {
+    "start_offset": Json::string(value.start_offset.to_string()),
+    "end_offset": Json::string(value.end_offset.to_string()),
+    "events": @json.to_json(value.event_count),
+    "event_bytes": Json::string(value.wire_bytes.to_string()),
   }
   Json::object(fields).stringify()
 }

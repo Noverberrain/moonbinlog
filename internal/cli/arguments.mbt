@@ -9,6 +9,7 @@ pub struct Config {
   rows : Bool
   transactions : Bool
   include_rows : Bool
+  with_gtid : Bool
   schema_template : Bool
   use_table_metadata : Bool
   decode_rotate : Bool
@@ -55,7 +56,7 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
+    #|Usage: moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows] [--with-gtid]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
@@ -68,6 +69,7 @@ pub fn usage() -> String {
     #|  --rows                Decode unconfirmed row changes as JSON Lines.
     #|  --transactions        Summarize explicit transactional RBR commits/rollbacks.
     #|  --include-rows        Include committed row values; requires --transactions.
+    #|  --with-gtid           Bind GTID prefixes; requires --transactions and --schema.
     #|  --schema PATH         Schema v1 UTF-8 JSON file; required by either mode.
     #|  --schema-template     Emit a schema draft from TABLE_MAP after clean EOF.
     #|                        Review column_N names and replace integer unsigned:null.
@@ -115,6 +117,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut rows = false
   let mut transactions = false
   let mut include_rows = false
+  let mut with_gtid = false
   let mut schema_template = false
   let mut use_table_metadata = false
   let mut decode_rotate = false
@@ -175,6 +178,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
         raise InvalidArguments("duplicate --schema-template")
       }
       schema_template = true
+    } else if !positional && arg == "--with-gtid" {
+      guard !with_gtid else { raise InvalidArguments("duplicate --with-gtid") }
+      with_gtid = true
     } else if !positional && arg == "--include-rows" {
       guard !include_rows else {
         raise InvalidArguments("duplicate --include-rows")
@@ -278,6 +284,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   guard !include_rows || transactions else {
     raise InvalidArguments("--include-rows requires --transactions")
   }
+  guard !with_gtid || transactions else {
+    raise InvalidArguments("--with-gtid requires --transactions")
+  }
   guard (rows || transactions) == (schema_path is Some(_)) else {
     raise InvalidArguments(
       "--rows or --transactions requires --schema, and vice versa",
@@ -329,6 +338,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     rows,
     transactions,
     include_rows,
+    with_gtid,
     schema_template,
     use_table_metadata,
     decode_rotate,
