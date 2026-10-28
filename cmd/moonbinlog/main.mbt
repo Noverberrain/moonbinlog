@@ -111,6 +111,19 @@ async fn inspect(config : @cli.Config) -> Unit {
     } else {
       None
     }
+    let gtid = if config.decode_gtid &&
+      (event.header.event_type == 33 || event.header.event_type == 34) {
+      Some(
+        @binlog.GtidEvent::parse(
+          event.format,
+          event.raw,
+          file_offset=event.header.file_offset,
+          max_event_size=config.max_event_bytes,
+        ),
+      )
+    } else {
+      None
+    }
     stats.record(event.header)
     if transactions is Some(transactions) {
       if transactions.feed(event) is Some(outcome) {
@@ -149,6 +162,8 @@ async fn inspect(config : @cli.Config) -> Unit {
         @cli.rotate_json_line(rotation, event.format.checksum_algorithm)
       } else if previous_gtids is Some(previous) {
         @cli.previous_gtids_json_line(previous, event.format.checksum_algorithm)
+      } else if gtid is Some(gtid) {
+        @cli.gtid_json_line(gtid, event.format.checksum_algorithm)
       } else if config.json_output {
         @cli.event_json_line(event.header, event.format.checksum_algorithm)
       } else {

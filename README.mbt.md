@@ -124,6 +124,7 @@ python scripts/test_template_metadata_cli.py
 python scripts/test_rotate_cli.py
 python scripts/test_chain_cli.py
 python scripts/test_previous_gtids_cli.py
+python scripts/test_gtid_cli.py
 python scripts/generate_previous_gtids_fixtures.py --check
 python scripts/generate_gtid_fixtures.py --check
 python scripts/generate_schema_example.py --check
@@ -149,4 +150,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成 GTID_EVENT / ANONYMOUS_GTID_EVENT 库解析，详细范围见 [GTID 事件](docs/gtid-events.md)。暂停，等待用户继续指令。
+本批已完成 GTID_EVENT / ANONYMOUS_GTID_EVENT CLI 详情，详细范围见 [GTID CLI](docs/cli-gtid.md)。暂停，等待用户继续指令。

@@ -8,11 +8,14 @@ pub fn chain_event_line(
   index : Int32,
   path : String,
   previous_gtids~ : @moonbinlog.PreviousGtidsEvent? = None,
+  gtid~ : @moonbinlog.GtidEvent? = None,
 ) -> String {
   let fields = if rotation is Some(rotation) {
     rotate_json_fields(rotation, event.format.checksum_algorithm)
   } else if previous_gtids is Some(previous) {
     previous_gtids_json_fields(previous, event.format.checksum_algorithm)
+  } else if gtid is Some(gtid) {
+    gtid_json_fields(gtid, event.format.checksum_algorithm)
   } else {
     event_json_fields(event.header, event.format.checksum_algorithm)
   }

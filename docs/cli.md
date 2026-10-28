@@ -32,7 +32,7 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
+moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
 ```
 
 | 参数 | 含义 | 默认值 |
@@ -42,6 +42,7 @@ moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-previo
 | --max-total-bytes N | 多文件输入总预算，只能与 --chain 使用 | 268435456 |
 | --decode-rotate | 事件模式输出轮转详情，自动使用 JSON Lines；--summary 仍验证轮转 | 关闭 |
 | --decode-previous-gtids | 事件模式输出历史 SID/GTID 区间，自动 JSON Lines；可组合轮转/多文件，summary 仍验证 | 关闭 |
+| --decode-gtid | 事件模式显示 assigned/anonymous GTID、时钟及扩展，自动 JSON Lines；summary 仍验证 | 关闭 |
 | --json | 使用 JSON Lines，每行一个事件或统计对象 | 关闭（使用 TSV） |
 | --summary | 只输出统计，仍完整遍历与校验文件 | 关闭 |
 | --use-table-metadata | 提取可用列名和整数符号，仅用于 --schema-template；缺失时保留占位值 | 关闭 |
@@ -157,3 +158,5 @@ JSON 字段新增独立 `python scripts/test_json_cli.py` 回归（可用 `--exe
 `--chain FILE1 FILE2 ...` 增加显式多文件事件浏览和来源标记，最终输出 chain_summary；文件名/目标位置、顺序、配额及失败前缀规则见 [多文件 CLI](cli-chain.md)。其他模式仍只接受单文件。新增 78 个子进程场景，九组 CLI 合计 760 个。
 
 历史 GTID 详情可用 `--decode-previous-gtids FILE`，可组合 --decode-rotate、--chain、--summary，字段和配额见 [历史 GTID CLI](cli-previous-gtids.md)。默认模式仍将类型 35 body 作为不透明数据，行/事务语义范围保持原样。
+
+GTID / 匿名 GTID 事件详情可用 `--decode-gtid FILE`，可组合历史集合/轮转详情、链浏览和摘要。匿名身份为 null，UInt64 值用十进制字符串，详见 [GTID CLI](cli-gtid.md)。未开启时仍保留类型 33/34 body 的原不透明处理，事务绑定范围不变。

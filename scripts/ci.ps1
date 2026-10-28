@@ -47,7 +47,8 @@ try {
         'scripts/test_template_metadata_cli.py',
         'scripts/test_rotate_cli.py',
         'scripts/test_chain_cli.py',
-        'scripts/test_previous_gtids_cli.py'
+        'scripts/test_previous_gtids_cli.py',
+        'scripts/test_gtid_cli.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript)
     }

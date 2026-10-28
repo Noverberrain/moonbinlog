@@ -20,9 +20,7 @@ fn previous_gtids_json_fields(
   let sids = previous.sids
     .iter()
     .map(entry => {
-      // The parser guarantees exactly 16 SID bytes (32 lowercase hex digits).
-      let hex = @hex.encode(entry.sid)
-      let sid = "\{hex[0:8]}-\{hex[8:12]}-\{hex[12:16]}-\{hex[16:20]}-\{hex[20:32]}"
+      let sid = sid_uuid(entry.sid)
       let intervals = entry.intervals
         .iter()
         .map(interval => {

@@ -40,6 +40,19 @@ async fn inspect_chain(config : @cli.Config) -> Unit {
         } else {
           None
         }
+        let gtid = if config.decode_gtid &&
+          (event.header.event_type == 33 || event.header.event_type == 34) {
+          Some(
+            @binlog.GtidEvent::parse(
+              event.format,
+              event.raw,
+              file_offset=event.header.file_offset,
+              max_event_size=config.max_event_bytes,
+            ),
+          )
+        } else {
+          None
+        }
         stats.record(event.header)
         total.record(event.header)
         if !config.summary_only {
@@ -54,6 +67,7 @@ async fn inspect_chain(config : @cli.Config) -> Unit {
               index,
               path,
               previous_gtids~,
+              gtid~,
             ) +
             "\n",
           )

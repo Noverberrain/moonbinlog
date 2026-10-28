@@ -13,6 +13,7 @@ pub struct Config {
   use_table_metadata : Bool
   decode_rotate : Bool
   decode_previous_gtids : Bool
+  decode_gtid : Bool
   chain : Bool
   paths : ReadOnlyArray[String]
   max_total_bytes : Int32
@@ -54,12 +55,13 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
+    #|Usage: moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
     #|  --decode-rotate       Add decoded rotation targets; event mode, JSON Lines.
     #|  --decode-previous-gtids  Add historical SID/GTID intervals; event mode, JSON Lines.
+    #|  --decode-gtid         Add assigned/anonymous GTID fields; event mode, JSON Lines.
     #|  --chain               Inspect 2..128 explicitly ordered files as JSON Lines.
     #|  --max-total-bytes N   Chain input budget (default 268435456, max 2147483647).
     #|  --summary             Show counts only; still validate the entire file.
@@ -117,6 +119,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut use_table_metadata = false
   let mut decode_rotate = false
   let mut decode_previous_gtids = false
+  let mut decode_gtid = false
   let mut chain = false
   let mut total_limit = None
   let mut schema_path = None
@@ -149,6 +152,11 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
         raise InvalidArguments("duplicate --decode-previous-gtids")
       }
       decode_previous_gtids = true
+    } else if !positional && arg == "--decode-gtid" {
+      guard !decode_gtid else {
+        raise InvalidArguments("duplicate --decode-gtid")
+      }
+      decode_gtid = true
     } else if !positional && arg == "--rows" {
       guard !rows else { raise InvalidArguments("duplicate --rows") }
       rows = true
@@ -282,6 +290,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   guard !decode_previous_gtids || !(rows || transactions || schema_template) else {
     raise InvalidArguments("--decode-previous-gtids requires event mode")
   }
+  guard !decode_gtid || !(rows || transactions || schema_template) else {
+    raise InvalidArguments("--decode-gtid requires event mode")
+  }
   guard !use_table_metadata || schema_template else {
     raise InvalidArguments("--use-table-metadata requires --schema-template")
   }
@@ -313,6 +324,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     schema_template ||
     decode_rotate ||
     decode_previous_gtids ||
+    decode_gtid ||
     chain,
     rows,
     transactions,
@@ -321,6 +333,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     use_table_metadata,
     decode_rotate,
     decode_previous_gtids,
+    decode_gtid,
     filter,
     schema_path,
     max_event_bytes: event_limit.unwrap_or(16_777_216),
