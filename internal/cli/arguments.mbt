@@ -65,7 +65,7 @@ pub fn usage() -> String {
     #|  --decode-previous-gtids  Add historical SID/GTID intervals; event mode, JSON Lines.
     #|  --decode-gtid         Add assigned/anonymous GTID fields; event mode, JSON Lines.
     #|  --chain               Inspect 2..128 explicitly ordered files as JSON Lines.
-    #|  --stream              Read one event at a time; single-file event/row mode.
+    #|  --stream              Read one event at a time; single-file events/rows/transactions.
     #|  --max-total-bytes N   Chain input budget (default 268435456, max 2147483647).
     #|  --summary             Show counts only; still validate the entire file.
     #|  --rows                Decode unconfirmed row changes as JSON Lines.
@@ -284,8 +284,8 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   guard !chain || !(rows || transactions || schema_template) else {
     raise InvalidArguments("--chain only supports event inspection")
   }
-  guard !stream || !(chain || transactions || schema_template) else {
-    raise InvalidArguments("--stream requires single-file event or row mode")
+  guard !stream || !(chain || schema_template) else {
+    raise InvalidArguments("--stream does not support chains or schema drafts")
   }
   guard !(rows && transactions) else {
     raise InvalidArguments("--rows and --transactions are mutually exclusive")

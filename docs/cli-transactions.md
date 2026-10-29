@@ -123,3 +123,5 @@ python scripts/test_transactions_cli.py
 事务及行导出合计新增 13 项 MoonBit 测试，子进程场景从 50 个扩展为 72 个。三组真实 MySQL 8.0.43 捕获核对官方 mysqlbinlog 的 BEGIN/XID 位置、XID 及导出行的 300 个列位置；合成场景覆盖空事务、COMMIT/ROLLBACK、高位 XID、多笔事务、多表同 ID 重用、多行序号、BOM/Unicode/转义标签、schema 错误、活动事务包络、有效 CRC 的语义错误、事件/变化配额及完整/截断 EOF。原有事件及行模式回归独立保留，脚本核对固定输入未改变，不启动数据库。
 
 可选 `--with-gtid` 使用严格的 GTID 前缀绑定器，支持现有行导出/筛选/摘要，在完成事务中附加 gtid 和包含前缀的 gtid_span。默认模式及本页原有 BEGIN-based 字段保持一致，完整规则见 [GTID 事务导出](cli-gtid-transactions.md)。
+
+单文件事务导出可加 `--stream` 逐事件读取；支持 --with-gtid、--include-rows、筛选和摘要，保留单笔事务的缓冲及 EOF 检查，详见 [逐事件读取](cli-stream.md)。

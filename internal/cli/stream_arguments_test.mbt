@@ -31,7 +31,7 @@ test "CLI stream rejects repeated flag and unsupported or multi-file modes" {
       ["--stream", "--stream", "f"],
       ["--stream", "--chain", "a", "b"],
       ["--stream", "--rows", "f"],
-      ["--stream", "--transactions", "--schema", "s", "f"],
+      ["--stream", "--transactions", "f"],
       ["--stream", "--schema-template", "f"],
       ["--stream", "--include-rows", "f"],
       ["--stream", "--with-gtid", "f"],
@@ -67,6 +67,55 @@ test "CLI stream accepts rows schema filters summary and byte budgets" {
       ["--stream", "--rows", "--schema", "s", "--with-gtid", "f"],
       ["--stream", "--rows", "--schema", "s", "--use-table-metadata", "f"],
     ] {
+    invalid_args(args[:])
+  }
+}
+
+///|
+test "CLI stream accepts plain and GTID-bound transactions with committed rows" {
+  for
+    options in [
+      [],
+      ["--with-gtid"],
+      ["--include-rows"],
+      ["--with-gtid", "--include-rows"],
+    ] {
+    let args = [
+      "--stream", "--transactions", "--schema", "s", "--database", "db", "--table",
+      "t", "--summary", "--max-file-bytes", "1000", "f",
+    ]
+    for option in options {
+      args.push(option)
+    }
+    guard @cli.parse_args(args[:]) is Inspect(config) else {
+      fail("missing transaction config")
+    }
+    assert_true(
+      config.stream &&
+      config.transactions &&
+      config.json_output &&
+      config.summary_only,
+    )
+    assert_false(config.rows)
+    assert_eq(config.with_gtid, options.contains("--with-gtid"))
+    assert_eq(config.include_rows, options.contains("--include-rows"))
+    assert_true(config.filter.matches("db", "t"))
+    assert_eq(config.max_file_bytes, 1000)
+  }
+  for
+    options in [
+      ["--rows"],
+      ["--decode-gtid"],
+      ["--decode-rotate"],
+      ["--decode-previous-gtids"],
+      ["--schema-template"],
+      ["--use-table-metadata"],
+      ["--chain", "other"],
+    ] {
+    let args = ["--stream", "--transactions", "--schema", "s", "f"]
+    for option in options {
+      args.push(option)
+    }
     invalid_args(args[:])
   }
 }

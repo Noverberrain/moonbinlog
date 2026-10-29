@@ -5,15 +5,26 @@
 // Read a bounded, closed regular file event by event. Bound event reads by the
 // snapshot; reading past it detects growth before success output.
 async fn inspect_stream(config : @cli.Config) -> Unit {
-  let scanner = if config.rows {
-    guard config.schema_path is Some(path) else {
-      raise InvalidFile("row export requires schema")
+  let schema = match config.schema_path {
+    Some(path) => {
+      let bytes = read_input(path, 4_194_304)
+      Some(@binlog.SchemaConfig::parse(@utf8.decode(bytes, ignore_bom=true)))
     }
-    let bytes = read_input(path, 4_194_304)
-    let schema = @binlog.SchemaConfig::parse(
-      @utf8.decode(bytes, ignore_bom=true),
-    )
+    None => None
+  }
+  let scanner = if config.rows && schema is Some(schema) {
     Some(@cli.RowScanner::new(schema, max_event_size=config.max_event_bytes))
+  } else {
+    None
+  }
+  let transactions = if config.transactions && schema is Some(schema) {
+    Some(
+      @cli.TransactionScanner::new(
+        schema,
+        filter=config.filter,
+        with_gtid=config.with_gtid,
+      ),
+    )
   } else {
     None
   }
@@ -39,6 +50,8 @@ async fn inspect_stream(config : @cli.Config) -> Unit {
     max_event_size=config.max_event_bytes,
   )
   let stats = @cli.Stats::new()
+  let transaction_stats = @cli.TransactionStats::new()
+  let selected_transactions = @cli.TransactionStats::new()
   let mut row_events = 0
   let mut changes = 0
   let mut selected_row_events = 0
@@ -107,7 +120,33 @@ async fn inspect_stream(config : @cli.Config) -> Unit {
       None
     }
     stats.record(event.header)
-    if scanner is Some(scanner) {
+    if transactions is Some(transactions) {
+      if transactions.feed(event) is Some(outcome) {
+        transaction_stats.record(outcome)
+        if transactions.outcome_selected() {
+          selected_transactions.record(outcome)
+        }
+        if !config.summary_only && transactions.outcome_selected() {
+          let line = if config.with_gtid {
+            guard transactions.gtid_outcome() is Some(value) else {
+              raise InvalidFile("bound transaction metadata missing")
+            }
+            @cli.gtid_transaction_line(
+              value,
+              schema=if config.include_rows { schema } else { None },
+            )
+          } else if config.include_rows {
+            guard schema is Some(schema) else {
+              raise InvalidFile("transaction row export requires schema")
+            }
+            @cli.transaction_rows_line(outcome, schema)
+          } else {
+            @cli.transaction_line(outcome)
+          }
+          @stdio.stdout.write(line + "\n")
+        }
+      }
+    } else if scanner is Some(scanner) {
       // Filtering and summary suppress output only; schema/rows still validate.
       if scanner.feed(event) is Some((rows, bound)) {
         row_events += 1
@@ -141,7 +180,20 @@ async fn inspect_stream(config : @cli.Config) -> Unit {
     raise InvalidFile("file grew while reading; use a closed binlog file")
   }
   reader.finish()
-  if scanner is Some(_) {
+  if transactions is Some(transactions) {
+    transactions.finish()
+    let summary = if config.filter.is_active() {
+      transaction_stats.filtered_json_line(
+        stats,
+        length,
+        config.filter,
+        selected_transactions,
+      )
+    } else {
+      transaction_stats.json_line(stats, length)
+    }
+    @stdio.stdout.write(summary + "\n")
+  } else if scanner is Some(_) {
     let summary = if config.filter.is_active() {
       stats.filtered_row_json_line(
         length,

@@ -85,7 +85,7 @@ def main(executable):
         options = ['--json', '--summary', '--max-event-bytes', str(len(large_event))]
         assert run(['--stream', *options, source]).stdout == run([*options, source]).stdout
         for options in [['--stream'], ['--chain', 'other'], ['--rows'],
-                        ['--transactions', '--schema', 's'], ['--schema-template'],
+                        ['--transactions'], ['--schema-template'],
                         ['--include-rows'], ['--with-gtid'], ['--database', 'd'], ['--table', 't']]:
             run(['--stream', *options, source], 2)
         run(['--stream'], 2)
