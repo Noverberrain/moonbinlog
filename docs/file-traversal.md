@@ -60,3 +60,5 @@ FDE 自身始终验证 CRC，它的 `body` 仍包含末尾的 checksum-algorithm
 收到类型 4 的完整文件事件后，可将 event.format、event.raw 与 event.header.file_offset 交给 RotateEvent::parse，提取目标日志标识及 UInt64 位置，见 [轮转解析](rotate-events.md)。遍历器自身仍只处理当前输入，不自动读取目标文件，也不把轮转视为事务提交。
 
 CLI 另提供 --chain，显式按顺序读取多份文件并核对末尾轮转连接，见 [多文件事件浏览](cli-chain.md)。这不改变单文件遍历器/轮转解析器本身，也没有增加跨文件行或事务续接。
+
+另有 [BinlogEventStream 和 CLI --stream](cli-stream.md)：调用者逐个提供完整事件，CLI 可逐事件读取单文件。此接口不改变上面 BinlogFileReader 的完整内存视图语义。

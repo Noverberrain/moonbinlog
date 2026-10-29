@@ -26,7 +26,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 层次 | 已实现能力 | 说明 |
 | --- | --- | --- |
 | 文件标识与事件头 | 未加密 Binlog magic、v4 公共事件头 | 保存真实物理偏移，事件长度有上限 |
-| 离线文件遍历 | 顺序切分、FDE 上下文切换、事件完整性校验 | 输入完整内存视图，未知事件保留原始数据 |
+| 离线文件遍历 | 顺序切分、FDE 上下文切换、事件完整性校验 | 支持内存视图及逐事件库接口，未知事件保留原始数据 |
 | 离线 CLI | 事件统计、外部 schema 行变化、显式事务汇总与已提交行导出 | 行模式标记 unconfirmed，事务模式可按整笔提交导出行值 |
 | 格式与完整性 | MySQL 8.0.x FORMAT_DESCRIPTION、CRC32 / OFF | 检查格式、完整事件及校验尾部 |
 | 日志轮转 | ROTATE_EVENT 目标文件标识和 UInt64 起始位置 | 库接口及可选 CLI 详情；保留文件名字节，尚不自动跟随 |
@@ -45,7 +45,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 | GTID 事务绑定 | GTID / 匿名前缀与紧邻显式事务的提交/回滚关联 | 独立库接口及 CLI --with-gtid，含前缀配额和失败终止 |
 
-**验证状态：376 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史集合/事务 GTID/绑定导出/真实 GTID 十三组 CLI 共 2272 个场景通过，运行验证使用 native 后端。** 已对九组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，JSON 场景共 42 个列位置，真实 GTID 场景另有 42 个列位置及 9 笔 assigned 事务；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)、[JSON 捕获](fixtures/mysql-json/README.md)及 [真实 GTID 捕获](fixtures/gtid-real/README.md)。
+**验证状态：382 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史集合/事务 GTID/绑定导出/真实 GTID/逐事件读取十四组 CLI 共 2721 个场景通过，运行验证使用 native 后端。** 已对九组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，JSON 场景共 42 个列位置，真实 GTID 场景另有 42 个列位置及 9 笔 assigned 事务；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)、[JSON 捕获](fixtures/mysql-json/README.md)及 [真实 GTID 捕获](fixtures/gtid-real/README.md)。
 
 ## 解析流程
 
@@ -85,7 +85,7 @@ moon build --target native
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十三组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十四组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 
@@ -102,6 +102,8 @@ moon run --target native cmd/moonbinlog -- fixtures/mysql-8.0/crc32-full.binlog
 moon run --target native cmd/moonbinlog -- --summary fixtures/mysql-8.0/off-full.binlog
 moon run --target native cmd/moonbinlog -- --json --summary fixtures/mysql-8.0/crc32-full.binlog
 ```
+
+事件浏览可用 `--stream --max-file-bytes 1073741824 FILE` 逐事件读取较大文件，当前仍限于单文件事件模式，见 [逐事件读取](docs/cli-stream.md)。
 
 默认显示 TSV 事件表及类型统计，`--json` 切换为逐行 JSON 对象，`--summary` 仅输出统计。JSON 的 UInt64 字段用十进制字符串保留精度。文件默认限制 64 MiB，单事件默认限制 16 MiB。退出码 0 表示遍历成功，1 表示读取或解析失败，2 表示参数错误；完整参数和构建产物路径见 [CLI 使用说明](docs/cli.md)。
 
@@ -231,7 +233,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 日志轮转 | [ROTATE_EVENT 库接口](docs/rotate-events.md) · [CLI 详情输出](docs/cli-rotate.md) |
 | 多文件事件浏览 | [显式文件顺序、连接核对和来源统计](docs/cli-chain.md) |
 | JSON 字段 | [binary JSON、精度、配额与 CLI 表示](docs/json-values.md) |
-| 文件级遍历 | [内存文件遍历、偏移与错误处理](docs/file-traversal.md) |
+| 文件级遍历 | [内存遍历](docs/file-traversal.md) · [逐事件读取](docs/cli-stream.md) |
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
 | Schema 草稿 | [从 TABLE_MAP 生成并确认配置](docs/cli-schema-template.md) |
 | 命令行行变化 | [schema 接入、行 JSON 与提交状态](docs/cli-rows.md) |
@@ -285,7 +287,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] 表映射、常用字段值与行镜像
 - [x] ROWS v2 多行解析与 UPDATE 配对
 - [x] 显式事务边界、提交 / 回滚与配额检查
-- [x] 离线 Binlog 文件字节遍历（内存视图接口）
+- [x] 离线 Binlog 文件字节遍历（内存视图和逐事件接口）
+- [x] CLI 单文件事件浏览逐事件读取（--stream）
 - [x] 三组真实 MySQL 8.0.43 文件集成及官方 mysqlbinlog 对照
 - [x] 完整 binary JSON 普通标量、容器及行/事务接入
 - [ ] 更多字段 / 事件类型

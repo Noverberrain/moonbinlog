@@ -51,7 +51,8 @@ try {
         'scripts/test_previous_gtids_cli.py',
         'scripts/test_gtid_cli.py',
         'scripts/test_gtid_transactions_cli.py',
-        'scripts/test_assigned_gtid_cli.py'
+        'scripts/test_assigned_gtid_cli.py',
+        'scripts/test_stream_cli.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript)
     }

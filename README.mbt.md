@@ -39,6 +39,8 @@ test "validate a file signature and decode a common header" {
 
 ## 当前接口与边界
 
+- `BinlogEventStream` 接收文件标识及逐个完整事件，维护物理偏移和 FDE；`--stream` 可逐事件读取本地文件，见 [逐事件读取](docs/cli-stream.md)。
+
 - `BinlogFileReader::new` 校验文件标识；`next()` 按事件大小遍历并校验，首个事件要求 FDE。未知类型保留原始数据，错误后永久停止；本层不进行业务事件分发。详见[文件遍历说明](docs/file-traversal.md)。
 
 - `validate_file_header` 校验前四字节 `FE 62 69 6E`，不据此确认 Binlog 版本。
@@ -128,6 +130,7 @@ python scripts/test_previous_gtids_cli.py
 python scripts/test_gtid_cli.py
 python scripts/test_gtid_transactions_cli.py
 python scripts/test_assigned_gtid_cli.py
+python scripts/test_stream_cli.py
 python scripts/verify_assigned_gtid_fixtures.py --check
 python scripts/generate_previous_gtids_fixtures.py --check
 python scripts/generate_gtid_fixtures.py --check
@@ -154,4 +157,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成真实 GTID=ON 日志、官方事务及行值对照，详细范围见 [捕获说明](fixtures/gtid-real/README.md)。暂停，等待用户继续指令。
+本批已完成单文件事件浏览逐事件读取，详细范围见 [逐事件读取](docs/cli-stream.md)。暂停，等待用户继续指令。

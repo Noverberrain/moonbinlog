@@ -16,6 +16,7 @@ pub struct Config {
   decode_previous_gtids : Bool
   decode_gtid : Bool
   chain : Bool
+  stream : Bool
   paths : ReadOnlyArray[String]
   max_total_bytes : Int32
   filter : TableFilter
@@ -56,7 +57,7 @@ pub extend ArgumentError with @debug.Debug::{to_repr}
 ///|
 pub fn usage() -> String {
   let text =
-    #|Usage: moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows] [--with-gtid]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
+    #|Usage: moonbinlog [--json] [--summary] [--stream] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows] [--with-gtid]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
     #|
     #|Inspect an unencrypted MySQL 8.0 binlog file; TSV output by default.
     #|  --json                Output JSON Lines: event objects, then one summary.
@@ -64,6 +65,7 @@ pub fn usage() -> String {
     #|  --decode-previous-gtids  Add historical SID/GTID intervals; event mode, JSON Lines.
     #|  --decode-gtid         Add assigned/anonymous GTID fields; event mode, JSON Lines.
     #|  --chain               Inspect 2..128 explicitly ordered files as JSON Lines.
+    #|  --stream              Read one event at a time; single-file event mode.
     #|  --max-total-bytes N   Chain input budget (default 268435456, max 2147483647).
     #|  --summary             Show counts only; still validate the entire file.
     #|  --rows                Decode unconfirmed row changes as JSON Lines.
@@ -77,7 +79,7 @@ pub fn usage() -> String {
     #|  --database NAME       Exact database name; requires --rows/--transactions.
     #|  --table NAME          Exact table name; combine with --database if needed.
     #|  --max-event-bytes N   Event limit, including header/checksum (default 16777216).
-    #|  --max-file-bytes N    In-memory file limit (default 67108864, max 2147483647).
+    #|  --max-file-bytes N    File limit (default 67108864, max 2147483647).
     #|  --                    Treat the remaining arguments as filenames.
     #|  -h, --help            Show this help (use as the only argument).
     #|
@@ -124,6 +126,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   let mut decode_previous_gtids = false
   let mut decode_gtid = false
   let mut chain = false
+  let mut stream = false
   let mut total_limit = None
   let mut schema_path = None
   let mut database = None
@@ -145,6 +148,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     } else if !positional && arg == "--chain" {
       guard !chain else { raise InvalidArguments("duplicate --chain") }
       chain = true
+    } else if !positional && arg == "--stream" {
+      guard !stream else { raise InvalidArguments("duplicate --stream") }
+      stream = true
     } else if !positional && arg == "--decode-rotate" {
       guard !decode_rotate else {
         raise InvalidArguments("duplicate --decode-rotate")
@@ -278,6 +284,9 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
   guard !chain || !(rows || transactions || schema_template) else {
     raise InvalidArguments("--chain only supports event inspection")
   }
+  guard !stream || !(chain || rows || transactions || schema_template) else {
+    raise InvalidArguments("--stream requires single-file event mode")
+  }
   guard !(rows && transactions) else {
     raise InvalidArguments("--rows and --transactions are mutually exclusive")
   }
@@ -325,6 +334,7 @@ pub fn parse_args(argv : ArrayView[String]) -> Command raise ArgumentError {
     path: paths[0],
     paths: ReadOnlyArray::from_array(paths),
     chain,
+    stream,
     max_total_bytes: total_limit.unwrap_or(268_435_456),
     summary_only,
     json_output: json_output ||

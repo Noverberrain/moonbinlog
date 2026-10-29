@@ -90,6 +90,7 @@ pub struct Config {
   decode_previous_gtids : Bool
   decode_gtid : Bool
   chain : Bool
+  stream : Bool
   paths : ReadOnlyArray[String]
   max_total_bytes : Int
   filter : TableFilter

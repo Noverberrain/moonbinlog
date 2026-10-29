@@ -1,6 +1,6 @@
 # 离线 Binlog CLI
 
-CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog。默认检查文件标识、事件完整性、格式与校验和，输出 TSV 或 JSON Lines 事件与统计；`--rows --schema PATH` 输出[有类型的行变化](cli-rows.md)，`--transactions --schema PATH` 输出[显式事务汇总](cli-transactions.md)。只有事务模式解析受支持的 BEGIN/COMMIT/ROLLBACK 与 XID 边界；四种模式都不解释通用 SQL 或 GTID 语义；`--schema-template FILE` 生成[待确认的 schema 草稿](cli-schema-template.md)。
+CLI 使用文件遍历库读取本地未加密 MySQL 8.0.x Binlog。默认检查文件标识、事件完整性、格式与校验和，输出 TSV 或 JSON Lines 事件与统计；`--rows --schema PATH` 输出[有类型的行变化](cli-rows.md)，`--transactions --schema PATH` 输出[显式事务汇总](cli-transactions.md)。只有事务模式解析受支持的 BEGIN/COMMIT/ROLLBACK 与 XID 边界；模式不解释通用 SQL；显式 --with-gtid 可绑定受支持事务的前缀；`--schema-template FILE` 生成[待确认的 schema 草稿](cli-schema-template.md)。
 
 ## 运行与构建
 
@@ -32,7 +32,7 @@ MSVC 首次编译 async 依赖的 `internal/event_loop/fs.c` 时会出现一条 
 ## 参数
 
 ```text
-moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows] [--with-gtid]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
+moonbinlog [--json] [--summary] [--stream] [--chain [--max-total-bytes N]] [--decode-gtid] [--decode-previous-gtids] [--decode-rotate | --schema-template | --rows | --transactions [--include-rows] [--with-gtid]] [--schema PATH] [--database NAME] [--table NAME] [--max-event-bytes N] [--max-file-bytes N] [--] FILE [FILE...]
 ```
 
 | 参数 | 含义 | 默认值 |
@@ -55,7 +55,8 @@ moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] 
 | --database NAME | 精确匹配库名；必须选择行/事务模式 | 不限制 |
 | --table NAME | 精确匹配表名；可与 --database 组合 | 不限制 |
 | --max-event-bytes N | 每个事件的编码字节上限，包含头和 CRC | 16777216（16 MiB） |
-| --max-file-bytes N | 读取到内存的文件大小上限 | 67108864（64 MiB） |
+| --stream | 单文件事件浏览逐事件读取；可组合详情/摘要，不支持行、事务、草稿和链 | 关闭 |
+| --max-file-bytes N | 文件大小上限；默认模式整份读入内存 | 67108864（64 MiB） |
 | -- | 其后参数按文件名处理，可用于以 `-` 开头的路径 | 无 |
 | -h / --help | 显示帮助，必须单独使用 | 无 |
 
@@ -69,7 +70,7 @@ moonbinlog [--json] [--summary] [--chain [--max-total-bytes N]] [--decode-gtid] 
 moon run --target native cmd/moonbinlog -- --summary --max-file-bytes 134217728 path/to/binlog.000001
 ```
 
-本批仍整份读入内存，不是分块扫描。打开文件后先验证它是普通文件，并检查大小上限，之后才分配读取数据。读取期间文件缩短会失败，读取结束时若发现新增字节也会失败。该检查不能提供操作系统级原子快照，应使用已经关闭或稳定复制的文件。
+默认模式整份读入内存；事件浏览可使用 [--stream](cli-stream.md) 逐事件读取。打开文件后先验证它是普通文件，并检查大小上限，之后才分配读取数据。读取期间文件缩短会失败，读取结束时若发现新增字节也会失败。该检查不能提供操作系统级原子快照，应使用已经关闭或稳定复制的文件。
 
 schema 文件使用同样的普通文件与稳定性检查，硬上限为 4 MiB；严格 UTF-8 解码，接受一个开头 BOM，然后按配置库默认的 1048576 个 UTF-16 单位、1024 张表、每表 1024 列、16 层嵌套检查。此上限不受 --max-file-bytes 改变，详见 [schema 格式](schema.md)。事务模式额外受既有事务解码器固定配额约束，详见[事务上限](cli-transactions.md#配额)。
 

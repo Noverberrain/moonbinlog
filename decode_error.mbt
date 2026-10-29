@@ -224,6 +224,8 @@ pub(all) suberror DecodeError {
   GtidTransactionFailed
   MissingFormatDescription(file_offset~ : UInt64)
   FileReaderFailed(file_offset~ : UInt64)
+  StreamAlreadyFinished(file_offset~ : UInt64)
+  InvalidStreamOffset(file_offset~ : UInt64)
 } derive(Debug, Eq)
 
 ///|

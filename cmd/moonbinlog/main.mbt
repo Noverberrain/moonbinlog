@@ -28,6 +28,10 @@ async fn read_input(path : String, max_bytes : Int32) -> Bytes {
 
 ///|
 async fn inspect(config : @cli.Config) -> Unit {
+  if config.stream {
+    inspect_stream(config)
+    return
+  }
   if config.chain {
     inspect_chain(config)
     return

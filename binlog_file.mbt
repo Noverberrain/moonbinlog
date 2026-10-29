@@ -72,6 +72,28 @@ fn BinlogFileReader::invalidate(self : BinlogFileReader) -> Unit {
 }
 
 ///|
+// Shared by in-memory and event-at-a-time readers. The caller has already
+// checked the complete declared event and supplies its physical header.
+fn decode_file_event(
+  header : EventHeader,
+  raw : BytesView,
+  context : FormatDescription?,
+  max_event_size : UInt32,
+) -> BinlogFileEvent raise DecodeError {
+  let file_offset = header.file_offset
+  let (format, body) = if header.event_type == 15 {
+    let format = FormatDescription::parse(raw, file_offset~, max_event_size~)
+    (format, raw[19:raw.length() - 4])
+  } else {
+    guard context is Some(format) else {
+      raise MissingFormatDescription(file_offset~)
+    }
+    (format, format.payload(raw, file_offset~, max_event_size~))
+  }
+  { header, raw, body, format, }
+}
+
+///|
 /// Return exactly one event, or None at a clean event-boundary EOF after FDE.
 /// Any error permanently stops this reader and clears its format. Already
 /// returned events remain valid, but do not imply a complete file/transaction.
@@ -94,26 +116,9 @@ pub fn BinlogFileReader::next(
     file_offset~,
     max_event_size=self.max_event_size,
   )
-  let (format, body) = if header.event_type == 15 {
-    let format = FormatDescription::parse(
-      raw,
-      file_offset~,
-      max_event_size=self.max_event_size,
-    )
-    (format, raw[19:raw.length() - 4])
-  } else {
-    guard self.context is Some(format) else {
-      raise MissingFormatDescription(file_offset~)
-    }
-    let body = format.payload(
-      raw,
-      file_offset~,
-      max_event_size=self.max_event_size,
-    )
-    (format, body)
-  }
+  let event = decode_file_event(header, raw, self.context, self.max_event_size)
   // complete_event proves raw fits in remaining; this sum cannot exceed length.
   self.cursor += raw.length()
-  self.context = Some(format)
-  Some({ header, raw, body, format, })
+  self.context = Some(event.format)
+  Some(event)
 }

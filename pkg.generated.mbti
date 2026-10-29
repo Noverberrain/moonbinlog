@@ -87,6 +87,8 @@ pub(all) suberror DecodeError {
   GtidTransactionFailed
   MissingFormatDescription(file_offset~ : UInt64)
   FileReaderFailed(file_offset~ : UInt64)
+  StreamAlreadyFinished(file_offset~ : UInt64)
+  InvalidStreamOffset(file_offset~ : UInt64)
 } derive(Eq, @debug.Debug)
 pub fn DecodeError::equal(Self, Self) -> Bool
 pub fn DecodeError::not_equal(Self, Self) -> Bool
@@ -117,6 +119,15 @@ pub fn BinaryJsonValue::equal(Self, Self) -> Bool
 pub fn BinaryJsonValue::not_equal(Self, Self) -> Bool
 pub fn BinaryJsonValue::to_json_text(Self) -> String
 pub fn BinaryJsonValue::to_repr(Self) -> @debug.Repr
+
+pub struct BinlogEventStream {
+  // private fields
+}
+pub fn BinlogEventStream::feed(Self, BytesView) -> BinlogFileEvent raise DecodeError
+pub fn BinlogEventStream::finish(Self) -> Unit raise DecodeError
+pub fn BinlogEventStream::format(Self) -> FormatDescription?
+pub fn BinlogEventStream::new(BytesView, max_event_size? : UInt) -> Self raise DecodeError
+pub fn BinlogEventStream::position(Self) -> UInt64
 
 pub struct BinlogFileEvent {
   header : EventHeader
