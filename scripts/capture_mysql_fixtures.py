@@ -25,8 +25,12 @@ def run(command, **kwargs):
     return result.stdout
 
 
-def capture(mysql_bin, destination=DEST):
+def capture(mysql_bin, destination=DEST, gtid_mode="OFF"):
     dest = destination.resolve()
+    if gtid_mode not in ("OFF", "ON"):
+        raise ValueError("gtid_mode must be OFF or ON")
+    if gtid_mode == "ON" and dest in (DEST.resolve(), (ROOT / 'fixtures/mysql-json').resolve()):
+        raise ValueError("Use a separate output directory for GTID-enabled captures")
     suffix = ".exe" if os.name == "nt" else ""
     tools = {name: str(mysql_bin / (name + suffix))
              for name in ("mysqld", "mysql", "mysqlbinlog", "mysqladmin")}
@@ -56,7 +60,8 @@ def capture(mysql_bin, destination=DEST):
                 f"--datadir={data}", "--bind-address=127.0.0.1", f"--port={port}",
                 "--mysqlx=OFF", "--server-id=810043", f"--log-bin={data / 'capture'}",
                 "--binlog-format=ROW", "--binlog-row-metadata=FULL",
-                "--binlog-transaction-compression=OFF", "--gtid-mode=OFF",
+                "--binlog-transaction-compression=OFF", f"--gtid-mode={gtid_mode}",
+                *(["--enforce-gtid-consistency=ON"] if gtid_mode == "ON" else []),
                 "--innodb-buffer-pool-size=32M", "--console",
                 *(["--no-monitor"] if os.name == "nt" else []),
             ], stdout=log, stderr=subprocess.STDOUT, creationflags=flags)
@@ -80,13 +85,22 @@ def capture(mysql_bin, destination=DEST):
             setup = (dest / "schema.sql").read_text(encoding="utf-8")
             workload = (dest / "workload.sql").read_text(encoding="utf-8")
             sql("SET SESSION sql_log_bin=0;" + setup)
+            seed_path = dest / "seed.sql"
+            seed = seed_path.read_text(encoding="utf-8") if gtid_mode == "ON" and seed_path.exists() else None
+            if seed is not None:
+                sql(seed)
             dest.mkdir(parents=True, exist_ok=True)
             manifest = {"server_version": version,
                         "mysqlbinlog_version": run([tools["mysqlbinlog"], "--version"]).decode().strip(),
                         "schema_sha256": hashlib.sha256(setup.encode()).hexdigest(),
                         "workload_sha256": hashlib.sha256(workload.encode()).hexdigest(),
-                        "gtid_mode": "OFF", "binlog_format": "ROW",
+                        "gtid_mode": gtid_mode, "binlog_format": "ROW",
                         "binlog_row_metadata": "FULL", "profiles": {}}
+            if gtid_mode == "ON":
+                manifest["server_uuid"] = sql("SELECT @@GLOBAL.server_uuid;").strip()
+                manifest["enforce_gtid_consistency"] = sql("SELECT @@GLOBAL.enforce_gtid_consistency;").strip()
+                if seed is not None:
+                    manifest["seed_sha256"] = hashlib.sha256(seed.encode()).hexdigest()
             for name, checksum, image in [("crc32-full", "CRC32", "FULL"),
                                           ("crc32-minimal", "CRC32", "MINIMAL"),
                                           ("off-full", "NONE", "FULL")]:
@@ -94,6 +108,7 @@ def capture(mysql_bin, destination=DEST):
                 sql("SET SESSION sql_log_bin=0; DELETE FROM moonbinlog_fixture.sample;")
                 sql(f"SET GLOBAL binlog_checksum='{checksum}'; FLUSH BINARY LOGS;")
                 filename = sql("SHOW MASTER STATUS;").split("\t")[0]
+                executed_before = sql("SELECT @@GLOBAL.gtid_executed;").strip() if gtid_mode == "ON" else None
                 sql(f"SET SESSION binlog_row_image='{image}';" + workload)
                 final_rows = sql("SELECT id, text_value IS NULL FROM moonbinlog_fixture.sample ORDER BY id;")
                 if final_rows.strip() != "2\t1":
@@ -112,6 +127,11 @@ def capture(mysql_bin, destination=DEST):
                     "oracle_sha256": hashlib.sha256(dump).hexdigest(),
                     "final_rows": final_rows.strip(),
                 }
+                if gtid_mode == "ON":
+                    manifest["profiles"][name].update(
+                        gtid_executed_before=executed_before,
+                        gtid_executed_after=sql("SELECT @@GLOBAL.gtid_executed;").strip(),
+                    )
             (dest / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
             run([tools["mysqladmin"], *client, "shutdown"])
             server.wait(timeout=30)
@@ -132,5 +152,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mysql-bin", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=DEST)
+    parser.add_argument("--gtid-mode", choices=("OFF", "ON"), default="OFF")
     args = parser.parse_args()
-    capture(args.mysql_bin.resolve(), args.output_dir)
+    capture(args.mysql_bin.resolve(), args.output_dir, args.gtid_mode)

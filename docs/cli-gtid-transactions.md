@@ -50,6 +50,6 @@ moon run --target native cmd/moonbinlog -- --transactions --with-gtid --summary 
 
 新增 7 项独立 MoonBit 测试，覆盖参数、六组真实事务和原报告/行快照的一致性、assigned 提交/anonymous 回滚、筛选、空事务、schema/EOF/格式错误后禁止复用、含前缀的事件/字节/变化配额，以及成功事务之间的格式切换。
 
-`scripts/test_gtid_transactions_cli.py` 新增 568 个端到端场景：六组真实捕获的完整/行导出/筛选/摘要对照，22 种合成前缀的 CRC32/OFF 事务绑定，94 个坏 GTID body 的默认兼容和明细/摘要失败，缺前缀/重复前缀/孤立前缀/未提交行/FDE/未知事件/SQL、回滚不导出行值、重复身份不去重、之前成功事务后的 EOF 错误、未选中缺 schema、预算/CRC/参数组合。原始六组捕获保持原样，assigned GTID 的绑定仍使用合成数据。
+`scripts/test_gtid_transactions_cli.py` 新增 568 个端到端场景：六组真实捕获的完整/行导出/筛选/摘要对照，22 种合成前缀的 CRC32/OFF 事务绑定，94 个坏 GTID body 的默认兼容和明细/摘要失败，缺前缀/重复前缀/孤立前缀/未提交行/FDE/未知事件/SQL、回滚不导出行值、重复身份不去重、之前成功事务后的 EOF 错误、未选中缺 schema、预算/CRC/参数组合。原始六组捕获保持原样，边界场景继续使用合成数据，另有三组 [真实 assigned GTID 捕获](../fixtures/gtid-real/README.md)的 72 个 CLI 对照场景。
 
 脚本纳入统一 CI，十二组 CLI 合计 2200 个场景。字段和底层依据见 [GTID 事件](gtid-events.md)、[事务绑定库](gtid-transactions.md)和 [原事务 CLI](cli-transactions.md)。

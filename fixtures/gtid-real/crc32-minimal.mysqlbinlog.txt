@@ -1,0 +1,115 @@
+# The proper term is pseudo_replica_mode, but we use this compatibility alias
+# to make the statement usable on server versions 8.0.24 and older.
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/;
+/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/;
+DELIMITER /*!*/;
+# at 4
+#261029 15:05:23 server id 810043  end_log_pos 126 CRC32 0x032c1703 	Start: binlog v 4, server v 8.0.43 created 261029 15:05:23
+# at 126
+#261029 15:05:23 server id 810043  end_log_pos 197 CRC32 0x7064b6e1 	Previous-GTIDs
+# 17b889c0-d367-11f1-aca4-40c2ba4192a8:1-4
+# at 197
+#261029 15:05:23 server id 810043  end_log_pos 276 CRC32 0x1a25e954 	GTID	last_committed=0	sequence_number=1	rbr_only=yes	original_committed_timestamp=1793257523838245	immediate_commit_timestamp=1793257523838245	transaction_length=460
+/*!50718 SET TRANSACTION ISOLATION LEVEL READ COMMITTED*//*!*/;
+# original_commit_timestamp=1793257523838245 (2026-10-29 15:05:23.838245 中国标准时间)
+# immediate_commit_timestamp=1793257523838245 (2026-10-29 15:05:23.838245 中国标准时间)
+/*!80001 SET @@session.original_commit_timestamp=1793257523838245*//*!*/;
+/*!80014 SET @@session.original_server_version=80043*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80043*//*!*/;
+SET @@SESSION.GTID_NEXT= '17b889c0-d367-11f1-aca4-40c2ba4192a8:5'/*!*/;
+# at 276
+#261029 15:05:23 server id 810043  end_log_pos 365 CRC32 0x111c6164 	Query	thread_id=24	exec_time=0	error_code=0
+SET TIMESTAMP=1793257523/*!*/;
+SET @@session.pseudo_thread_id=24/*!*/;
+SET @@session.foreign_key_checks=1, @@session.sql_auto_is_null=0, @@session.unique_checks=1, @@session.autocommit=1/*!*/;
+SET @@session.sql_mode=1168113696/*!*/;
+SET @@session.auto_increment_increment=1, @@session.auto_increment_offset=1/*!*/;
+/*!\C utf8mb4 *//*!*/;
+SET @@session.character_set_client=255,@@session.collation_connection=255,@@session.collation_server=255/*!*/;
+SET @@session.lc_time_names=0/*!*/;
+SET @@session.collation_database=DEFAULT/*!*/;
+/*!80011 SET @@session.default_collation_for_utf8mb4=255*//*!*/;
+BEGIN
+/*!*/;
+# at 365
+#261029 15:05:23 server id 810043  end_log_pos 455 CRC32 0xbf4834c8 	Table_map: `moonbinlog_fixture`.`sample` mapped to number 106
+# has_generated_invisible_primary_key=0
+# at 455
+#261029 15:05:23 server id 810043  end_log_pos 626 CRC32 0xeb6f3b93 	Write_rows: table id 106 flags: STMT_END_F
+### INSERT INTO `moonbinlog_fixture`.`sample`
+### SET
+###   @1=1 /* INT meta=0 nullable=0 is_null=0 */
+###   @2='{"a": [true, false, {"z": "x"}], "f": 1.5, "i": -9223372036854775808, "n": null, "s": "涓枃", "u": 18446744073709551615}' /* JSON meta=4 nullable=1 is_null=0 */
+### INSERT INTO `moonbinlog_fixture`.`sample`
+### SET
+###   @1=2 /* INT meta=0 nullable=0 is_null=0 */
+###   @2=NULL /* JSON meta=4 nullable=1 is_null=1 */
+### INSERT INTO `moonbinlog_fixture`.`sample`
+### SET
+###   @1=3 /* INT meta=0 nullable=0 is_null=0 */
+###   @2='null' /* JSON meta=4 nullable=1 is_null=0 */
+# at 626
+#261029 15:05:23 server id 810043  end_log_pos 657 CRC32 0x3b09c803 	Xid = 85
+COMMIT/*!*/;
+# at 657
+#261029 15:05:23 server id 810043  end_log_pos 736 CRC32 0x3e680a57 	GTID	last_committed=1	sequence_number=2	rbr_only=yes	original_committed_timestamp=1793257523839339	immediate_commit_timestamp=1793257523839339	transaction_length=395
+/*!50718 SET TRANSACTION ISOLATION LEVEL READ COMMITTED*//*!*/;
+# original_commit_timestamp=1793257523839339 (2026-10-29 15:05:23.839339 中国标准时间)
+# immediate_commit_timestamp=1793257523839339 (2026-10-29 15:05:23.839339 中国标准时间)
+/*!80001 SET @@session.original_commit_timestamp=1793257523839339*//*!*/;
+/*!80014 SET @@session.original_server_version=80043*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80043*//*!*/;
+SET @@SESSION.GTID_NEXT= '17b889c0-d367-11f1-aca4-40c2ba4192a8:6'/*!*/;
+# at 736
+#261029 15:05:23 server id 810043  end_log_pos 834 CRC32 0xe394dd2e 	Query	thread_id=24	exec_time=0	error_code=0
+SET TIMESTAMP=1793257523/*!*/;
+BEGIN
+/*!*/;
+# at 834
+#261029 15:05:23 server id 810043  end_log_pos 924 CRC32 0x7f12aeca 	Table_map: `moonbinlog_fixture`.`sample` mapped to number 106
+# has_generated_invisible_primary_key=0
+# at 924
+#261029 15:05:23 server id 810043  end_log_pos 1021 CRC32 0xc2c755b1 	Update_rows: table id 106 flags: STMT_END_F
+### UPDATE `moonbinlog_fixture`.`sample`
+### WHERE
+###   @1=1 /* INT meta=0 nullable=0 is_null=0 */
+### SET
+###   @2='["鏇存柊", null, 18446744073709551615, -9223372036854775808, 1.25]' /* JSON meta=4 nullable=1 is_null=0 */
+# at 1021
+#261029 15:05:23 server id 810043  end_log_pos 1052 CRC32 0x34609db6 	Xid = 88
+COMMIT/*!*/;
+# at 1052
+#261029 15:05:23 server id 810043  end_log_pos 1131 CRC32 0xd2a5406b 	GTID	last_committed=2	sequence_number=3	rbr_only=yes	original_committed_timestamp=1793257523840762	immediate_commit_timestamp=1793257523840762	transaction_length=334
+/*!50718 SET TRANSACTION ISOLATION LEVEL READ COMMITTED*//*!*/;
+# original_commit_timestamp=1793257523840762 (2026-10-29 15:05:23.840762 中国标准时间)
+# immediate_commit_timestamp=1793257523840762 (2026-10-29 15:05:23.840762 中国标准时间)
+/*!80001 SET @@session.original_commit_timestamp=1793257523840762*//*!*/;
+/*!80014 SET @@session.original_server_version=80043*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80043*//*!*/;
+SET @@SESSION.GTID_NEXT= '17b889c0-d367-11f1-aca4-40c2ba4192a8:7'/*!*/;
+# at 1131
+#261029 15:05:23 server id 810043  end_log_pos 1220 CRC32 0xbd7dc0f4 	Query	thread_id=24	exec_time=0	error_code=0
+SET TIMESTAMP=1793257523/*!*/;
+BEGIN
+/*!*/;
+# at 1220
+#261029 15:05:23 server id 810043  end_log_pos 1310 CRC32 0x4e275ca7 	Table_map: `moonbinlog_fixture`.`sample` mapped to number 106
+# has_generated_invisible_primary_key=0
+# at 1310
+#261029 15:05:23 server id 810043  end_log_pos 1355 CRC32 0x2ff6b5a5 	Delete_rows: table id 106 flags: STMT_END_F
+### DELETE FROM `moonbinlog_fixture`.`sample`
+### WHERE
+###   @1=1 /* INT meta=0 nullable=0 is_null=0 */
+### DELETE FROM `moonbinlog_fixture`.`sample`
+### WHERE
+###   @1=3 /* INT meta=0 nullable=0 is_null=0 */
+# at 1355
+#261029 15:05:23 server id 810043  end_log_pos 1386 CRC32 0x3d34b547 	Xid = 94
+COMMIT/*!*/;
+# at 1386
+#261029 15:05:24 server id 810043  end_log_pos 1431 CRC32 0xafa4b4d9 	Rotate to capture.000007  pos: 4
+SET @@SESSION.GTID_NEXT= 'AUTOMATIC' /* added by mysqlbinlog */ /*!*/;
+DELIMITER ;
+# End of log file
+/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;

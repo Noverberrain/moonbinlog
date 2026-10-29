@@ -17,7 +17,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 - **保留数据含义**：区分缺失列、NULL 和实际值；整数保留完整精度，DECIMAL 使用精确字符串。
 - **显式管理状态**：表映射按语句清理，待定行变化在事务提交后才作为提交结果返回。
 - **可定位的错误**：通过 `DecodeError` 报告截断、非法元数据、校验失败和资源上限等问题。
-- **可复现的验证**：独立构造协议样本，并固定六组真实 MySQL 日志与官方工具输出，记录 SHA-256，逐字段比较行镜像。
+- **可复现的验证**：独立构造协议样本，并固定九组真实 MySQL 日志与官方工具输出，记录 SHA-256，逐字段比较行镜像。
 
 离线分析、CDC 和审计是后续应用方向；目前没有数据库订阅、数据投递或 SQL 回放功能。
 
@@ -45,7 +45,7 @@ Binlog 记录数据库的数据变化，是理解 CDC、数据同步和变更审
 | 显式事务 | BEGIN → TABLE_MAP / ROWS → XID / COMMIT / ROLLBACK | 提交返回完整结果，回滚丢弃，EOF 检查未结束事务 |
 | GTID 事务绑定 | GTID / 匿名前缀与紧邻显式事务的提交/回滚关联 | 独立库接口及 CLI --with-gtid，含前缀配额和失败终止 |
 
-**验证状态：373 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史集合/事务 GTID/绑定导出十二组 CLI 共 2200 个场景通过，运行验证使用 native 后端。** 已对六组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，新增 JSON 场景共 42 个列位置；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)和 [JSON 捕获](fixtures/mysql-json/README.md)。
+**验证状态：376 项 MoonBit 测试，以及事件/行变化/事务/筛选/JSON/schema 草稿/元数据/轮转/多文件/历史集合/事务 GTID/绑定导出/真实 GTID 十三组 CLI 共 2272 个场景通过，运行验证使用 native 后端。** 已对九组真实 MySQL 8.0.43 日志完成官方 `mysqlbinlog` 对照，覆盖 CRC32/OFF、FULL/MINIMAL：原有字段共 300 个列位置，JSON 场景共 42 个列位置，真实 GTID 场景另有 42 个列位置及 9 笔 assigned 事务；其他版本及 Java 客户端差分尚未完成。详见[集成验证结果](docs/mysql-integration.md)、[JSON 捕获](fixtures/mysql-json/README.md)及 [真实 GTID 捕获](fixtures/gtid-real/README.md)。
 
 ## 解析流程
 
@@ -85,7 +85,7 @@ moon build --target native
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十二组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十三组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 
@@ -280,6 +280,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Schema example check failed' }
 - [x] PREVIOUS_GTIDS_EVENT 历史集合解析及 CLI 详情
 - [x] GTID_EVENT / ANONYMOUS_GTID_EVENT 字段解析及 CLI 详情
 - [x] GTID 前缀与显式事务绑定（库接口及可选 CLI 导出）
+- [x] 三组真实 GTID=ON 日志、非空历史及官方事务/行值对照
 - [x] 显式多文件事件浏览与轮转连接核对（CLI）
 - [x] 表映射、常用字段值与行镜像
 - [x] ROWS v2 多行解析与 UPDATE 配对

@@ -47,3 +47,5 @@ GTID 模式 OFF 的真实文件仍包含 Anonymous_GTID。集成测试仅在 BEG
 底层解析实现和公共 API 无需改动即可通过这批样本。后续已提供[最小离线 CLI](cli.md)，可以直接读取文件并查看事件列表与统计。
 
 采集与对照命令参考 MySQL 官方文档：[初始化独立数据目录](https://dev.mysql.com/doc/refman/8.0/en/data-directory-initialization.html)、[二进制日志选项及 row image/checksum](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html)、[mysqlbinlog 行事件显示](https://dev.mysql.com/doc/refman/8.0/en/mysqlbinlog-row-events.html)。
+
+2026-10-29 新增三组 [GTID=ON 捕获](../fixtures/gtid-real/README.md)，覆盖 9 笔 assigned 事务、非空历史集合、JSON 行值及 CLI 绑定导出；本页原有三组样本和官方对照不变。

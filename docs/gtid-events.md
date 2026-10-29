@@ -51,7 +51,7 @@ FDE 必须对当前类型声明 42 字节 post-header。body 前 42 字节依次
 
 新增 9 项独立 MoonBit 测试，使用 Python struct/zlib 独立生成的 44 个有效事件（22 种内容 × CRC32/OFF）、94 个无效 body，覆盖扩展阶段、缺失/零值区别、两类 GNO、任意 SID/flags、64 位边界、所有 packed 宽度与非最短编码、错误 post-header/类型/CRC、逐字节 framing 截断、重写长度后的 body 前缀、切片/后续输入和事件预算。
 
-六组既有 MySQL 8.0.43 日志均包含一个匿名 GTID 事件，逻辑时钟、提交时间、事务长度及服务端版本与官方 mysqlbinlog 输出逐一核对。已分配 GTID 和 ticket 的边界样本为合成数据，没有新增真实 GTID 模式数据库捕获。另用本机官方 mysqlbinlog 8.0.43，对 8 组合成 assigned/anonymous 事件核对标识、时钟和可用的时间/长度/版本文本；ticket 位值主要由独立合成预期验证。
+六组既有 MySQL 8.0.43 日志均包含一个匿名 GTID 事件，逻辑时钟、提交时间、事务长度及服务端版本与官方 mysqlbinlog 输出逐一核对。ticket 等边界样本仍为合成数据；现在另有三组 [真实 assigned GTID 捕获](../fixtures/gtid-real/README.md)，覆盖 9 笔真实事务及非空历史。另用本机官方 mysqlbinlog 8.0.43，对 8 组合成 assigned/anonymous 事件核对标识、时钟和可用的时间/长度/版本文本；ticket 位值主要由独立合成预期验证。
 
 `scripts/generate_gtid_fixtures.py --check` 自动进入统一 CI；可选官方工具对照命令为：
 

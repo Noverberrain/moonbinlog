@@ -1,0 +1,44 @@
+{
+  "server_version": "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqld.exe  Ver 8.0.43 for Win64 on x86_64 (MySQL Community Server - GPL)",
+  "mysqlbinlog_version": "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqlbinlog.exe  Ver 8.0.43 for Win64 on x86_64 (MySQL Community Server - GPL)",
+  "schema_sha256": "559a081c1cea980a476415527dfea7696a960f1b9e6b8d8a9a8e23def21d9fcb",
+  "workload_sha256": "c910cf2a2fa77c480f5c422486d4e76ef4377b9dab402958737d52a5ebcde73c",
+  "gtid_mode": "ON",
+  "binlog_format": "ROW",
+  "binlog_row_metadata": "FULL",
+  "profiles": {
+    "crc32-full": {
+      "checksum": "CRC32",
+      "row_image": "FULL",
+      "bytes": 1611,
+      "sha256": "bcc99918625bdd9260286b5d4e9dd642216a2b3437fcada90277cbc26863848e",
+      "oracle_sha256": "96717664fc6040330b79f0f85dcd0272b97b3106838e316b27310fe537194d5d",
+      "final_rows": "2\t1",
+      "gtid_executed_before": "17b889c0-d367-11f1-aca4-40c2ba4192a8:1",
+      "gtid_executed_after": "17b889c0-d367-11f1-aca4-40c2ba4192a8:1-4"
+    },
+    "crc32-minimal": {
+      "checksum": "CRC32",
+      "row_image": "MINIMAL",
+      "bytes": 1431,
+      "sha256": "cad40f5b5b7b02983a9be33de2a88c77325dace6e94b1fd12c47f7d6b789d869",
+      "oracle_sha256": "e2b38a0ee3f635b06d3b918ac23eb0814b1cb05bfa0a07525144509ad2364cf5",
+      "final_rows": "2\t1",
+      "gtid_executed_before": "17b889c0-d367-11f1-aca4-40c2ba4192a8:1-4",
+      "gtid_executed_after": "17b889c0-d367-11f1-aca4-40c2ba4192a8:1-7"
+    },
+    "off-full": {
+      "checksum": "NONE",
+      "row_image": "FULL",
+      "bytes": 1543,
+      "sha256": "2ae6ad3a7a69a1d465af3d485cb96962cf369723b81db6af0d9a8d9ba30810b1",
+      "oracle_sha256": "008dc0219a7d5a574844deb2d2faed5a34f7dab7f4b3e702fe73d2de29284c5e",
+      "final_rows": "2\t1",
+      "gtid_executed_before": "17b889c0-d367-11f1-aca4-40c2ba4192a8:1-7",
+      "gtid_executed_after": "17b889c0-d367-11f1-aca4-40c2ba4192a8:1-10"
+    }
+  },
+  "server_uuid": "17b889c0-d367-11f1-aca4-40c2ba4192a8",
+  "enforce_gtid_consistency": "ON",
+  "seed_sha256": "f09a01afd6ff482930c431db86b1b01b9e89145d9fd3b8328adb28c989a98750"
+}

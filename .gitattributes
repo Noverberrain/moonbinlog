@@ -7,3 +7,5 @@ fixtures/mysql-8.0/*.binlog binary
 fixtures/mysql-8.0/*.mysqlbinlog.txt binary
 fixtures/mysql-json/*.binlog binary
 fixtures/mysql-json/*.mysqlbinlog.txt binary
+fixtures/gtid-real/*.binlog binary
+fixtures/gtid-real/*.mysqlbinlog.txt binary

@@ -69,6 +69,6 @@ EOF 时必须调用 finish()。只有 GTID、尚未 BEGIN，同样属于未完�
 
 新增 10 项独立 MoonBit 测试，复用既有独立 Python GTID / 事务样本：22 种已分配或匿名前缀分别绑定 CRC32/OFF 行事务；覆盖提交/回滚/空事务/多语句/重复身份、返回快照、未结束输入、前缀和嵌套边界、偏移与 UInt64 边界、94 个坏 GTID body、CRC/坏行/缺失 signedness、精确事件/字节配额及行变化超限、失败后禁止复用。
 
-六组既有真实 MySQL 8.0.43 匿名前缀的元数据仍与官方 mysqlbinlog 预期核对，其绑定后的内层结果与原 TransactionDecoder 的行/提交结果完全一致。已分配 GTID 绑定使用合成数据，没有新增真实 GTID 模式捕获，也没有修改原始日志或官方输出。
+六组既有真实 MySQL 8.0.43 匿名前缀的元数据仍与官方 mysqlbinlog 预期核对，其绑定后的内层结果与原 TransactionDecoder 的行/提交结果完全一致。原有合成边界测试保留；另有三组 [真实 GTID=ON 日志](../fixtures/gtid-real/README.md)覆盖 9 笔 assigned 绑定和官方行值，原六组捕获保持原样。
 
 GTID 与事务布局依据见 [GTID 事件](gtid-events.md)和 [原事务接口](transactions.md)，生命周期背景见 [MySQL 8.0 GTID Life Cycle](https://dev.mysql.com/doc/refman/8.0/en/replication-gtids-lifecycle.html)。本接口仅支持上述显式事务子集，CLI 另有可选绑定导出，仍没有自动提交/DDL/XA/隐式边界推断、跨文件事务续接、历史连续性验证、exactly-once 投递或实时复制。

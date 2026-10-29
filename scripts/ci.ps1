@@ -33,6 +33,7 @@ try {
     foreach ($ciScript in @(
         'scripts/verify_mysql_fixtures.py',
         'scripts/verify_json_fixtures.py',
+        'scripts/verify_assigned_gtid_fixtures.py',
         'scripts/generate_schema_example.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript, '--check')
@@ -49,7 +50,8 @@ try {
         'scripts/test_chain_cli.py',
         'scripts/test_previous_gtids_cli.py',
         'scripts/test_gtid_cli.py',
-        'scripts/test_gtid_transactions_cli.py'
+        'scripts/test_gtid_transactions_cli.py',
+        'scripts/test_assigned_gtid_cli.py'
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript)
     }

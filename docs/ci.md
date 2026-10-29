@@ -25,10 +25,10 @@ checkout、setup-python 和 msvc-dev-cmd 均固定到已核对的完整提交 SH
 [scripts/ci.ps1](../scripts/ci.ps1) 逐条执行，任一外部命令非零退出即失败：
 
 1. 输出工具链/Python 版本，检查 MoonBit 格式及 native 严格类型检查。
-2. 运行全部 native 测试并构建 CLI；当前为 373 项 MoonBit 测试。
+2. 运行全部 native 测试并构建 CLI；当前为 376 项 MoonBit 测试。
 3. moon info 重新生成接口，检查所有 .mbti 相对 HEAD 的差异，并拒绝未跟踪的新接口文件。
-4. 检查十七组合成样本、六组真实 MySQL 日志（含三组 JSON 捕获）及 schema 示例的一致性。
-5. 运行事件、行变化、事务、筛选、JSON、schema 草稿、元数据、轮转、多文件、历史集合和事务 GTID 和绑定导出 CLI 脚本，当前共 2200 个场景，并核对官方行镜像。
+4. 检查十七组合成样本、九组真实 MySQL 日志（含三组 JSON、三组 assigned GTID 捕获）及 schema 示例的一致性。
+5. 运行事件、行变化、事务、筛选、JSON、schema 草稿、元数据、轮转、多文件、历史集合和事务 GTID、绑定导出及真实 GTID CLI 脚本，当前共 2272 个场景，并核对官方行镜像。
 6. git diff --check 检查工作区补丁中的空白错误。
 
 所有日志均为仓库固定样本，不启动 MySQL 或连接业务服务。MSVC 编译官方 async 依赖时既有 EINVAL 宏重定义 C4005 警告仍可能出现；本项目的 MoonBit 警告按错误处理，没有修改依赖源码。
@@ -55,7 +55,7 @@ if ($LASTEXITCODE -ne 0) { throw 'moon update failed' }
 
 ## 更新与排查
 
-升级工具链时同时更新安装脚本中的版本与两个哈希，核对官方归档，再重新安装并执行全套检查；不要仅把版本替换为 latest。修改 Actions 版本时核对上游标签对应的完整提交 SHA。升级 Python 或 runner 镜像也应重新验证 native 构建和十二组 CLI。
+升级工具链时同时更新安装脚本中的版本与两个哈希，核对官方归档，再重新安装并执行全套检查；不要仅把版本替换为 latest。修改 Actions 版本时核对上游标签对应的完整提交 SHA。升级 Python 或 runner 镜像也应重新验证 native 构建和十三组 CLI。
 
 失败日志会显示实际版本及失败命令。下载/索引失败先检查网络与归档可用性；接口漂移应本地执行 moon info 并审查差异；协议/CLI 失败应按脚本输出定位，保留损坏样本及错误退出码，不能通过跳过检查掩盖失败。
 
