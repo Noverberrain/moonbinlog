@@ -99,3 +99,5 @@ python scripts/test_rows_cli.py
 ```
 
 本功能新增 9 项 MoonBit 测试，覆盖参数、精确值/字节、状态清理、多行及镜像配对。28 个行模式子进程场景对三组固定 MySQL 8.0.43 捕获逐一比较官方 mysqlbinlog 的 300 个列位置，并覆盖 BOM/Unicode/转义标签、错误 schema、两层输入上限、语义损坏的有效 CRC 事件、未知事件、截断及无提交尾部。输入摘要在运行前后核对；脚本不启动数据库。
+
+单文件行导出可加 `--stream` 逐事件读取，避免预先读入整个 binlog；schema、筛选、摘要和未确认语义保持一致，详见 [逐事件读取](cli-stream.md)。

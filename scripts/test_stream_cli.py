@@ -84,7 +84,7 @@ def main(executable):
         run(['--stream', '--json', '--summary', source], 1, 'EventTooLarge')
         options = ['--json', '--summary', '--max-event-bytes', str(len(large_event))]
         assert run(['--stream', *options, source]).stdout == run([*options, source]).stdout
-        for options in [['--stream'], ['--chain', 'other'], ['--rows', '--schema', 's'],
+        for options in [['--stream'], ['--chain', 'other'], ['--rows'],
                         ['--transactions', '--schema', 's'], ['--schema-template'],
                         ['--include-rows'], ['--with-gtid'], ['--database', 'd'], ['--table', 't']]:
             run(['--stream', *options, source], 2)

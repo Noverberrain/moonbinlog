@@ -55,7 +55,7 @@ moonbinlog [--json] [--summary] [--stream] [--chain [--max-total-bytes N]] [--de
 | --database NAME | 精确匹配库名；必须选择行/事务模式 | 不限制 |
 | --table NAME | 精确匹配表名；可与 --database 组合 | 不限制 |
 | --max-event-bytes N | 每个事件的编码字节上限，包含头和 CRC | 16777216（16 MiB） |
-| --stream | 单文件事件浏览逐事件读取；可组合详情/摘要，不支持行、事务、草稿和链 | 关闭 |
+| --stream | 单文件事件浏览或行导出逐事件读取；行模式需 --rows --schema，不支持事务、草稿和链 | 关闭 |
 | --max-file-bytes N | 文件大小上限；默认模式整份读入内存 | 67108864（64 MiB） |
 | -- | 其后参数按文件名处理，可用于以 `-` 开头的路径 | 无 |
 | -h / --help | 显示帮助，必须单独使用 | 无 |
@@ -70,7 +70,7 @@ moonbinlog [--json] [--summary] [--stream] [--chain [--max-total-bytes N]] [--de
 moon run --target native cmd/moonbinlog -- --summary --max-file-bytes 134217728 path/to/binlog.000001
 ```
 
-默认模式整份读入内存；事件浏览可使用 [--stream](cli-stream.md) 逐事件读取。打开文件后先验证它是普通文件，并检查大小上限，之后才分配读取数据。读取期间文件缩短会失败，读取结束时若发现新增字节也会失败。该检查不能提供操作系统级原子快照，应使用已经关闭或稳定复制的文件。
+默认模式整份读入内存；事件浏览或行导出可使用 [--stream](cli-stream.md) 逐事件读取。打开文件后先验证它是普通文件，并检查大小上限，之后才分配读取数据。读取期间文件缩短会失败，读取结束时若发现新增字节也会失败。该检查不能提供操作系统级原子快照，应使用已经关闭或稳定复制的文件。
 
 schema 文件使用同样的普通文件与稳定性检查，硬上限为 4 MiB；严格 UTF-8 解码，接受一个开头 BOM，然后按配置库默认的 1048576 个 UTF-16 单位、1024 张表、每表 1024 列、16 层嵌套检查。此上限不受 --max-file-bytes 改变，详见 [schema 格式](schema.md)。事务模式额外受既有事务解码器固定配额约束，详见[事务上限](cli-transactions.md#配额)。
 
