@@ -93,6 +93,8 @@ python scripts/demo_acceptance.py
 
 脚本构建 CLI，依次验证事件详情、MINIMAL 行变化、GTID 提交事务和未结束事务报错；实际输出保存到 `_build/acceptance-demo/`。使用仓库固定样本，不需要启动 MySQL。四步预期结果、单独运行命令和讲解要点见 [验收演示](docs/acceptance-demo.md)。这套演示也接入 CI，不会自动提交赛事材料。
 
+提交材料前可查看 [干净克隆复现结果与验收清单](docs/acceptance-checklist.md)，其中记录已检查的提交、运行证据和仍需自行完成的提交动作。
+
 ### 持续集成
 
 [CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十六组 CLI 回归，无需启动 MySQL。

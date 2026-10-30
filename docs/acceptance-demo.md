@@ -77,3 +77,5 @@ moon run --target native cmd/moonbinlog -- --stream --transactions --with-gtid -
 当前不支持实时订阅、自动跟随轮转、自动提交/DDL/XA 推断或跨文件事务续接。schema 必须匹配历史表结构；逐事件读取仍需完整事件和事务缓冲，默认文件上限 64 MiB、最大 2 GiB−1，详见 [流式读取范围](cli-stream.md)。这些固定小样本没有提供吞吐或内存峰值结论。
 
 演示通过表示本地四步复现成功，不会自动报名、提交验收表、发布包或上传演示产物。正式验收仍需按赛事通知提交对应材料。
+
+准备提交时可参考 [干净克隆复现结果与验收清单](acceptance-checklist.md)，检查所引用的提交版本及材料链接。
