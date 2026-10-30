@@ -4,6 +4,8 @@ version = "0.1.0"
 
 readme = "README.mbt.md"
 
+repository = "https://github.com/Noverberrain/moonbinlog"
+
 license = "Apache-2.0"
 
 keywords = [ "mysql", "binlog", "parser" ]
