@@ -29,7 +29,8 @@ checkout、setup-python 和 msvc-dev-cmd 均固定到已核对的完整提交 SH
 3. moon info 重新生成接口，检查所有 .mbti 相对 HEAD 的差异，并拒绝未跟踪的新接口文件。
 4. 检查十七组合成样本、九组真实 MySQL 日志（含三组 JSON、三组 assigned GTID 捕获）及 schema 示例的一致性。
 5. 运行事件、行变化、事务、筛选、JSON、schema 草稿、元数据、轮转、多文件、历史集合和事务 GTID、绑定导出、真实 GTID、逐事件读取、逐事件行及事务导出 CLI 脚本，当前共 3521 个场景，并核对官方行镜像。
-6. git diff --check 检查工作区补丁中的空白错误。
+6. 运行 [四步验收演示](acceptance-demo.md)，复用已构建的 CLI，校验事件/行/GTID 事务及预期 EOF 失败；输出保存在 runner 的 _build/acceptance-demo，尚未上传为 Actions artifact。
+7. git diff --check 检查工作区补丁中的空白错误。
 
 所有日志均为仓库固定样本，不启动 MySQL 或连接业务服务。MSVC 编译官方 async 依赖时既有 EINVAL 宏重定义 C4005 警告仍可能出现；本项目的 MoonBit 警告按错误处理，没有修改依赖源码。
 

@@ -83,6 +83,16 @@ moon build --target native
 
 当前开发环境为 Windows、MoonBit v0.10.15、moon 0.1.20261012，native 构建使用 MSVC。其他环境和后端的运行兼容性仍待验证。重建协议样本还需要 Python 3。
 
+### 验收演示
+
+准备好 Windows native 工具链和 Python 后，运行：
+
+```powershell
+python scripts/demo_acceptance.py
+```
+
+脚本构建 CLI，依次验证事件详情、MINIMAL 行变化、GTID 提交事务和未结束事务报错；实际输出保存到 `_build/acceptance-demo/`。使用仓库固定样本，不需要启动 MySQL。四步预期结果、单独运行命令和讲解要点见 [验收演示](docs/acceptance-demo.md)。这套演示也接入 CI，不会自动提交赛事材料。
+
 ### 持续集成
 
 [CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十六组 CLI 回归，无需启动 MySQL。
@@ -233,6 +243,7 @@ ROWS 的 `STMT_END_F` 表示语句结束，不代表事务提交。事务内遇�
 | 日志轮转 | [ROTATE_EVENT 库接口](docs/rotate-events.md) · [CLI 详情输出](docs/cli-rotate.md) |
 | 多文件事件浏览 | [显式文件顺序、连接核对和来源统计](docs/cli-chain.md) |
 | JSON 字段 | [binary JSON、精度、配额与 CLI 表示](docs/json-values.md) |
+| 验收演示 | [四步复现与预期结果](docs/acceptance-demo.md) |
 | 文件级遍历 | [内存遍历](docs/file-traversal.md) · [逐事件读取](docs/cli-stream.md) |
 | 命令行工具 | [CLI 参数、输出和退出码](docs/cli.md) |
 | Schema 草稿 | [从 TABLE_MAP 生成并确认配置](docs/cli-schema-template.md) |

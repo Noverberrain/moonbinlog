@@ -133,6 +133,7 @@ python scripts/test_assigned_gtid_cli.py
 python scripts/test_stream_cli.py
 python scripts/test_stream_rows_cli.py
 python scripts/test_stream_transactions_cli.py
+python scripts/demo_acceptance.py
 python scripts/verify_assigned_gtid_fixtures.py --check
 python scripts/generate_previous_gtids_fixtures.py --check
 python scripts/generate_gtid_fixtures.py --check
@@ -159,4 +160,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成单文件事务导出逐事件读取（--stream --transactions），支持 GTID 绑定、提交行、筛选及摘要，详细范围见 [逐事件读取](docs/cli-stream.md)。暂停，等待用户继续指令。
+本批已补齐一键离线验收演示，覆盖事件、行、GTID 事务及预期失败，见 [演示说明](docs/acceptance-demo.md)。暂停，等待用户继续指令。

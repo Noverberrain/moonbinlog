@@ -58,6 +58,7 @@ try {
     )) {
         Invoke-CiCommand -Program python -ArgumentList @($ciScript)
     }
+    Invoke-CiCommand -Program python -ArgumentList @('scripts/demo_acceptance.py', '--exe', '_build/native/debug/build/cmd/moonbinlog/moonbinlog.exe')
     Invoke-CiCommand -Program git -ArgumentList @('diff', '--check')
 } finally {
     Pop-Location
