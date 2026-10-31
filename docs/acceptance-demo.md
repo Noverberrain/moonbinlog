@@ -6,7 +6,7 @@
 
 ## 一条命令运行
 
-已验证环境为 Windows x64、MoonBit/core 0.10.15+943464bfa、moon 0.1.20261012、MSVC 和 Python 3.13.9。先确保 `moon version --all`、`python --version` 可用，native 编译环境按 [CI 说明](ci.md) 准备。首次获取依赖需要联网；依赖齐备后的四步演示本身无需联网。
+已验证环境为 Windows x64、MoonBit/core 0.10.18+6c83a7f62、moon 0.1.20261028、MSVC 和 Python 3.13.9。先确保 `moon version --all`、`python --version` 可用，native 编译环境按 [CI 说明](ci.md) 准备。首次获取依赖需要联网；依赖齐备后的四步演示本身无需联网。
 
 在仓库根目录运行：
 
@@ -76,6 +76,6 @@ moon run --target native cmd/moonbinlog -- --stream --transactions --with-gtid -
 
 当前不支持实时订阅、自动跟随轮转、自动提交/DDL/XA 推断或跨文件事务续接。schema 必须匹配历史表结构；逐事件读取仍需完整事件和事务缓冲，默认文件上限 64 MiB、最大 2 GiB−1，详见 [流式读取范围](cli-stream.md)。这些固定小样本没有提供吞吐或内存峰值结论。
 
-演示通过表示本地四步复现成功，不会自动报名、提交验收表、发布包或上传演示产物。正式验收仍需按赛事通知提交对应材料。
+演示通过表示本地四步复现成功。按参赛者提供的验收指南，审核通过后无需再交表格，保持开发并将对应内容上传 GitHub 即可；脚本不会上传产物或代办赛事操作。
 
 准备提交时可参考 [干净克隆复现结果与验收清单](acceptance-checklist.md)，检查所引用的提交版本及材料链接。

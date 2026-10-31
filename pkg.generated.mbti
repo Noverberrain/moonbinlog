@@ -11,75 +11,75 @@ pub fn validate_file_header(BytesView) -> Unit raise DecodeError
 // Errors
 pub(all) suberror DecodeError {
   InvalidMagic(actual~ : Bytes)
-  TruncatedInput(file_offset~ : UInt64, expected~ : Int, actual~ : Int)
-  InvalidEventLength(file_offset~ : UInt64, event_size~ : UInt)
-  EventTooLarge(file_offset~ : UInt64, event_size~ : UInt, max_event_size~ : UInt)
-  InvalidEventLimit(max_event_size~ : UInt)
-  TruncatedEvent(file_offset~ : UInt64, expected~ : UInt, actual~ : UInt)
+  TruncatedInput(file_offset~ : UInt64, expected~ : Int32, actual~ : Int32)
+  InvalidEventLength(file_offset~ : UInt64, event_size~ : UInt32)
+  EventTooLarge(file_offset~ : UInt64, event_size~ : UInt32, max_event_size~ : UInt32)
+  InvalidEventLimit(max_event_size~ : UInt32)
+  TruncatedEvent(file_offset~ : UInt64, expected~ : UInt32, actual~ : UInt32)
   UnexpectedEventType(file_offset~ : UInt64, expected~ : Byte, actual~ : Byte)
   UnsupportedBinlogVersion(file_offset~ : UInt64, version~ : UInt16)
   UnsupportedServerVersion(file_offset~ : UInt64, server_version~ : String)
   UnsupportedHeaderLength(file_offset~ : UInt64, length~ : Byte)
   InvalidFormatDescription(file_offset~ : UInt64, reason~ : String)
   UnsupportedChecksumAlgorithm(file_offset~ : UInt64, algorithm~ : Byte)
-  ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt, actual~ : UInt)
+  ChecksumMismatch(file_offset~ : UInt64, expected~ : UInt32, actual~ : UInt32)
   FormatContextResetRequired(file_offset~ : UInt64)
   InvalidRotateEvent(file_offset~ : UInt64, reason~ : String)
   UnsupportedGtidEvent(file_offset~ : UInt64, event_type~ : Byte)
-  InvalidGtidEvent(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
-  InvalidPreviousGtidsEvent(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
-  InvalidGtidSetLimits(max_sids~ : Int, max_intervals~ : Int)
+  InvalidGtidEvent(file_offset~ : UInt64, body_offset~ : Int32, reason~ : String)
+  InvalidPreviousGtidsEvent(file_offset~ : UInt64, body_offset~ : Int32, reason~ : String)
+  InvalidGtidSetLimits(max_sids~ : Int32, max_intervals~ : Int32)
   GtidSetLimitExceeded(file_offset~ : UInt64, reason~ : String)
-  InvalidTableMap(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
-  UnsupportedColumnType(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidColumnLimit(max_columns~ : Int)
-  ColumnLimitExceeded(file_offset~ : UInt64, count~ : UInt64, max_columns~ : Int)
-  InvalidTableContextLimit(max_tables~ : Int, max_bytes~ : UInt64)
+  InvalidTableMap(file_offset~ : UInt64, body_offset~ : Int32, reason~ : String)
+  UnsupportedColumnType(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidColumnLimit(max_columns~ : Int32)
+  ColumnLimitExceeded(file_offset~ : UInt64, count~ : UInt64, max_columns~ : Int32)
+  InvalidTableContextLimit(max_tables~ : Int32, max_bytes~ : UInt64)
   TableContextLimitExceeded(file_offset~ : UInt64, reason~ : String)
-  UnsupportedIntegerColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  TruncatedColumnValue(file_offset~ : UInt64, column_index~ : Int, expected~ : Int, actual~ : Int)
-  UnsupportedStringColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidStringMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
-  StringLengthExceeded(file_offset~ : UInt64, column_index~ : Int, length~ : Int, max_length~ : Int)
-  UnsupportedBlobColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidBlobMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
-  InvalidBlobLimit(max_value_bytes~ : Int)
-  BlobTooLarge(file_offset~ : UInt64, column_index~ : Int, length~ : UInt64, max_value_bytes~ : Int)
-  UnsupportedDecimalColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidDecimalMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
-  InvalidDecimalValue(file_offset~ : UInt64, column_index~ : Int, value_offset~ : Int)
-  UnsupportedTemporalColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidTemporalMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
-  InvalidTemporalValue(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
-  UnsupportedFloatingColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidFloatingMetadata(file_offset~ : UInt64, column_index~ : Int, expected_width~ : Int)
-  NonFiniteFloatingValue(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte, bits~ : UInt64)
-  UnsupportedBitColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidBitMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
-  UnsupportedEnumSetColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidEnumSetMetadata(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
+  UnsupportedIntegerColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  TruncatedColumnValue(file_offset~ : UInt64, column_index~ : Int32, expected~ : Int32, actual~ : Int32)
+  UnsupportedStringColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidStringMetadata(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
+  StringLengthExceeded(file_offset~ : UInt64, column_index~ : Int32, length~ : Int32, max_length~ : Int32)
+  UnsupportedBlobColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidBlobMetadata(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
+  InvalidBlobLimit(max_value_bytes~ : Int32)
+  BlobTooLarge(file_offset~ : UInt64, column_index~ : Int32, length~ : UInt64, max_value_bytes~ : Int32)
+  UnsupportedDecimalColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidDecimalMetadata(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
+  InvalidDecimalValue(file_offset~ : UInt64, column_index~ : Int32, value_offset~ : Int32)
+  UnsupportedTemporalColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidTemporalMetadata(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
+  InvalidTemporalValue(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
+  UnsupportedFloatingColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidFloatingMetadata(file_offset~ : UInt64, column_index~ : Int32, expected_width~ : Int32)
+  NonFiniteFloatingValue(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte, bits~ : UInt64)
+  UnsupportedBitColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidBitMetadata(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
+  UnsupportedEnumSetColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidEnumSetMetadata(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
   InvalidRowImage(file_offset~ : UInt64, reason~ : String)
-  InvalidRowImageLimit(max_bytes~ : Int)
-  RowImageLimitExceeded(file_offset~ : UInt64, max_bytes~ : Int)
-  UnexpectedRowNull(file_offset~ : UInt64, column_index~ : Int)
-  MissingIntegerSignedness(file_offset~ : UInt64, column_index~ : Int)
-  UnsupportedRowColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  UnsupportedJsonColumn(file_offset~ : UInt64, column_index~ : Int, wire_type~ : Byte)
-  InvalidJsonMetadata(file_offset~ : UInt64, column_index~ : Int)
-  InvalidJsonLimits(max_value_bytes~ : Int, max_depth~ : Int, max_nodes~ : Int)
-  JsonLimitExceeded(file_offset~ : UInt64, column_index~ : Int, reason~ : String)
-  InvalidJsonValue(file_offset~ : UInt64, column_index~ : Int, value_offset~ : Int, reason~ : String)
-  UnsupportedJsonType(file_offset~ : UInt64, column_index~ : Int, value_offset~ : Int, binary_type~ : Byte)
+  InvalidRowImageLimit(max_bytes~ : Int32)
+  RowImageLimitExceeded(file_offset~ : UInt64, max_bytes~ : Int32)
+  UnexpectedRowNull(file_offset~ : UInt64, column_index~ : Int32)
+  MissingIntegerSignedness(file_offset~ : UInt64, column_index~ : Int32)
+  UnsupportedRowColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  UnsupportedJsonColumn(file_offset~ : UInt64, column_index~ : Int32, wire_type~ : Byte)
+  InvalidJsonMetadata(file_offset~ : UInt64, column_index~ : Int32)
+  InvalidJsonLimits(max_value_bytes~ : Int32, max_depth~ : Int32, max_nodes~ : Int32)
+  JsonLimitExceeded(file_offset~ : UInt64, column_index~ : Int32, reason~ : String)
+  InvalidJsonValue(file_offset~ : UInt64, column_index~ : Int32, value_offset~ : Int32, reason~ : String)
+  UnsupportedJsonType(file_offset~ : UInt64, column_index~ : Int32, value_offset~ : Int32, binary_type~ : Byte)
   UnsupportedRowsEvent(file_offset~ : UInt64, event_type~ : Byte)
-  InvalidRowsEvent(file_offset~ : UInt64, body_offset~ : Int, reason~ : String)
+  InvalidRowsEvent(file_offset~ : UInt64, body_offset~ : Int32, reason~ : String)
   MissingTableMap(file_offset~ : UInt64, table_id~ : UInt64)
-  InvalidRowsLimit(max_rows~ : Int)
-  RowsLimitExceeded(file_offset~ : UInt64, max_rows~ : Int)
+  InvalidRowsLimit(max_rows~ : Int32)
+  RowsLimitExceeded(file_offset~ : UInt64, max_rows~ : Int32)
   UnsupportedTransactionEvent(file_offset~ : UInt64, event_type~ : Byte)
   InvalidTransactionEvent(file_offset~ : UInt64, reason~ : String)
   UnsupportedTransactionStatement(file_offset~ : UInt64)
   InvalidTransactionState(file_offset~ : UInt64, reason~ : String)
-  InvalidTransactionLimits(max_events~ : Int, max_changes~ : Int, max_bytes~ : UInt64)
+  InvalidTransactionLimits(max_events~ : Int32, max_changes~ : Int32, max_bytes~ : UInt64)
   TransactionLimitExceeded(file_offset~ : UInt64, reason~ : String)
   IncompleteTransaction(start_offset~ : UInt64)
   InvalidGtidTransactionState(file_offset~ : UInt64, reason~ : String)
@@ -96,10 +96,10 @@ pub fn DecodeError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror SchemaError {
   InvalidSchema(path~ : String, reason~ : String)
-  InvalidSchemaLimits(max_tables~ : Int, max_columns~ : Int, max_input_units~ : Int)
+  InvalidSchemaLimits(max_tables~ : Int32, max_columns~ : Int32, max_input_units~ : Int32)
   SchemaLimitExceeded(path~ : String, reason~ : String)
   MissingTableSchema(file_offset~ : UInt64, database~ : String, table~ : String)
-  SchemaMismatch(file_offset~ : UInt64, database~ : String, table~ : String, column_index~ : Int?, reason~ : String)
+  SchemaMismatch(file_offset~ : UInt64, database~ : String, table~ : String, column_index~ : Int32?, reason~ : String)
 } derive(Eq, @debug.Debug)
 pub fn SchemaError::equal(Self, Self) -> Bool
 pub fn SchemaError::not_equal(Self, Self) -> Bool
@@ -126,7 +126,7 @@ pub struct BinlogEventStream {
 pub fn BinlogEventStream::feed(Self, BytesView) -> BinlogFileEvent raise DecodeError
 pub fn BinlogEventStream::finish(Self) -> Unit raise DecodeError
 pub fn BinlogEventStream::format(Self) -> FormatDescription?
-pub fn BinlogEventStream::new(BytesView, max_event_size? : UInt) -> Self raise DecodeError
+pub fn BinlogEventStream::new(BytesView, max_event_size? : UInt32) -> Self raise DecodeError
 pub fn BinlogEventStream::position(Self) -> UInt64
 
 pub struct BinlogFileEvent {
@@ -143,7 +143,7 @@ pub struct BinlogFileReader {
   // private fields
 }
 pub fn BinlogFileReader::format(Self) -> FormatDescription?
-pub fn BinlogFileReader::new(BytesView, max_event_size? : UInt) -> Self raise DecodeError
+pub fn BinlogFileReader::new(BytesView, max_event_size? : UInt32) -> Self raise DecodeError
 pub fn BinlogFileReader::next(Self) -> BinlogFileEvent? raise DecodeError
 pub fn BinlogFileReader::position(Self) -> UInt64
 
@@ -169,8 +169,8 @@ pub struct CommittedTransaction {
   end_offset : UInt64
   xid : UInt64?
   events : ReadOnlyArray[RowsEvent]
-  event_count : Int
-  change_count : Int
+  event_count : Int32
+  change_count : Int32
   wire_bytes : UInt64
 } derive(Eq, @debug.Debug)
 pub fn CommittedTransaction::equal(Self, Self) -> Bool
@@ -179,8 +179,8 @@ pub fn CommittedTransaction::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedBit {
   value : UInt64
-  bit_length : Int
-  bytes_read : Int
+  bit_length : Int32
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedBit::equal(Self, Self) -> Bool
 pub fn DecodedBit::not_equal(Self, Self) -> Bool
@@ -188,7 +188,7 @@ pub fn DecodedBit::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedBlob {
   value : Bytes
-  bytes_read : Int
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedBlob::equal(Self, Self) -> Bool
 pub fn DecodedBlob::not_equal(Self, Self) -> Bool
@@ -196,9 +196,9 @@ pub fn DecodedBlob::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedDecimal {
   value : String
-  precision : Int
-  scale : Int
-  bytes_read : Int
+  precision : Int32
+  scale : Int32
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedDecimal::equal(Self, Self) -> Bool
 pub fn DecodedDecimal::not_equal(Self, Self) -> Bool
@@ -206,7 +206,7 @@ pub fn DecodedDecimal::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedEnumSet {
   value : EnumSetValue
-  bytes_read : Int
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedEnumSet::equal(Self, Self) -> Bool
 pub fn DecodedEnumSet::not_equal(Self, Self) -> Bool
@@ -215,7 +215,7 @@ pub fn DecodedEnumSet::to_repr(Self) -> @debug.Repr
 pub struct DecodedFloating {
   value : FloatingValue
   bits : UInt64
-  bytes_read : Int
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedFloating::equal(Self, Self) -> Bool
 pub fn DecodedFloating::not_equal(Self, Self) -> Bool
@@ -223,7 +223,7 @@ pub fn DecodedFloating::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedInteger {
   value : IntegerValue
-  bytes_read : Int
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedInteger::equal(Self, Self) -> Bool
 pub fn DecodedInteger::not_equal(Self, Self) -> Bool
@@ -231,7 +231,7 @@ pub fn DecodedInteger::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedJson {
   value : BinaryJsonValue
-  bytes_read : Int
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedJson::equal(Self, Self) -> Bool
 pub fn DecodedJson::not_equal(Self, Self) -> Bool
@@ -239,7 +239,7 @@ pub fn DecodedJson::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedString {
   value : Bytes
-  bytes_read : Int
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedString::equal(Self, Self) -> Bool
 pub fn DecodedString::not_equal(Self, Self) -> Bool
@@ -247,8 +247,8 @@ pub fn DecodedString::to_repr(Self) -> @debug.Repr
 
 pub struct DecodedTemporal {
   value : TemporalValue
-  fractional_precision : Int
-  bytes_read : Int
+  fractional_precision : Int32
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn DecodedTemporal::equal(Self, Self) -> Bool
 pub fn DecodedTemporal::not_equal(Self, Self) -> Bool
@@ -264,16 +264,16 @@ pub fn EnumSetValue::to_repr(Self) -> @debug.Repr
 
 pub struct EventHeader {
   file_offset : UInt64
-  timestamp : UInt
+  timestamp : UInt32
   event_type : Byte
-  server_id : UInt
-  event_size : UInt
-  next_position : UInt
+  server_id : UInt32
+  event_size : UInt32
+  next_position : UInt32
   flags : UInt16
 } derive(Eq, @debug.Debug)
 pub fn EventHeader::equal(Self, Self) -> Bool
 pub fn EventHeader::not_equal(Self, Self) -> Bool
-pub fn EventHeader::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
+pub fn EventHeader::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt32) -> Self raise DecodeError
 pub fn EventHeader::to_repr(Self) -> @debug.Repr
 
 pub(all) enum FloatingValue {
@@ -288,15 +288,15 @@ pub struct FormatDescription {
   header : EventHeader
   binlog_version : UInt16
   server_version : String
-  created_timestamp : UInt
+  created_timestamp : UInt32
   common_header_length : Byte
   post_header_lengths : Bytes
   checksum_algorithm : ChecksumAlgorithm
 } derive(Eq, @debug.Debug)
 pub fn FormatDescription::equal(Self, Self) -> Bool
 pub fn FormatDescription::not_equal(Self, Self) -> Bool
-pub fn FormatDescription::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
-pub fn FormatDescription::payload(Self, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> BytesView raise DecodeError
+pub fn FormatDescription::parse(BytesView, file_offset~ : UInt64, max_event_size? : UInt32) -> Self raise DecodeError
+pub fn FormatDescription::payload(Self, BytesView, file_offset~ : UInt64, max_event_size? : UInt32) -> BytesView raise DecodeError
 pub fn FormatDescription::to_repr(Self) -> @debug.Repr
 
 pub struct GtidCommitTimestamps {
@@ -323,7 +323,7 @@ pub fn GtidEvent::equal(Self, Self) -> Bool
 pub fn GtidEvent::is_anonymous(Self) -> Bool
 pub fn GtidEvent::may_have_sbr_statements(Self) -> Bool
 pub fn GtidEvent::not_equal(Self, Self) -> Bool
-pub fn GtidEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
+pub fn GtidEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt32) -> Self raise DecodeError
 pub fn GtidEvent::to_repr(Self) -> @debug.Repr
 
 pub struct GtidInterval {
@@ -335,8 +335,8 @@ pub fn GtidInterval::not_equal(Self, Self) -> Bool
 pub fn GtidInterval::to_repr(Self) -> @debug.Repr
 
 pub struct GtidServerVersions {
-  immediate : UInt
-  original : UInt
+  immediate : UInt32
+  original : UInt32
 } derive(Eq, @debug.Debug)
 pub fn GtidServerVersions::equal(Self, Self) -> Bool
 pub fn GtidServerVersions::not_equal(Self, Self) -> Bool
@@ -356,14 +356,14 @@ pub struct GtidTransactionDecoder {
 pub fn GtidTransactionDecoder::feed(Self, BytesView, file_offset~ : UInt64, integer_unsigned? : ReadOnlyArray[Bool?]) -> GtidTransactionStep raise DecodeError
 pub fn GtidTransactionDecoder::finish(Self) -> Unit raise DecodeError
 pub fn GtidTransactionDecoder::is_active(Self) -> Bool
-pub fn GtidTransactionDecoder::new(FormatDescription, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self raise DecodeError
+pub fn GtidTransactionDecoder::new(FormatDescription, max_events? : Int32, max_changes? : Int32, max_bytes? : UInt64) -> Self raise DecodeError
 
 pub struct GtidTransactionOutcome {
   gtid : GtidEvent
   transaction : TransactionOutcome
   start_offset : UInt64
   end_offset : UInt64
-  event_count : Int
+  event_count : Int32
   wire_bytes : UInt64
 } derive(Eq, @debug.Debug)
 pub fn GtidTransactionOutcome::equal(Self, Self) -> Bool
@@ -392,7 +392,7 @@ pub struct PreviousGtidsEvent {
 } derive(Eq, @debug.Debug)
 pub fn PreviousGtidsEvent::equal(Self, Self) -> Bool
 pub fn PreviousGtidsEvent::not_equal(Self, Self) -> Bool
-pub fn PreviousGtidsEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt, max_sids? : Int, max_intervals? : Int) -> Self raise DecodeError
+pub fn PreviousGtidsEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt32, max_sids? : Int32, max_intervals? : Int32) -> Self raise DecodeError
 pub fn PreviousGtidsEvent::to_repr(Self) -> @debug.Repr
 
 pub struct RotateEvent {
@@ -402,7 +402,7 @@ pub struct RotateEvent {
 } derive(Eq, @debug.Debug)
 pub fn RotateEvent::equal(Self, Self) -> Bool
 pub fn RotateEvent::not_equal(Self, Self) -> Bool
-pub fn RotateEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt) -> Self raise DecodeError
+pub fn RotateEvent::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_event_size? : UInt32) -> Self raise DecodeError
 pub fn RotateEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RowCell {
@@ -433,7 +433,7 @@ pub fn RowChange::to_repr(Self) -> @debug.Repr
 
 pub struct RowImage {
   columns : ReadOnlyArray[RowCell]
-  bytes_read : Int
+  bytes_read : Int32
 } derive(Eq, @debug.Debug)
 pub fn RowImage::equal(Self, Self) -> Bool
 pub fn RowImage::not_equal(Self, Self) -> Bool
@@ -468,23 +468,23 @@ pub struct SchemaConfig {
 }
 pub fn SchemaConfig::bind(Self, TableMap) -> BoundTableSchema raise SchemaError
 pub fn SchemaConfig::get(Self, String, String) -> TableSchema?
-pub fn SchemaConfig::length(Self) -> Int
-pub fn SchemaConfig::parse(StringView, max_tables? : Int, max_columns? : Int, max_input_units? : Int) -> Self raise SchemaError
+pub fn SchemaConfig::length(Self) -> Int32
+pub fn SchemaConfig::parse(StringView, max_tables? : Int32, max_columns? : Int32, max_input_units? : Int32) -> Self raise SchemaError
 
 pub struct TableColumn {
   wire_type : Byte
   metadata : Bytes
   nullable : Bool
 } derive(Eq, @debug.Debug)
-pub fn TableColumn::decode_bit(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedBit raise DecodeError
-pub fn TableColumn::decode_blob(Self, BytesView, file_offset~ : UInt64, column_index~ : Int, max_value_bytes? : Int) -> DecodedBlob raise DecodeError
-pub fn TableColumn::decode_decimal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedDecimal raise DecodeError
-pub fn TableColumn::decode_enum_set(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedEnumSet raise DecodeError
-pub fn TableColumn::decode_floating(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedFloating raise DecodeError
-pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int) -> DecodedInteger raise DecodeError
-pub fn TableColumn::decode_json(Self, BytesView, file_offset~ : UInt64, column_index~ : Int, max_value_bytes? : Int, max_depth? : Int, max_nodes? : Int) -> DecodedJson raise DecodeError
-pub fn TableColumn::decode_string(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedString raise DecodeError
-pub fn TableColumn::decode_temporal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int) -> DecodedTemporal raise DecodeError
+pub fn TableColumn::decode_bit(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32) -> DecodedBit raise DecodeError
+pub fn TableColumn::decode_blob(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32, max_value_bytes? : Int32) -> DecodedBlob raise DecodeError
+pub fn TableColumn::decode_decimal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32) -> DecodedDecimal raise DecodeError
+pub fn TableColumn::decode_enum_set(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32) -> DecodedEnumSet raise DecodeError
+pub fn TableColumn::decode_floating(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32) -> DecodedFloating raise DecodeError
+pub fn TableColumn::decode_integer(Self, BytesView, unsigned~ : Bool, file_offset~ : UInt64, column_index~ : Int32) -> DecodedInteger raise DecodeError
+pub fn TableColumn::decode_json(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32, max_value_bytes? : Int32, max_depth? : Int32, max_nodes? : Int32) -> DecodedJson raise DecodeError
+pub fn TableColumn::decode_string(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32) -> DecodedString raise DecodeError
+pub fn TableColumn::decode_temporal(Self, BytesView, file_offset~ : UInt64, column_index~ : Int32) -> DecodedTemporal raise DecodeError
 pub fn TableColumn::equal(Self, Self) -> Bool
 pub fn TableColumn::not_equal(Self, Self) -> Bool
 pub fn TableColumn::to_repr(Self) -> @debug.Repr
@@ -498,21 +498,21 @@ pub struct TableMap {
   columns : ReadOnlyArray[TableColumn]
   optional_metadata : ReadOnlyArray[TableMetadataField]
 } derive(Eq, @debug.Debug)
-pub fn TableMap::decode_row_image(Self, BytesView, columns_present~ : BytesView, integer_unsigned~ : ReadOnlyArray[Bool?], file_offset~ : UInt64, max_bytes? : Int) -> RowImage raise DecodeError
+pub fn TableMap::decode_row_image(Self, BytesView, columns_present~ : BytesView, integer_unsigned~ : ReadOnlyArray[Bool?], file_offset~ : UInt64, max_bytes? : Int32) -> RowImage raise DecodeError
 pub fn TableMap::equal(Self, Self) -> Bool
 pub fn TableMap::not_equal(Self, Self) -> Bool
-pub fn TableMap::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_columns? : Int, max_event_size? : UInt) -> Self raise DecodeError
+pub fn TableMap::parse(FormatDescription, BytesView, file_offset~ : UInt64, max_columns? : Int32, max_event_size? : UInt32) -> Self raise DecodeError
 pub fn TableMap::to_repr(Self) -> @debug.Repr
 
 pub struct TableMapContext {
   // private fields
 }
-pub fn TableMapContext::apply(Self, BytesView, file_offset~ : UInt64, max_columns? : Int, max_event_size? : UInt) -> TableMap raise DecodeError
+pub fn TableMapContext::apply(Self, BytesView, file_offset~ : UInt64, max_columns? : Int32, max_event_size? : UInt32) -> TableMap raise DecodeError
 pub fn TableMapContext::clear(Self) -> Unit
-pub fn TableMapContext::decode_rows(Self, BytesView, integer_unsigned~ : ReadOnlyArray[Bool?], file_offset~ : UInt64, max_rows? : Int, max_row_bytes? : Int, max_event_size? : UInt) -> RowsEvent raise DecodeError
+pub fn TableMapContext::decode_rows(Self, BytesView, integer_unsigned~ : ReadOnlyArray[Bool?], file_offset~ : UInt64, max_rows? : Int32, max_row_bytes? : Int32, max_event_size? : UInt32) -> RowsEvent raise DecodeError
 pub fn TableMapContext::get(Self, UInt64) -> TableMap?
-pub fn TableMapContext::length(Self) -> Int
-pub fn TableMapContext::new(FormatDescription, max_tables? : Int, max_bytes? : UInt64) -> Self raise DecodeError
+pub fn TableMapContext::length(Self) -> Int32
+pub fn TableMapContext::new(FormatDescription, max_tables? : Int32, max_bytes? : UInt64) -> Self raise DecodeError
 pub fn TableMapContext::reset(Self, FormatDescription) -> Unit
 
 pub struct TableMetadataField {
@@ -533,11 +533,11 @@ pub fn TableSchema::not_equal(Self, Self) -> Bool
 pub fn TableSchema::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TemporalValue {
-  Year(Int)
-  Date(year~ : Int, month~ : Int, day~ : Int)
-  DateTime(year~ : Int, month~ : Int, day~ : Int, hour~ : Int, minute~ : Int, second~ : Int, microsecond~ : Int)
-  Time(negative~ : Bool, hour~ : Int, minute~ : Int, second~ : Int, microsecond~ : Int)
-  Timestamp(seconds~ : UInt, microsecond~ : Int)
+  Year(Int32)
+  Date(year~ : Int32, month~ : Int32, day~ : Int32)
+  DateTime(year~ : Int32, month~ : Int32, day~ : Int32, hour~ : Int32, minute~ : Int32, second~ : Int32, microsecond~ : Int32)
+  Time(negative~ : Bool, hour~ : Int32, minute~ : Int32, second~ : Int32, microsecond~ : Int32)
+  Timestamp(seconds~ : UInt32, microsecond~ : Int32)
 } derive(Eq, @debug.Debug)
 pub fn TemporalValue::equal(Self, Self) -> Bool
 pub fn TemporalValue::not_equal(Self, Self) -> Bool
@@ -568,11 +568,11 @@ pub struct TransactionDecoder {
 pub fn TransactionDecoder::feed(Self, BytesView, file_offset~ : UInt64, integer_unsigned? : ReadOnlyArray[Bool?]) -> TransactionStep raise DecodeError
 pub fn TransactionDecoder::finish(Self) -> Unit raise DecodeError
 pub fn TransactionDecoder::is_active(Self) -> Bool
-pub fn TransactionDecoder::new(FormatDescription, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self raise DecodeError
+pub fn TransactionDecoder::new(FormatDescription, max_events? : Int32, max_changes? : Int32, max_bytes? : UInt64) -> Self raise DecodeError
 
 pub(all) enum TransactionOutcome {
   Committed(CommittedTransaction)
-  RolledBack(start_offset~ : UInt64, end_offset~ : UInt64, discarded_changes~ : Int)
+  RolledBack(start_offset~ : UInt64, end_offset~ : UInt64, discarded_changes~ : Int32)
 } derive(Eq, @debug.Debug)
 pub fn TransactionOutcome::equal(Self, Self) -> Bool
 pub fn TransactionOutcome::not_equal(Self, Self) -> Bool

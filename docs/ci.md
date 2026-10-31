@@ -10,7 +10,7 @@
 | --- | --- |
 | 托管镜像 | windows-2022，x64；镜像内系统补丁和 MSVC 小版本由 GitHub 维护，并非完全冻结 |
 | 编译环境 | ilammy/msvc-dev-cmd 初始化 x64 MSVC |
-| MoonBit / core | 0.10.15+943464bfa；对应 moon 0.1.20261012 |
+| MoonBit / core | 0.10.18+6c83a7f62；对应 moon 0.1.20261028 |
 | Python | 3.13.9，仅使用标准库 |
 | 解析库依赖 | 沿用 moon.mod 中 async 0.21.3、x 0.5.5 |
 
@@ -24,7 +24,7 @@ checkout、setup-python 和 msvc-dev-cmd 均固定到已核对的完整提交 SH
 
 [scripts/ci.ps1](../scripts/ci.ps1) 逐条执行，任一外部命令非零退出即失败：
 
-1. 输出工具链/Python 版本，检查 MoonBit 格式及 native 严格类型检查。
+1. 输出工具链/Python 版本，拒绝 moonc 低于 0.10.16，再检查 MoonBit 格式及 native 严格类型检查。
 2. 运行全部 native 测试并构建 CLI；当前为 384 项 MoonBit 测试。
 3. moon info 重新生成接口，检查所有 .mbti 相对 HEAD 的差异，并拒绝未跟踪的新接口文件。
 4. 检查十七组合成样本、九组真实 MySQL 日志（含三组 JSON、三组 assigned GTID 捕获）及 schema 示例的一致性。
@@ -52,7 +52,7 @@ if ($LASTEXITCODE -ne 0) { throw 'moon update failed' }
 ./scripts/install_ci_moonbit.ps1 -InstallDir 'E:/temp/moonbinlog-toolchain'
 ```
 
-脚本在当前 PowerShell 进程前置安装目录的 bin 到 PATH；GitHub Actions 中同时通过 GITHUB_PATH 供后续步骤使用。初次本地验证在忽略的 _build/ci-toolchain 中独立安装并运行相同检查入口，使用 actionlint 1.7.12 及 PowerShell AST 检查语法；上述首次云端运行也已成功完成。
+脚本在当前 PowerShell 进程前置安装目录的 bin 到 PATH，并设置 MOON_HOME；GitHub Actions 中同时通过 GITHUB_PATH 和 GITHUB_ENV 供后续步骤使用。下载缓存按完整版本隔离，避免升级时复用旧归档。初次本地验证在忽略的 _build/ci-toolchain 中独立安装并运行相同检查入口，使用 actionlint 1.7.12 及 PowerShell AST 检查语法；上述首次云端运行也已成功完成。
 
 ## 更新与排查
 

@@ -23,7 +23,7 @@
 **预期验收产物**
 
 - 已发布 [Mooncakes 解析库 0.1.0](https://mooncakes.io/docs/Noverberrain/moonbinlog)，仓库提供 native CLI、API 示例、固定样本及支持范围文档；运行 python scripts/demo_acceptance.py 可复现事件、行变化、GTID 提交事务和未完成事务报错，说明见 [验收演示](docs/acceptance-demo.md)。
-- 截至 2026 年 10 月 30 日，已通过 384 项 MoonBit 测试、3521 个 CLI 场景及四步验收演示，本地统一 CI 通过；九组真实 MySQL 8.0.43 日志已与官方 mysqlbinlog 输出对照，含 GTID=ON 样本，仓库提供 Windows native CI。
+- 截至 2026 年 10 月 31 日，使用 moonc 0.10.18 通过 384 项 MoonBit 测试、3521 个 CLI 场景及四步验收演示，本地统一 CI 通过；九组真实 MySQL 8.0.43 日志已与官方 mysqlbinlog 输出对照，含 GTID=ON 样本，仓库提供 Windows native CI。
 
 **移植或参考说明**
 

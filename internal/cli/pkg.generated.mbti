@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn chain_event_line(@moonbinlog.BinlogFileEvent, @moonbinlog.RotateEvent?, Int, String, previous_gtids? : @moonbinlog.PreviousGtidsEvent?, gtid? : @moonbinlog.GtidEvent?) -> String
+pub fn chain_event_line(@moonbinlog.BinlogFileEvent, @moonbinlog.RotateEvent?, Int32, String, previous_gtids? : @moonbinlog.PreviousGtidsEvent?, gtid? : @moonbinlog.GtidEvent?) -> String
 
 pub fn event_columns() -> String
 
@@ -27,9 +27,9 @@ pub fn previous_gtids_json_line(@moonbinlog.PreviousGtidsEvent, @moonbinlog.Chec
 
 pub fn rotate_json_line(@moonbinlog.RotateEvent, @moonbinlog.ChecksumAlgorithm) -> String
 
-pub fn row_cell_json(@moonbinlog.RowCell, Int, String) -> Json
+pub fn row_cell_json(@moonbinlog.RowCell, Int32, String) -> Json
 
-pub fn row_change_line(@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema, Int) -> String raise RowScanError
+pub fn row_change_line(@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema, Int32) -> String raise RowScanError
 
 pub fn transaction_line(@moonbinlog.TransactionOutcome) -> String
 
@@ -47,7 +47,7 @@ pub fn ArgumentError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror ChainError {
   InvalidChainState(String)
-  InvalidChainLink(file_index~ : Int, reason~ : String)
+  InvalidChainLink(file_index~ : Int32, reason~ : String)
 } derive(@debug.Debug)
 pub fn ChainError::to_repr(Self) -> @debug.Repr
 
@@ -92,11 +92,11 @@ pub struct Config {
   chain : Bool
   stream : Bool
   paths : ReadOnlyArray[String]
-  max_total_bytes : Int
+  max_total_bytes : Int32
   filter : TableFilter
   schema_path : String?
-  max_event_bytes : UInt
-  max_file_bytes : Int
+  max_event_bytes : UInt32
+  max_file_bytes : Int32
 } derive(Eq, @debug.Debug)
 pub fn Config::equal(Self, Self) -> Bool
 pub fn Config::not_equal(Self, Self) -> Bool
@@ -106,35 +106,35 @@ pub struct RotationChain {
   // private fields
 }
 pub fn RotationChain::begin_file(Self, Bytes) -> Unit raise ChainError
-pub fn RotationChain::end_file(Self, Int, has_next~ : Bool) -> Unit raise ChainError
+pub fn RotationChain::end_file(Self, Int32, has_next~ : Bool) -> Unit raise ChainError
 pub fn RotationChain::feed(Self, @moonbinlog.BinlogFileEvent) -> @moonbinlog.RotateEvent? raise
 pub fn RotationChain::finish(Self) -> Unit raise ChainError
-pub fn RotationChain::new(max_event_size? : UInt) -> Self raise ChainError
+pub fn RotationChain::new(max_event_size? : UInt32) -> Self raise ChainError
 
 pub struct RowScanner {
   // private fields
 }
 pub fn RowScanner::feed(Self, @moonbinlog.BinlogFileEvent) -> (@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema)? raise
-pub fn RowScanner::new(@moonbinlog.SchemaConfig, max_event_size? : UInt) -> Self
+pub fn RowScanner::new(@moonbinlog.SchemaConfig, max_event_size? : UInt32) -> Self
 
 pub struct SchemaTemplate {
   // private fields
 }
 pub fn SchemaTemplate::feed(Self, @moonbinlog.BinlogFileEvent) -> Unit raise
-pub fn SchemaTemplate::new(max_tables? : Int, max_output_units? : Int, max_event_size? : UInt, use_table_metadata? : Bool) -> Self raise TemplateError
+pub fn SchemaTemplate::new(max_tables? : Int32, max_output_units? : Int32, max_event_size? : UInt32, use_table_metadata? : Bool) -> Self raise TemplateError
 pub fn SchemaTemplate::render(Self) -> String raise TemplateError
 
 pub struct Stats {
   // private fields
 }
-pub fn Stats::chain_file_json(Self, Int, String, Int) -> Json
-pub fn Stats::chain_json_line(Self, Int, Array[Json]) -> String
-pub fn Stats::filtered_row_json_line(Self, Int, Int, Int, TableFilter, Int, Int) -> String
-pub fn Stats::json_line(Self, Int) -> String
-pub fn Stats::lines(Self, Int) -> Array[String]
+pub fn Stats::chain_file_json(Self, Int32, String, Int32) -> Json
+pub fn Stats::chain_json_line(Self, Int32, Array[Json]) -> String
+pub fn Stats::filtered_row_json_line(Self, Int32, Int32, Int32, TableFilter, Int32, Int32) -> String
+pub fn Stats::json_line(Self, Int32) -> String
+pub fn Stats::lines(Self, Int32) -> Array[String]
 pub fn Stats::new() -> Self
 pub fn Stats::record(Self, @moonbinlog.EventHeader) -> Unit
-pub fn Stats::row_json_line(Self, Int, Int, Int) -> String
+pub fn Stats::row_json_line(Self, Int32, Int32, Int32) -> String
 
 pub(all) struct TableFilter {
   database : String?
@@ -153,14 +153,14 @@ pub struct TransactionScanner {
 pub fn TransactionScanner::feed(Self, @moonbinlog.BinlogFileEvent) -> @moonbinlog.TransactionOutcome? raise
 pub fn TransactionScanner::finish(Self) -> Unit raise
 pub fn TransactionScanner::gtid_outcome(Self) -> @moonbinlog.GtidTransactionOutcome?
-pub fn TransactionScanner::new(@moonbinlog.SchemaConfig, filter? : TableFilter, with_gtid? : Bool, max_events? : Int, max_changes? : Int, max_bytes? : UInt64) -> Self
+pub fn TransactionScanner::new(@moonbinlog.SchemaConfig, filter? : TableFilter, with_gtid? : Bool, max_events? : Int32, max_changes? : Int32, max_bytes? : UInt64) -> Self
 pub fn TransactionScanner::outcome_selected(Self) -> Bool
 
 pub struct TransactionStats {
   // private fields
 }
-pub fn TransactionStats::filtered_json_line(Self, Stats, Int, TableFilter, Self) -> String
-pub fn TransactionStats::json_line(Self, Stats, Int) -> String
+pub fn TransactionStats::filtered_json_line(Self, Stats, Int32, TableFilter, Self) -> String
+pub fn TransactionStats::json_line(Self, Stats, Int32) -> String
 pub fn TransactionStats::new() -> Self
 pub fn TransactionStats::record(Self, @moonbinlog.TransactionOutcome) -> Unit
 

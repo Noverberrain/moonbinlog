@@ -81,7 +81,7 @@ moon test --target native
 moon build --target native
 ```
 
-当前开发环境为 Windows、MoonBit v0.10.15、moon 0.1.20261012，native 构建使用 MSVC。其他环境和后端的运行兼容性仍待验证。重建协议样本还需要 Python 3。
+当前开发环境为 Windows、MoonBit v0.10.18、moon 0.1.20261028，native 构建使用 MSVC。其他环境和后端的运行兼容性仍待验证。重建协议样本还需要 Python 3。
 
 ### 验收演示
 
@@ -93,7 +93,7 @@ python scripts/demo_acceptance.py
 
 脚本构建 CLI，依次验证事件详情、MINIMAL 行变化、GTID 提交事务和未结束事务报错；实际输出保存到 `_build/acceptance-demo/`。使用仓库固定样本，不需要启动 MySQL。四步预期结果、单独运行命令和讲解要点见 [验收演示](docs/acceptance-demo.md)。这套演示也接入 CI，不会自动提交赛事材料。
 
-提交材料前可查看 [干净克隆复现结果与验收清单](docs/acceptance-checklist.md)，其中记录已检查的提交、运行证据和仍需自行完成的提交动作。
+已通过初审的选手按验收指南无需再交表格，继续将开发内容上传 GitHub 即可；[验收清单](docs/acceptance-checklist.md)记录工程证据和工具链要求。
 
 `Noverberrain/moonbinlog@0.1.0` 已发布到 Mooncakes，在自己的 MoonBit 项目中安装：
 
@@ -105,7 +105,7 @@ moon add Noverberrain/moonbinlog@0.1.0
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.15+943464bfa` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十六组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.18+6c83a7f62` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十六组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 

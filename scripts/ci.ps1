@@ -15,6 +15,12 @@ function Invoke-CiCommand {
 Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
     Invoke-CiCommand -Program moon -ArgumentList @('version', '--all')
+    $ciCompilerVersion = & moonc -v
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot read moonc version' }
+    if ($ciCompilerVersion -notmatch 'v?(\d+\.\d+\.\d+)' -or
+        [Version]$Matches[1] -lt [Version]'0.10.16') {
+        throw "Acceptance requires moonc >= 0.10.16; got: $ciCompilerVersion"
+    }
     Invoke-CiCommand -Program python -ArgumentList @('--version')
     Invoke-CiCommand -Program moon -ArgumentList @('fmt', '--check')
     Invoke-CiCommand -Program moon -ArgumentList @('check', '--target', 'native', '--warn-list', '+unnecessary_annotation', '--deny-warn')

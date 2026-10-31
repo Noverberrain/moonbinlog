@@ -4,11 +4,14 @@
 # Install into a new directory; never replace the developer's existing .moon.
 param(
     [Parameter(Mandatory)][string]$InstallDir,
-    [string]$DownloadDir = (Join-Path ([IO.Path]::GetTempPath()) 'moonbinlog-ci-downloads')
+    [string]$DownloadDir
 )
 
 $ErrorActionPreference = 'Stop'
-$ciVersion = '0.10.15+943464bfa'
+$ciVersion = '0.10.18+6c83a7f62'
+if ([string]::IsNullOrWhiteSpace($DownloadDir)) {
+    $DownloadDir = Join-Path ([IO.Path]::GetTempPath()) "moonbinlog-ci-downloads-$ciVersion"
+}
 $ciEncodedVersion = [Uri]::EscapeDataString($ciVersion)
 if (Test-Path -LiteralPath $InstallDir) {
     throw "Install directory must not exist: $InstallDir"
@@ -19,13 +22,13 @@ $ciArchives = @(
     @{
         File = 'moonbit.zip'
         Url = "https://cli.moonbitlang.com/binaries/$ciEncodedVersion/moonbit-windows-x86_64.zip"
-        Hash = '6e3ef6cb96aa5086d122183972687f79fc912f80652000907d96ee6ad967e3bf'
+        Hash = '249c53518a4b63fbb2577734e03f3f7e0ca15614ba6e66255359315bed9bc73a'
         Destination = $InstallDir
     },
     @{
         File = 'core.zip'
         Url = "https://cli.moonbitlang.com/cores/core-$ciEncodedVersion.zip"
-        Hash = '05556b27b156348950ea88ae6838032c8b478ae532b18b3929387d1da4c18d55'
+        Hash = 'af149c0e8bf9ad9144fcec9e41aa2e34005c0043b5d5d8ff96be11ddef3bfb58'
         Destination = (Join-Path $InstallDir 'lib')
     }
 )
@@ -42,6 +45,10 @@ foreach ($ciArchive in $ciArchives) {
 
 $ciBinDir = Join-Path $InstallDir 'bin'
 $env:PATH = "$ciBinDir;$env:PATH"
+$env:MOON_HOME = [IO.Path]::GetFullPath($InstallDir)
+if ($env:GITHUB_ENV) {
+    "MOON_HOME=$env:MOON_HOME" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+}
 if ($env:GITHUB_PATH) {
     $ciBinDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 }
