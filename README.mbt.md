@@ -160,4 +160,4 @@ Copyright 2026 Noverberrain.
 每次完成一个功能后暂停，报告行为变化、验证结果和新增行数。
 源码、测试、生成接口及文档/配置分别统计；行数包含空行与注释，不作为有效代码量或完成度指标。
 
-本批已完成本地打包及解包验证；实际发布等待账号与命名空间问题解决，见 [发布预检查](docs/mooncakes-publish.md)。暂停，等待用户继续指令。
+本批已发布 Noverberrain/moonbinlog@0.1.0，并从独立项目安装验证公开 API，见 [发布记录](docs/mooncakes-publish.md)。暂停，等待用户继续指令。

@@ -95,7 +95,13 @@ python scripts/demo_acceptance.py
 
 提交材料前可查看 [干净克隆复现结果与验收清单](docs/acceptance-checklist.md)，其中记录已检查的提交、运行证据和仍需自行完成的提交动作。
 
-Mooncakes 实际发布尚未完成，当前发布预检查存在账号与命名空间不一致问题，见 [发布准备与状态](docs/mooncakes-publish.md)。
+`Noverberrain/moonbinlog@0.1.0` 已发布到 Mooncakes，在自己的 MoonBit 项目中安装：
+
+```powershell
+moon add Noverberrain/moonbinlog@0.1.0
+```
+
+解析库的发布记录、独立项目安装验证及支持范围见 [Mooncakes 发布](docs/mooncakes-publish.md)。CLI 的源码构建和演示仍按上面的命令运行。
 
 ### 持续集成
 
