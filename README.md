@@ -81,7 +81,7 @@ moon test --target native
 moon build --target native
 ```
 
-当前开发环境为 Windows、MoonBit v0.10.18、moon 0.1.20261028，native 构建使用 MSVC。其他环境和后端的运行兼容性仍待验证。重建协议样本还需要 Python 3。
+2026-11-13 在 Windows 使用 `moon 0.1.20261104`、`moonc 0.10.20+65efd5b93` 验证，native 构建使用 MSVC。其他环境和后端的运行兼容性仍待验证。重建协议样本还需要 Python 3。
 
 ### 验收演示
 
@@ -105,7 +105,7 @@ moon add Noverberrain/moonbinlog@0.1.0
 
 ### 持续集成
 
-[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.18+6c83a7f62` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十六组 CLI 回归，无需启动 MySQL。
+[CI 工作流](.github/workflows/ci.yml) 在推送 main、向 main 提交 PR 或手动触发时运行 Windows native 检查，固定 MoonBit/core `0.10.20+65efd5b93` 与 Python `3.13.9`。覆盖格式、严格检查、全部测试、构建、接口差异、样本和十六组 CLI 回归，无需启动 MySQL。
 
 Windows 本地已准备好工具链后，也可运行同一入口：
 

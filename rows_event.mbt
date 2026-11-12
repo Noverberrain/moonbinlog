@@ -3,11 +3,12 @@
 
 ///|
 /// An uncommitted row change; transaction outcome must be handled separately.
+#derive(Debug, Eq)
 pub(all) enum RowChange {
   Insert(RowImage)
   Update(before~ : RowImage, after~ : RowImage)
   Delete(RowImage)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RowChange with Eq::{equal, not_equal}
@@ -18,6 +19,7 @@ pub extend RowChange with @debug.Debug::{to_repr}
 ///|
 /// One verified v2 ROWS event and an immutable snapshot of its table map.
 /// Extra header bytes are preserved without interpreting NDB/partition tags.
+#derive(Debug, Eq)
 pub struct RowsEvent {
   header : EventHeader
   table : TableMap
@@ -26,7 +28,7 @@ pub struct RowsEvent {
   columns_before : Bytes?
   columns_after : Bytes?
   changes : ReadOnlyArray[RowChange]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RowsEvent with Eq::{equal, not_equal}

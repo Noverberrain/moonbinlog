@@ -3,10 +3,11 @@
 
 ///|
 /// Exact bytes of a non-NULL BLOB/TEXT, without its length prefix.
+#derive(Debug, Eq)
 pub struct DecodedBlob {
   value : Bytes
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedBlob with Eq::{equal, not_equal}

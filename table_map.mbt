@@ -4,11 +4,12 @@
 ///|
 /// A wire type, its exact metadata bytes, and the column's nullable flag.
 /// This does not supply its SQL name, signedness, charset or decoded row value.
+#derive(Debug, Eq)
 pub struct TableColumn {
   wire_type : Byte
   metadata : Bytes
   nullable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TableColumn with Eq::{equal, not_equal}
@@ -18,10 +19,11 @@ pub extend TableColumn with @debug.Debug::{to_repr}
 
 ///|
 /// A structurally checked optional metadata TLV, preserved without interpretation.
+#derive(Debug, Eq)
 pub struct TableMetadataField {
   field_type : Byte
   value : Bytes
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TableMetadataField with Eq::{equal, not_equal}
@@ -31,6 +33,7 @@ pub extend TableMetadataField with @debug.Debug::{to_repr}
 
 ///|
 /// An immutable MySQL 8.0 TABLE_MAP_EVENT (type 19).
+#derive(Debug, Eq)
 pub struct TableMap {
   header : EventHeader
   table_id : UInt64
@@ -39,7 +42,7 @@ pub struct TableMap {
   table : String
   columns : ReadOnlyArray[TableColumn]
   optional_metadata : ReadOnlyArray[TableMetadataField]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TableMap with Eq::{equal, not_equal}

@@ -8,7 +8,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$ciVersion = '0.10.18+6c83a7f62'
+$ciVersion = '0.10.20+65efd5b93'
 if ([string]::IsNullOrWhiteSpace($DownloadDir)) {
     $DownloadDir = Join-Path ([IO.Path]::GetTempPath()) "moonbinlog-ci-downloads-$ciVersion"
 }
@@ -22,13 +22,13 @@ $ciArchives = @(
     @{
         File = 'moonbit.zip'
         Url = "https://cli.moonbitlang.com/binaries/$ciEncodedVersion/moonbit-windows-x86_64.zip"
-        Hash = '249c53518a4b63fbb2577734e03f3f7e0ca15614ba6e66255359315bed9bc73a'
+        Hash = 'bdff9a3b2d7c61a3adae2fe09221d3de63effc6cab28bfa0cbeb94fb0d529d79'
         Destination = $InstallDir
     },
     @{
         File = 'core.zip'
         Url = "https://cli.moonbitlang.com/cores/core-$ciEncodedVersion.zip"
-        Hash = 'af149c0e8bf9ad9144fcec9e41aa2e34005c0043b5d5d8ff96be11ddef3bfb58'
+        Hash = 'd7982eed233e0c4f933f566274cc9777466447e0d5b633006e8bf18975c7c833'
         Destination = (Join-Path $InstallDir 'lib')
     }
 )

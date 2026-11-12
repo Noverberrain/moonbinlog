@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Debug)
 pub(all) suberror ChainError {
   InvalidChainState(String)
   InvalidChainLink(file_index~ : Int32, reason~ : String)
-} derive(Debug)
+}
 
 ///|
 pub extend ChainError with @debug.Debug::{to_repr}

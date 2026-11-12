@@ -8,7 +8,8 @@ import {
 // Values
 
 // Errors
-type InputError derive(@debug.Debug)
+#derive(@debug.Debug)
+type InputError
 
 // Types and methods
 

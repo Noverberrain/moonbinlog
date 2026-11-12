@@ -4,10 +4,11 @@
 ///|
 /// One GTID interval [start, end_exclusive). Values fit MySQL's positive GNO
 /// range; end_exclusive may equal INT64_MAX, which is not itself a valid GNO.
+#derive(Debug, Eq)
 pub struct GtidInterval {
   start : UInt64
   end_exclusive : UInt64
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GtidInterval with Eq::{equal, not_equal}
@@ -18,10 +19,11 @@ pub extend GtidInterval with @debug.Debug::{to_repr}
 ///|
 /// A 16-byte SID and its ordered, nonoverlapping, nonadjacent intervals.
 /// The SID is retained verbatim, without UUID version/variant restrictions.
+#derive(Debug, Eq)
 pub struct GtidSidIntervals {
   sid : Bytes
   intervals : ReadOnlyArray[GtidInterval]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GtidSidIntervals with Eq::{equal, not_equal}
@@ -33,10 +35,11 @@ pub extend GtidSidIntervals with @debug.Debug::{to_repr}
 /// Historical GTIDs declared by PREVIOUS_GTIDS_EVENT (35).
 /// SID entries retain wire order, including repeated SIDs and empty entries;
 /// this is a decoded representation, not a normalized GTID set.
+#derive(Debug, Eq)
 pub struct PreviousGtidsEvent {
   header : EventHeader
   sids : ReadOnlyArray[GtidSidIntervals]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PreviousGtidsEvent with Eq::{equal, not_equal}

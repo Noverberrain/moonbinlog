@@ -3,10 +3,11 @@
 
 ///|
 /// One non-NULL SQL string's exact bytes; no charset conversion or padding.
+#derive(Debug, Eq)
 pub struct DecodedString {
   value : Bytes
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedString with Eq::{equal, not_equal}

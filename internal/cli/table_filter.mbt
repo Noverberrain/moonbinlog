@@ -3,10 +3,11 @@
 
 ///|
 /// Exact, case-sensitive output selection. Never controls decoding or binding.
+#derive(Debug, Eq)
 pub(all) struct TableFilter {
   database : String?
   table : String?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TableFilter with Eq::{equal, not_equal}

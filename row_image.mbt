@@ -3,6 +3,7 @@
 
 ///|
 /// One table column: absent, SQL NULL, or a typed decoded value.
+#derive(Debug, Eq)
 pub(all) enum RowCell {
   Absent
   Null
@@ -15,7 +16,7 @@ pub(all) enum RowCell {
   Bit(DecodedBit)
   EnumSet(EnumSetValue)
   Temporal(DecodedTemporal)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RowCell with Eq::{equal, not_equal}
@@ -24,10 +25,11 @@ pub extend RowCell with Eq::{equal, not_equal}
 pub extend RowCell with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub struct RowImage {
   columns : ReadOnlyArray[RowCell]
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RowImage with Eq::{equal, not_equal}

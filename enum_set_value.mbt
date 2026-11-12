@@ -3,10 +3,11 @@
 
 ///|
 /// Raw ordinal or membership bits. Names and member counts are not inferred.
+#derive(Debug, Eq)
 pub(all) enum EnumSetValue {
   EnumIndex(UInt16)
   SetMask(UInt64)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend EnumSetValue with Eq::{equal, not_equal}
@@ -15,10 +16,11 @@ pub extend EnumSetValue with Eq::{equal, not_equal}
 pub extend EnumSetValue with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub struct DecodedEnumSet {
   value : EnumSetValue
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedEnumSet with Eq::{equal, not_equal}

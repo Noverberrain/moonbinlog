@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum TransactionAction {
   Begin
   Commit
   Rollback
   Xid(UInt64)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TransactionAction with Eq::{equal, not_equal}
@@ -16,10 +17,11 @@ pub extend TransactionAction with Eq::{equal, not_equal}
 pub extend TransactionAction with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub struct TransactionBoundary {
   header : EventHeader
   action : TransactionAction
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TransactionBoundary with Eq::{equal, not_equal}

@@ -3,6 +3,7 @@
 
 ///|
 /// A declared committed span. XID is absent for QUERY COMMIT.
+#derive(Debug, Eq)
 pub struct CommittedTransaction {
   start_offset : UInt64
   end_offset : UInt64
@@ -11,7 +12,7 @@ pub struct CommittedTransaction {
   event_count : Int32
   change_count : Int32
   wire_bytes : UInt64
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend CommittedTransaction with Eq::{equal, not_equal}
@@ -20,6 +21,7 @@ pub extend CommittedTransaction with Eq::{equal, not_equal}
 pub extend CommittedTransaction with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum TransactionOutcome {
   Committed(CommittedTransaction)
   RolledBack(
@@ -27,7 +29,7 @@ pub(all) enum TransactionOutcome {
     end_offset~ : UInt64,
     discarded_changes~ : Int32
   )
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TransactionOutcome with Eq::{equal, not_equal}
@@ -37,10 +39,11 @@ pub extend TransactionOutcome with @debug.Debug::{to_repr}
 
 ///|
 /// Advance by header.event_size, even while outcome is None.
+#derive(Debug, Eq)
 pub struct TransactionStep {
   header : EventHeader
   outcome : TransactionOutcome?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TransactionStep with Eq::{equal, not_equal}

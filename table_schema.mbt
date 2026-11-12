@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Debug, Eq)
 pub(all) suberror SchemaError {
   InvalidSchema(path~ : String, reason~ : String)
   InvalidSchemaLimits(
@@ -18,7 +19,7 @@ pub(all) suberror SchemaError {
     column_index~ : Int32?,
     reason~ : String
   )
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SchemaError with Eq::{equal, not_equal}
@@ -29,13 +30,14 @@ pub extend SchemaError with @debug.Debug::{to_repr}
 ///|
 /// A positional column label and a physical TABLE_MAP descriptor.
 /// unsigned is required for integer wire types and absent for all others.
+#derive(Debug, Eq)
 pub struct SchemaColumn {
   name : String
   wire_type : Byte
   metadata : Bytes
   nullable : Bool
   unsigned : Bool?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SchemaColumn with Eq::{equal, not_equal}
@@ -44,11 +46,12 @@ pub extend SchemaColumn with Eq::{equal, not_equal}
 pub extend SchemaColumn with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub struct TableSchema {
   database : String
   table : String
   columns : ReadOnlyArray[SchemaColumn]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TableSchema with Eq::{equal, not_equal}
@@ -58,11 +61,12 @@ pub extend TableSchema with @debug.Debug::{to_repr}
 
 ///|
 /// Immutable binding for this exact TABLE_MAP snapshot, not a table-id cache.
+#derive(Debug, Eq)
 pub struct BoundTableSchema {
   table_map : TableMap
   schema : TableSchema
   integer_unsigned : ReadOnlyArray[Bool?]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend BoundTableSchema with Eq::{equal, not_equal}

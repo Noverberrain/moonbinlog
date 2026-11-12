@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Debug)
 pub(all) suberror TemplateError {
   InvalidTemplate(String)
   ConflictingTable(
@@ -17,7 +18,7 @@ pub(all) suberror TemplateError {
     field_type~ : Byte,
     reason~ : String
   )
-} derive(Debug)
+}
 
 ///|
 pub extend TemplateError with @debug.Debug::{to_repr}

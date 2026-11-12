@@ -4,6 +4,7 @@ package "Noverberrain/moonbinlog/internal/cli"
 import {
   "Noverberrain/moonbinlog",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -27,7 +28,7 @@ pub fn previous_gtids_json_line(@moonbinlog.PreviousGtidsEvent, @moonbinlog.Chec
 
 pub fn rotate_json_line(@moonbinlog.RotateEvent, @moonbinlog.ChecksumAlgorithm) -> String
 
-pub fn row_cell_json(@moonbinlog.RowCell, Int32, String) -> Json
+pub fn row_cell_json(@moonbinlog.RowCell, Int32, String) -> @json.Json
 
 pub fn row_change_line(@moonbinlog.RowsEvent, @moonbinlog.BoundTableSchema, Int32) -> String raise RowScanError
 
@@ -38,44 +39,50 @@ pub fn transaction_rows_line(@moonbinlog.TransactionOutcome, @moonbinlog.SchemaC
 pub fn usage() -> String
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror ArgumentError {
   InvalidArguments(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ArgumentError::equal(Self, Self) -> Bool
 pub fn ArgumentError::not_equal(Self, Self) -> Bool
 pub fn ArgumentError::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) suberror ChainError {
   InvalidChainState(String)
   InvalidChainLink(file_index~ : Int32, reason~ : String)
-} derive(@debug.Debug)
+}
 pub fn ChainError::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) suberror RowScanError {
   MissingFormat(file_offset~ : UInt64)
   UnsupportedEvent(file_offset~ : UInt64, event_type~ : Byte)
   InvalidOutput(String)
-} derive(@debug.Debug)
+}
 pub fn RowScanError::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) suberror TemplateError {
   InvalidTemplate(String)
   ConflictingTable(database~ : String, table~ : String, first_offset~ : UInt64, file_offset~ : UInt64)
   TemplateLimit(String)
   TemplateAborted
   InvalidTemplateMetadata(file_offset~ : UInt64, field_type~ : Byte, reason~ : String)
-} derive(@debug.Debug)
+}
 pub fn TemplateError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Command {
   Help
   Inspect(Config)
-} derive(Eq, @debug.Debug)
+}
 pub fn Command::equal(Self, Self) -> Bool
 pub fn Command::not_equal(Self, Self) -> Bool
 pub fn Command::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Config {
   path : String
   summary_only : Bool
@@ -97,7 +104,7 @@ pub struct Config {
   schema_path : String?
   max_event_bytes : UInt32
   max_file_bytes : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn Config::equal(Self, Self) -> Bool
 pub fn Config::not_equal(Self, Self) -> Bool
 pub fn Config::to_repr(Self) -> @debug.Repr
@@ -127,8 +134,8 @@ pub fn SchemaTemplate::render(Self) -> String raise TemplateError
 pub struct Stats {
   // private fields
 }
-pub fn Stats::chain_file_json(Self, Int32, String, Int32) -> Json
-pub fn Stats::chain_json_line(Self, Int32, Array[Json]) -> String
+pub fn Stats::chain_file_json(Self, Int32, String, Int32) -> @json.Json
+pub fn Stats::chain_json_line(Self, Int32, Array[@json.Json]) -> String
 pub fn Stats::filtered_row_json_line(Self, Int32, Int32, Int32, TableFilter, Int32, Int32) -> String
 pub fn Stats::json_line(Self, Int32) -> String
 pub fn Stats::lines(Self, Int32) -> Array[String]
@@ -136,10 +143,11 @@ pub fn Stats::new() -> Self
 pub fn Stats::record(Self, @moonbinlog.EventHeader) -> Unit
 pub fn Stats::row_json_line(Self, Int32, Int32, Int32) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TableFilter {
   database : String?
   table : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn TableFilter::all() -> Self
 pub fn TableFilter::equal(Self, Self) -> Bool
 pub fn TableFilter::is_active(Self) -> Bool

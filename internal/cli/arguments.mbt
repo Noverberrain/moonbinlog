@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Debug, Eq)
 pub struct Config {
   path : String
   summary_only : Bool
@@ -23,7 +24,7 @@ pub struct Config {
   schema_path : String?
   max_event_bytes : UInt32
   max_file_bytes : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Config with Eq::{equal, not_equal}
@@ -32,10 +33,11 @@ pub extend Config with Eq::{equal, not_equal}
 pub extend Config with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum Command {
   Help
   Inspect(Config)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Command with Eq::{equal, not_equal}
@@ -44,9 +46,10 @@ pub extend Command with Eq::{equal, not_equal}
 pub extend Command with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub(all) suberror ArgumentError {
   InvalidArguments(String)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ArgumentError with Eq::{equal, not_equal}

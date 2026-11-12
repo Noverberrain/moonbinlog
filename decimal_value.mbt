@@ -3,12 +3,13 @@
 
 ///|
 /// An exact decimal string retaining schema scale, without floating conversion.
+#derive(Debug, Eq)
 pub struct DecodedDecimal {
   value : String
   precision : Int32
   scale : Int32
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedDecimal with Eq::{equal, not_equal}

@@ -6,12 +6,13 @@
 /// Views retain the input bytes. `raw` includes header/checksum; `body` excludes
 /// both. For FDE, body still includes the checksum-algorithm descriptor.
 /// An unknown type has validated framing, not validated body semantics.
+#derive(Debug, Eq)
 pub struct BinlogFileEvent {
   header : EventHeader
   raw : BytesView
   body : BytesView
   format : FormatDescription
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend BinlogFileEvent with Eq::{equal, not_equal}

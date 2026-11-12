@@ -3,10 +3,11 @@
 
 ///|
 /// Exact integers retain their signedness, including the full UInt64 range.
+#derive(Debug, Eq)
 pub(all) enum IntegerValue {
   Signed(Int64)
   Unsigned(UInt64)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend IntegerValue with Eq::{equal, not_equal}
@@ -16,10 +17,11 @@ pub extend IntegerValue with @debug.Debug::{to_repr}
 
 ///|
 /// One non-NULL integer value and the number of bytes consumed from its view.
+#derive(Debug, Eq)
 pub struct DecodedInteger {
   value : IntegerValue
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedInteger with Eq::{equal, not_equal}

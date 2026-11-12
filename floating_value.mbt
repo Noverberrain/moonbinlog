@@ -3,10 +3,11 @@
 
 ///|
 /// The original binary precision, without decimal rounding or widening FLOAT.
+#derive(Debug, Eq)
 pub(all) enum FloatingValue {
   Single(Float)
   DoublePrecision(Double)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FloatingValue with Eq::{equal, not_equal}
@@ -17,11 +18,12 @@ pub extend FloatingValue with @debug.Debug::{to_repr}
 ///|
 /// A finite value, its raw IEEE bits (low 32 for FLOAT), and bytes consumed.
 /// Bits preserve negative zero independently of numeric equality or printing.
+#derive(Debug, Eq)
 pub struct DecodedFloating {
   value : FloatingValue
   bits : UInt64
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedFloating with Eq::{equal, not_equal}

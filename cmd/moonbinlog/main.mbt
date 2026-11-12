@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Debug)
 suberror InputError {
   InvalidFile(String)
   ChainFileFailure(file_index~ : Int32, path~ : String, reason~ : String)
-} derive(Debug)
+}
 
 ///|
 async fn read_input(path : String, max_bytes : Int32) -> Bytes {

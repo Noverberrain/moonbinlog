@@ -4,10 +4,11 @@
 ///|
 /// The policy for events following FORMAT_DESCRIPTION_EVENT.
 /// The format-description event itself always carries CRC32 in MySQL 8.0.
+#derive(Debug, Eq)
 pub(all) enum ChecksumAlgorithm {
   Off
   Crc32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ChecksumAlgorithm with Eq::{equal, not_equal}
@@ -18,6 +19,7 @@ pub extend ChecksumAlgorithm with @debug.Debug::{to_repr}
 ///|
 /// Immutable, validated MySQL 8.0 format context.
 /// Entry i in `post_header_lengths` describes event type i + 1.
+#derive(Debug, Eq)
 pub struct FormatDescription {
   header : EventHeader
   binlog_version : UInt16
@@ -26,7 +28,7 @@ pub struct FormatDescription {
   common_header_length : Byte
   post_header_lengths : Bytes
   checksum_algorithm : ChecksumAlgorithm
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FormatDescription with Eq::{equal, not_equal}

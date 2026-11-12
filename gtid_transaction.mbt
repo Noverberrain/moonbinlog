@@ -6,6 +6,7 @@
 /// The outer range/count/bytes include the GTID prefix. The nested transaction
 /// retains its existing BEGIN-based range and rollback/commit semantics.
 /// Anonymous prefixes remain anonymous; no executed-GTID set is updated.
+#derive(Debug, Eq)
 pub struct GtidTransactionOutcome {
   gtid : GtidEvent
   transaction : TransactionOutcome
@@ -13,7 +14,7 @@ pub struct GtidTransactionOutcome {
   end_offset : UInt64
   event_count : Int32
   wire_bytes : UInt64
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GtidTransactionOutcome with Eq::{equal, not_equal}
@@ -23,10 +24,11 @@ pub extend GtidTransactionOutcome with @debug.Debug::{to_repr}
 
 ///|
 /// No outcome is exposed until the inner span reaches COMMIT/XID/ROLLBACK.
+#derive(Debug, Eq)
 pub struct GtidTransactionStep {
   header : EventHeader
   outcome : GtidTransactionOutcome?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GtidTransactionStep with Eq::{equal, not_equal}

@@ -4,6 +4,7 @@
 ///|
 /// Complete (not partial-update) MySQL binary JSON, with exact integer values.
 /// Object members retain binary order. Floating bits preserve negative zero.
+#derive(Debug, Eq)
 pub(all) enum BinaryJsonValue {
   Null
   Boolean(Bool)
@@ -12,7 +13,7 @@ pub(all) enum BinaryJsonValue {
   Text(String)
   Array(ReadOnlyArray[BinaryJsonValue])
   Object(ReadOnlyArray[(String, BinaryJsonValue)])
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend BinaryJsonValue with Eq::{equal, not_equal}
@@ -21,10 +22,11 @@ pub extend BinaryJsonValue with Eq::{equal, not_equal}
 pub extend BinaryJsonValue with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub struct DecodedJson {
   value : BinaryJsonValue
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedJson with Eq::{equal, not_equal}

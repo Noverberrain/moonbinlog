@@ -3,11 +3,12 @@
 
 ///|
 /// An unsigned BIT value and its declared width, preserving leading-zero width.
+#derive(Debug, Eq)
 pub struct DecodedBit {
   value : UInt64
   bit_length : Int32
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedBit with Eq::{equal, not_equal}

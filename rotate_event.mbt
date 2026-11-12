@@ -4,11 +4,12 @@
 ///|
 /// A MySQL 8.0 ROTATE_EVENT (4), independent of the common header's next_position.
 /// The target identifier is retained verbatim, without charset/path interpretation.
+#derive(Debug, Eq)
 pub struct RotateEvent {
   header : EventHeader
   position : UInt64
   next_binlog : Bytes
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RotateEvent with Eq::{equal, not_equal}

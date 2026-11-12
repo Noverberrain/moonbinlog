@@ -4,10 +4,11 @@
 ///|
 /// Commit timestamps in microseconds, with the immediate timestamp's flag bit
 /// removed. When only one timestamp is encoded, both fields have that value.
+#derive(Debug, Eq)
 pub struct GtidCommitTimestamps {
   immediate : UInt64
   original : UInt64
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GtidCommitTimestamps with Eq::{equal, not_equal}
@@ -17,10 +18,11 @@ pub extend GtidCommitTimestamps with @debug.Debug::{to_repr}
 
 ///|
 /// Raw numeric MySQL server versions, without the immediate version's flag bit.
+#derive(Debug, Eq)
 pub struct GtidServerVersions {
   immediate : UInt32
   original : UInt32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GtidServerVersions with Eq::{equal, not_equal}
@@ -33,6 +35,7 @@ pub extend GtidServerVersions with @debug.Debug::{to_repr}
 /// Optional extensions use None when absent, distinct from an encoded zero.
 /// SID bytes and unknown flag bits are retained; anonymous SID/GNO fields do
 /// not assign a transaction identity. This event is not evidence of a commit.
+#derive(Debug, Eq)
 pub struct GtidEvent {
   header : EventHeader
   flags : Byte
@@ -44,7 +47,7 @@ pub struct GtidEvent {
   transaction_length : UInt64?
   server_versions : GtidServerVersions?
   commit_group_ticket : UInt64?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GtidEvent with Eq::{equal, not_equal}

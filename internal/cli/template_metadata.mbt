@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Eq)
 priv struct TemplateHints {
   names : ReadOnlyArray[String]?
   signs : ReadOnlyArray[Bool?]?
-} derive(Eq)
+}
 
 ///|
 fn metadata_error(

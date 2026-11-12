@@ -4,6 +4,7 @@
 ///|
 /// Errors from file signatures, events, table maps and column values.
 /// Offsets are physical file positions, not the header's next-position field.
+#derive(Debug, Eq)
 pub(all) suberror DecodeError {
   InvalidMagic(actual~ : Bytes)
   TruncatedInput(file_offset~ : UInt64, expected~ : Int32, actual~ : Int32)
@@ -226,7 +227,7 @@ pub(all) suberror DecodeError {
   FileReaderFailed(file_offset~ : UInt64)
   StreamAlreadyFinished(file_offset~ : UInt64)
   InvalidStreamOffset(file_offset~ : UInt64)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodeError with Eq::{equal, not_equal}

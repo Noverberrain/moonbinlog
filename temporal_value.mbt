@@ -4,6 +4,7 @@
 ///|
 /// Calendar components retain MySQL zero dates; timestamps retain wire seconds.
 /// TIME is a signed duration, not a time of day. No timezone is inferred.
+#derive(Debug, Eq)
 pub(all) enum TemporalValue {
   Year(Int32)
   Date(year~ : Int32, month~ : Int32, day~ : Int32)
@@ -24,7 +25,7 @@ pub(all) enum TemporalValue {
     microsecond~ : Int32
   )
   Timestamp(seconds~ : UInt32, microsecond~ : Int32)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TemporalValue with Eq::{equal, not_equal}
@@ -33,11 +34,12 @@ pub extend TemporalValue with Eq::{equal, not_equal}
 pub extend TemporalValue with @debug.Debug::{to_repr}
 
 ///|
+#derive(Debug, Eq)
 pub struct DecodedTemporal {
   value : TemporalValue
   fractional_precision : Int32
   bytes_read : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DecodedTemporal with Eq::{equal, not_equal}

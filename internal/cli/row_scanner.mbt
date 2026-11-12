@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+#derive(Debug)
 pub(all) suberror RowScanError {
   MissingFormat(file_offset~ : UInt64)
   UnsupportedEvent(file_offset~ : UInt64, event_type~ : Byte)
   InvalidOutput(String)
-} derive(Debug)
+}
 
 ///|
 pub extend RowScanError with @debug.Debug::{to_repr}

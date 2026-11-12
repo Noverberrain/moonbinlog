@@ -5,6 +5,7 @@
 /// Read-only decoded fields of a v4 common event header.
 /// `event_size` includes the common header and any checksum trailer.
 /// `next_position` is retained verbatim and must not replace the input cursor.
+#derive(Debug, Eq)
 pub struct EventHeader {
   file_offset : UInt64
   timestamp : UInt32
@@ -13,7 +14,7 @@ pub struct EventHeader {
   event_size : UInt32
   next_position : UInt32
   flags : UInt16
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend EventHeader with Eq::{equal, not_equal}
